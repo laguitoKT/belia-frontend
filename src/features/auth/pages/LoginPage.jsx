@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ChevronRight } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -20,28 +21,22 @@ export default function LoginPage() {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setErrorMessage('');
-    setIsSubmitting(true);
+  const { login } = useAuth();
 
-    try {
-      // TODO: Cuando el endpoint de FastAPI esté listo, se reemplazará por:
-      // const response = await authService.login(formData.username, formData.password);
-      
-      // Simulación temporal para navegar al módulo de Inicio:
-      if (formData.username.trim() && formData.password.trim()) {
-        localStorage.setItem('belia_access_token', 'mock-jwt-token');
-        navigate('/inicio');
-      } else {
-        setErrorMessage('Por favor ingresa tu usuario y contraseña.');
-      }
-    } catch (error) {
-      setErrorMessage('Credenciales incorrectas. Intenta nuevamente.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setErrorMessage('');
+  setIsSubmitting(true);
+
+  try {
+    await login(formData.username, formData.password);
+    navigate('/inicio');
+  } catch (error) {
+    setErrorMessage('Por favor ingresa tu usuario y contraseña.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="relative min-h-screen w-full flex flex-col lg:flex-row overflow-hidden bg-[#F8F6F7]">
@@ -54,9 +49,9 @@ export default function LoginPage() {
 
         {/* Encabezado de Marca (Belia) */}
         <header className="relative z-10 flex items-center gap-4">
-          <div className="w-11 h-11 bg-white rounded-sm shrink-0 shadow-sm" />
+          <div className="bg-white rounded-sm shadow-sm w-11 h-11 shrink-0" />
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-white leading-none">
+            <h1 className="text-xl font-bold leading-none tracking-tight text-white">
               Belia
             </h1>
             <p className="text-[10px] font-medium tracking-[0.22em] text-brand-light uppercase mt-1.5">
@@ -66,7 +61,7 @@ export default function LoginPage() {
         </header>
 
         {/* Mensaje Hero Central */}
-        <div className="relative z-10 my-auto max-w-xl py-12 lg:py-0">
+        <div className="relative z-10 max-w-xl py-12 my-auto lg:py-0">
           <div className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.18em] uppercase text-brand-soft mb-5">
             <Sparkles className="w-4 h-4 text-brand-light" />
             <span>GESTIÓN EN ARMONÍA</span>
@@ -78,18 +73,18 @@ export default function LoginPage() {
             en un solo lugar.
           </h2>
 
-          <p className="text-base sm:text-lg text-brand-soft/90 font-normal leading-relaxed max-w-md">
+          <p className="max-w-md text-base font-normal leading-relaxed sm:text-lg text-brand-soft/90">
             Organiza citas, clientes y servicios para que cada jornada fluya con
             naturalidad.
           </p>
         </div>
 
-        {/* Espaciador inferior para mantener la proporción vertical del mockup */}
-        <div className="hidden lg:block h-6" />
+        {/* Espaciador inferior para mantener la proporción vertical */}
+        <div className="hidden h-6 lg:block" />
       </div>
 
       {/* Contenedor de la Tarjeta de Inicio de Sesión (Superpuesta en la división) */}
-      <div className="relative z-20 w-full lg:w-[30%] flex items-center justify-center p-6 sm:p-10 lg:p-0">
+      <div className="relative z-20 w-full lg:w-[30%] flex items-center justify-left p-6 sm:p-10 lg:p-0">
         <div className="w-full max-w-[440px] lg:-ml-44 xl:-ml-56 bg-white rounded-[32px] shadow-card border border-stone-100 px-8 sm:px-11 pt-10 pb-9 relative">
           
           {/* Detalle superior carmesí en el borde de la tarjeta */}
@@ -98,9 +93,9 @@ export default function LoginPage() {
           {/* Encabezado del Formulario */}
           <div className="mb-8">
             <span className="block text-[11px] font-bold tracking-[0.16em] text-brand-primary uppercase mb-2.5">
-              BIENVENIDA A AURORA
+              BIENVENIDA A BELIA
             </span>
-            <h3 className="text-3xl font-bold text-stone-900 tracking-tight mb-2">
+            <h3 className="mb-2 text-3xl font-bold tracking-tight text-stone-900">
               Inicia sesión
             </h3>
             <p className="text-xs sm:text-sm text-stone-400">
@@ -110,7 +105,7 @@ export default function LoginPage() {
 
           {/* Mensaje de validación o error */}
           {errorMessage && (
-            <div className="mb-5 p-3 rounded-xl bg-brand-soft/60 border border-brand-light text-brand-primary text-xs font-medium">
+            <div className="p-3 mb-5 text-xs font-medium border rounded-xl bg-brand-soft/60 border-brand-light text-brand-primary">
               {errorMessage}
             </div>
           )}
@@ -120,7 +115,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="username"
-                className="block text-xs font-semibold text-stone-700 mb-2"
+                className="block mb-2 text-xs font-semibold text-stone-700"
               >
                 Usuario
               </label>
@@ -139,7 +134,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-xs font-semibold text-stone-700 mb-2"
+                className="block mb-2 text-xs font-semibold text-stone-700"
               >
                 Contraseña
               </label>
@@ -165,14 +160,14 @@ export default function LoginPage() {
                   onChange={handleChange}
                   className="w-4 h-4 rounded border-stone-300 text-brand-primary focus:ring-brand-primary/30 accent-brand-primary"
                 />
-                <span className="text-xs text-stone-400 font-medium">
+                <span className="text-xs font-medium text-stone-400">
                   Recordarme
                 </span>
               </label>
 
               <button
                 type="button"
-                className="text-xs font-semibold text-brand-primary hover:text-brand-accent transition-colors"
+                className="text-xs font-semibold transition-colors text-brand-primary hover:text-brand-accent"
               >
                 ¿Olvidaste tu contraseña?
               </button>
@@ -192,9 +187,9 @@ export default function LoginPage() {
           </form>
 
           {/* Pie de tarjeta */}
-          <div className="mt-7 text-center">
+          <div className="text-center mt-7">
             <p className="text-[11px] text-stone-400">
-              Acceso exclusivo para el equipo de Aurora.
+              Acceso exclusivo para el equipo de Belia.
             </p>
           </div>
         </div>
