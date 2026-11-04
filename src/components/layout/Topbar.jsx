@@ -9,7 +9,7 @@ export default function Topbar({ currentSection = 'Inicio', user, onOpenProfile 
       {/* Breadcrumb izquierdo + Badge de alcance según el rol */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 text-xs font-medium text-stone-400">
-          <span>Aurora</span>
+          <span>Belia</span>
           <span>/</span>
           <span className="text-stone-600">{currentSection}</span>
         </div>
