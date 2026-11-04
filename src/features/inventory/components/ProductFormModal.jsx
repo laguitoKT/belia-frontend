@@ -17,6 +17,26 @@ const PRODUCT_CATEGORIES = [
   'Facial',
 ];
 
+const PRESENTATIONS = [
+  'Botella',
+  'Tubo',
+  'Frasco',
+  'Tarro',
+  'Caja',
+  'Paquete',
+  'Sobre',
+  'Ampolleta',
+];
+
+const MEASUREMENT_UNITS = [
+  { value: 'ml', label: 'Mililitros (ml)' },
+  { value: 'L', label: 'Litros (L)' },
+  { value: 'g', label: 'Gramos (g)' },
+  { value: 'kg', label: 'Kilogramos (kg)' },
+  { value: 'oz', label: 'Onzas (oz)' },
+  { value: 'pzas', label: 'Piezas (pzas)' },
+];
+
 export default function ProductFormModal({
   isOpen,
   onClose,
@@ -32,8 +52,10 @@ export default function ProductFormModal({
   const [formData, setFormData] = useState({
     name: '',
     category: lockedCategory || 'Cabello',
-    unit: '',
+    presentation: '',
+    measureUnit: '',
     quantity: '',
+    active: true,
     imageUrl: null,
     imageFile: null,
   });
@@ -46,9 +68,11 @@ export default function ProductFormModal({
       setFormData({
         name: initialData.name || '',
         category: initialData.category || lockedCategory || 'Cabello',
-        unit: initialData.unit || '',
+        presentation: initialData.presentation || 'Botella',
+        measureUnit: initialData.measureUnit || 'L',
         quantity:
           initialData.quantity !== undefined ? String(initialData.quantity) : '',
+        active: initialData.active !== undefined ? initialData.active : true,
         imageUrl: initialData.imageUrl || null,
         imageFile: null,
       });
@@ -56,8 +80,10 @@ export default function ProductFormModal({
       setFormData({
         name: '',
         category: lockedCategory || 'Cabello',
-        unit: '',
+        presentation: '',
+        measureUnit: '',
         quantity: '',
+        active: true,
         imageUrl: null,
         imageFile: null,
       });
@@ -70,13 +96,22 @@ export default function ProductFormModal({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+      // Si la cantidad se pone en 0 en el formulario, desactivar automáticamente
+      if (name === 'quantity' && Number(value) === 0 && value !== '') {
+        updated.active = false;
+      } else if (name === 'quantity' && Number(value) > 0 && prev.quantity === '0') {
+        updated.active = true;
+      }
+      return updated;
+    });
+
     if (fieldErrors[name]) {
       setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  // Manejo de subida de imagen con validación de formato y tamaño (máx 2MB)
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -103,7 +138,7 @@ export default function ProductFormModal({
       setFormData((prev) => ({
         ...prev,
         imageUrl: reader.result,
-        imageFile: file, // Listo para enviarse como UploadFile a FastAPI
+        imageFile: file,
       }));
       setFieldErrors((prev) => ({ ...prev, image: undefined }));
     };
@@ -118,7 +153,6 @@ export default function ProductFormModal({
   const validateForm = () => {
     const errors = {};
     const trimmedName = formData.name.trim();
-    const trimmedUnit = formData.unit.trim();
 
     if (!trimmedName || trimmedName.length < 3) {
       errors.name = 'Ingresa el nombre del producto (mínimo 3 caracteres).';
@@ -137,10 +171,13 @@ export default function ProductFormModal({
       errors.category = 'Selecciona una categoría.';
     }
 
-    if (!trimmedUnit || trimmedUnit.length < 2) {
-      errors.unit = 'Especifica la unidad (ej. Botella 1 L, Tubo 90 ml).';
+    if (!formData.presentation) {
+      errors.presentation = 'Selecciona la presentación.';
     }
 
+    if (!formData.measureUnit) {
+      errors.measureUnit = 'Selecciona la unidad de medición.';
+    }
     const numericQty = Number(formData.quantity);
     if (
       formData.quantity === '' ||
@@ -165,11 +202,15 @@ export default function ProductFormModal({
   };
 
   const handleConfirmSave = () => {
+    const qty = Number(formData.quantity);
     const payload = {
-      name: isAdmin ? formData.name.trim() : initialData?.name,
-      category: isAdmin ? formData.category : initialData?.category,
-      unit: isAdmin ? formData.unit.trim() : initialData?.unit,
-      quantity: Number(formData.quantity),
+      name: formData.name.trim(),
+      category: formData.category,
+      presentation: formData.presentation,
+      measureUnit: formData.measureUnit,
+      quantity: qty,
+      // Si la cantidad es 0, fuerza Inactivo automáticamente
+      active: qty <= 0 ? false : Boolean(formData.active),
       imageUrl: formData.imageUrl,
       imageFile: formData.imageFile,
     };
@@ -179,47 +220,47 @@ export default function ProductFormModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/35 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/35 backdrop-blur-xs p-4"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-[640px] bg-white rounded-[32px] shadow-card border border-stone-100 p-8 sm:p-10 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto"
+        className="relative w-full max-w-[660px] bg-white rounded-[32px] shadow-card border border-stone-100 p-8 sm:p-10 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute flex items-center justify-center transition-colors bg-white border top-8 right-8 w-11 h-11 rounded-2xl border-stone-200/80 text-stone-600 hover:text-brand-primary"
+          className="absolute top-8 right-8 w-11 h-11 rounded-2xl bg-white border border-stone-200/80 flex items-center justify-center text-stone-600 hover:text-brand-primary transition-colors"
           aria-label="Cerrar modal"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="pr-12 mb-6">
+        <div className="mb-6 pr-12">
           <span className="block text-xs font-bold tracking-[0.14em] text-brand-primary uppercase mb-1.5">
             {isEditing ? 'EDITAR EXISTENCIA' : 'NUEVO REGISTRO'}
           </span>
-          <h3 className="text-3xl font-bold tracking-tight text-stone-900">
+          <h3 className="text-3xl font-bold text-stone-900 tracking-tight">
             {isEditing ? 'Editar producto' : 'Agregar producto'}
           </h3>
-          <p className="mt-1 text-sm text-stone-400">
+          <p className="text-sm text-stone-400 mt-1">
             Completa la información del insumo para el inventario.
           </p>
         </div>
 
-        <form onSubmit={handleRequestSubmit} className="space-y-5" noValidate>
-          {/* Carga y previsualización de Imagen del Producto */}
+        <form onSubmit={handleRequestSubmit} className="space-y-4" noValidate>
+          {/* Imagen del producto */}
           <div>
-            <label className="block mb-2 text-xs font-bold text-stone-800">
+            <label className="block text-xs font-bold text-stone-800 mb-2">
               Imagen del producto (Opcional)
             </label>
-            <div className="flex items-center gap-4 p-4 rounded-2xl bg-[#FAFAFB] border border-stone-200/90">
-              <div className="w-16 h-16 rounded-2xl bg-[#FDECEF] flex items-center justify-center text-brand-primary overflow-hidden shrink-0 border border-brand-light/30">
+            <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-[#FAFAFB] border border-stone-200/90">
+              <div className="w-14 h-14 rounded-2xl bg-[#FDECEF] flex items-center justify-center text-brand-primary overflow-hidden shrink-0 border border-brand-light/30">
                 {formData.imageUrl ? (
                   <img
                     src={formData.imageUrl}
                     alt="Vista previa"
-                    className="object-cover w-full h-full"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
                   <Box className="w-6 h-6" />
@@ -241,14 +282,14 @@ export default function ProductFormModal({
                     <button
                       type="button"
                       onClick={handleRemoveImage}
-                      className="inline-flex items-center gap-1 px-3 py-2 text-xs font-bold text-red-600 transition-colors rounded-xl bg-red-50 hover:bg-red-100"
+                      className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>Quitar</span>
                     </button>
                   )}
                 </div>
-                <p className="text-[11px] text-stone-400 mt-1.5">
+                <p className="text-[11px] text-stone-400 mt-1">
                   Formatos JPG, PNG o WEBP (Máx. 2 MB).
                 </p>
                 {fieldErrors.image && (
@@ -268,28 +309,19 @@ export default function ProductFormModal({
             </div>
           </div>
 
-          {/* Fila 1: Nombre del Producto y Categoría del Servicio */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* Fila 1: Nombre */}
+          <div className="grid grid-cols-1  gap-4">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-bold text-stone-800">
-                  Nombre del producto
-                </label>
-                {!isAdmin && isEditing && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
-                    <Lock className="w-2.5 h-2.5" />
-                    Solo Admin
-                  </span>
-                )}
-              </div>
+              <label className="block text-xs font-bold text-stone-800 mb-2">
+                Nombre del producto
+              </label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                disabled={!isAdmin && isEditing}
                 placeholder="Ej. Shampoo hidratante"
-                className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none disabled:bg-stone-100 disabled:text-stone-500 ${
+                className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none ${
                   fieldErrors.name
                     ? 'border-red-400'
                     : 'border-stone-200/90 focus:border-brand-primary'
@@ -301,17 +333,21 @@ export default function ProductFormModal({
                 </p>
               )}
             </div>
+          </div>
+
+          {/* Fila 2: Categoría, Presentación y Unidad de Medición */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
             <div>
-              <label className="block mb-2 text-xs font-bold text-stone-800">
+              <label className="block text-xs font-bold text-stone-800 mb-2">
                 Categoría del servicio
               </label>
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                disabled={Boolean(lockedCategory) || (!isAdmin && isEditing)}
-                className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none disabled:bg-stone-100 disabled:text-stone-500 ${
+                disabled={Boolean(lockedCategory)}
+                className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none disabled:bg-stone-100 ${
                   fieldErrors.category
                     ? 'border-red-400'
                     : 'border-stone-200/90 focus:border-brand-primary'
@@ -330,45 +366,69 @@ export default function ProductFormModal({
                 </p>
               )}
             </div>
-          </div>
 
-          {/* Fila 2: Unidad y Cantidad disponible */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-bold text-stone-800">
-                  Unidad / Presentación
-                </label>
-                {!isAdmin && isEditing && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
-                    <Lock className="w-2.5 h-2.5" />
-                    Solo Admin
-                  </span>
-                )}
-              </div>
-              <input
-                type="text"
-                name="unit"
-                value={formData.unit}
+              <label className="block text-xs font-bold text-stone-800 mb-2">
+                Presentación
+              </label>
+              <select
+                name="presentation"
+                value={formData.presentation}
                 onChange={handleChange}
-                disabled={!isAdmin && isEditing}
-                placeholder="Ej. Botella 1 L, Tubo 90 ml"
-                className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none disabled:bg-stone-100 disabled:text-stone-500 ${
-                  fieldErrors.unit
+                className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none cursor-pointer ${
+                  fieldErrors.presentation
                     ? 'border-red-400'
                     : 'border-stone-200/90 focus:border-brand-primary'
                 }`}
-              />
-              {fieldErrors.unit && (
+              >
+                <option value="">Seleccionar</option>
+                {PRESENTATIONS.map((pres) => (
+                  <option key={pres} value={pres}>
+                    {pres}
+                  </option>
+                ))}
+              </select>
+              {fieldErrors.presentation && (
                 <p className="text-[11px] font-medium text-red-600 mt-1">
-                  {fieldErrors.unit}
+                  {fieldErrors.presentation}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block mb-2 text-xs font-bold text-stone-800">
-                Cantidad disponible (Unidades)
+              <label className="block text-xs font-bold text-stone-800 mb-2">
+                Unidad de medición
+              </label>
+              <select
+                name="measureUnit"
+                value={formData.measureUnit}
+                onChange={handleChange}
+                className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none cursor-pointer ${
+                  fieldErrors.measureUnit
+                    ? 'border-red-400'
+                    : 'border-stone-200/90 focus:border-brand-primary'
+                }`}
+              >
+                <option value="">Seleccionar</option>
+                {MEASUREMENT_UNITS.map((u) => (
+                  <option key={u.value} value={u.value}>
+                    {u.label}
+                  </option>
+                ))}
+              </select>
+              {fieldErrors.measureUnit && (
+                <p className="text-[11px] font-medium text-red-600 mt-1">
+                  {fieldErrors.measureUnit}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Fila 3: Cantidad disponible y Estado (con auto-desactivación en 0) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-stone-800 mb-2">
+                Cantidad disponible (Stock)
               </label>
               <input
                 type="number"
@@ -378,7 +438,7 @@ export default function ProductFormModal({
                 step="1"
                 value={formData.quantity}
                 onChange={handleChange}
-                placeholder="Ej. 18"
+                placeholder="Ej. 18 (Si es 0 se desactiva)"
                 className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none ${
                   fieldErrors.quantity
                     ? 'border-red-400'
@@ -391,9 +451,34 @@ export default function ProductFormModal({
                 </p>
               )}
             </div>
+
+            <div>
+              <label className="block text-xs font-bold text-stone-800 mb-2">
+                Estado del producto
+              </label>
+              <select
+                name="active"
+                value={Number(formData.quantity) === 0 && formData.quantity !== '' ? 'false' : String(formData.active)}
+                disabled={Number(formData.quantity) === 0 && formData.quantity !== ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    active: e.target.value === 'true',
+                  }))
+                }
+                className="w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border border-stone-200/90 text-sm text-stone-800 focus:outline-none disabled:bg-stone-100 disabled:text-stone-500"
+              >
+                <option value="true">Activo</option>
+                <option value="false">Inactivo</option>
+              </select>
+              {Number(formData.quantity) === 0 && formData.quantity !== '' && (
+                <p className="text-[11px] font-medium text-amber-600 mt-1">
+                  Desactivado automáticamente por tener cantidad en 0.
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* Confirmación antes de guardar ("¿Estás seguro? / Guardar cambios") */}
           {showSaveConfirm ? (
             <div className="p-4 rounded-2xl bg-[#FDF2F5] border border-brand-light/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-150">
               <div className="flex items-center gap-2.5 text-brand-primary text-xs font-bold">
@@ -402,25 +487,25 @@ export default function ProductFormModal({
                   ¿Estás seguro de que deseas guardar los cambios en el inventario?
                 </span>
               </div>
-              <div className="flex items-center self-end gap-2 sm:self-auto">
+              <div className="flex items-center gap-2 self-end sm:self-auto">
                 <button
                   type="button"
                   onClick={() => setShowSaveConfirm(false)}
-                  className="px-4 py-2 text-xs font-bold bg-white border rounded-xl border-stone-200 text-stone-700"
+                  className="px-4 py-2 rounded-xl bg-white border border-stone-200 text-stone-700 text-xs font-bold"
                 >
                   Revisar
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmSave}
-                  className="px-4 py-2 text-xs font-bold text-white rounded-xl bg-brand-primary shadow-button"
+                  className="px-4 py-2 rounded-xl bg-brand-primary text-white text-xs font-bold shadow-button"
                 >
                   Sí, guardar cambios
                 </button>
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-end gap-3 pt-5 border-t border-stone-100">
+            <div className="pt-5 border-t border-stone-100 flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={onClose}

@@ -120,8 +120,10 @@ export default function ServicesPage() {
   }, [user]);
 
   const availableCategories = useMemo(() => {
-    if (!isAdmin && user?.specialtyCategory) return [user.specialtyCategory];
-    return ['Todas', 'Cabello', 'Uñas', 'Mirada', 'Maquillaje', 'Facial'];
+    if (!isAdmin && user?.specialtyCategory) {
+      return ['Todas', user.specialtyCategory, 'Paquete mixto'];
+    }
+    return ['Todas', 'Cabello', 'Uñas', 'Mirada', 'Maquillaje', 'Facial', 'Paquete mixto'];
   }, [isAdmin, user]);
 
   const filteredServices = useMemo(() => {
@@ -388,7 +390,7 @@ export default function ServicesPage() {
         </div>
       ) : activeTab === 'services' ? (
         viewMode === 'cards' ? (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredServices.map((srv) => {
               const theme = CARD_THEMES[srv.theme] || CARD_THEMES['pink-scissors'];
               const ThemeIcon = theme.icon;
@@ -449,16 +451,6 @@ export default function ServicesPage() {
                                 <Power className="w-3.5 h-3.5 text-amber-600" />
                                 {isActive ? 'Desactivar' : 'Activar'}
                               </button>
-                              {isAdmin && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleRequestDelete(srv)}
-                                  className="w-full px-3.5 py-2 text-left flex items-center gap-2 text-red-600 hover:bg-red-50 font-medium"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                  Eliminar
-                                </button>
-                              )}
                             </div>
                           )}
                         </div>
@@ -566,16 +558,6 @@ export default function ServicesPage() {
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
-                            {isAdmin && (
-                              <button
-                                type="button"
-                                onClick={() => handleRequestDelete(srv)}
-                                className="p-2 transition-colors rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50"
-                                title="Eliminar"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -589,7 +571,7 @@ export default function ServicesPage() {
       ) : (
         /* ==================== PESTAÑA 2: PAQUETES Y PROMOCIONES ==================== */
         viewMode === 'cards' ? (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredPromotions.map((promo) => {
               const theme = CARD_THEMES[promo.theme] || CARD_THEMES['pink-scissors'];
               const ThemeIcon = theme.icon;

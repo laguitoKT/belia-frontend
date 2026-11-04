@@ -158,14 +158,24 @@ export const catalogService = {
   },
 
   async getPromotions({ user } = {}) {
-    // Integración con FastAPI: return (await axiosClient.get('/promotions')).data;
+    // FastAPI: return (await axiosClient.get('/promotions')).data;
     return new Promise((resolve) => {
       setTimeout(() => {
-        const results =
-          user && user.role !== 'admin' && user.specialtyCategory
-            ? promotionsStore.filter((p) => p.category === user.specialtyCategory)
-            : [...promotionsStore];
-        resolve(results);
+        if (user && user.role !== 'admin' && user.specialtyCategory) {
+          const allowedServiceIds = servicesStore
+            .filter((s) => s.category === user.specialtyCategory)
+            .map((s) => s.id);
+
+          const results = promotionsStore.filter(
+            (p) =>
+              p.category === user.specialtyCategory ||
+              p.category === 'Paquete mixto' ||
+              p.serviceIds?.some((id) => allowedServiceIds.includes(id))
+          );
+          resolve(results);
+          return;
+        }
+        resolve([...promotionsStore]);
       }, 100);
     });
   },

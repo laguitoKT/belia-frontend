@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { X, Lock, Check, Calendar, ShieldQuestion } from 'lucide-react';
+import { X, Lock, Check, Calendar, ShieldQuestion, Sparkles } from 'lucide-react';
 import { getTodayISO } from '../../../utils/dateUtils';
 
 const SERVICE_CATEGORIES = ['Cabello', 'Uñas', 'Mirada', 'Maquillaje', 'Facial'];
@@ -13,7 +13,7 @@ export default function ServiceFormModal({
   lockedCategory = null,
   isAdmin = false,
   existingItems = [],
-  availableServices = [], // Catálogo de servicios reales para seleccionar en promociones
+  availableServices = [],
 }) {
   const isEditing = Boolean(initialData);
   const isPromotion = mode === 'promotion';
@@ -21,7 +21,7 @@ export default function ServiceFormModal({
 
   const [formData, setFormData] = useState({
     name: '',
-    category: lockedCategory || '',
+    category: lockedCategory || 'Cabello',
     serviceIds: [],
     price: '',
     validFrom: '',
@@ -61,12 +61,21 @@ export default function ServiceFormModal({
     setShowSaveConfirm(false);
   }, [initialData, isOpen, lockedCategory]);
 
-  // Servicios seleccionables según la categoría elegida
-  const selectableServices = useMemo(() => {
-    if (!formData.category) return availableServices;
-    const byCat = availableServices.filter((s) => s.category === formData.category);
-    return byCat.length > 0 ? byCat : availableServices;
-  }, [availableServices, formData.category]);
+  // Deducción automática de categoría según los servicios seleccionados en la promoción
+  const derivedPromotionCategory = useMemo(() => {
+    if (!isPromotion) return formData.category;
+    const selectedObjs = availableServices.filter((s) =>
+      formData.serviceIds.includes(s.id)
+    );
+    if (selectedObjs.length === 0) return 'Sin seleccionar';
+    if (selectedObjs.length > 1) {
+      const uniqueCategories = new Set(selectedObjs.map((s) => s.category));
+      return uniqueCategories.size === 1
+        ? [...uniqueCategories][0]
+        : 'Paquete mixto';
+    }
+    return selectedObjs[0].category;
+  }, [isPromotion, availableServices, formData.serviceIds, formData.category]);
 
   if (!isOpen) return null;
 
@@ -85,12 +94,7 @@ export default function ServiceFormModal({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-      // Si cambia de categoría en promoción, se limpian los servicios seleccionados de otra área
-      ...(name === 'category' && isPromotion ? { serviceIds: [] } : {}),
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
     if (fieldErrors[name]) {
       setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -114,7 +118,7 @@ export default function ServiceFormModal({
       }
     }
 
-    if (!formData.category) {
+    if (!isPromotion && !formData.category) {
       errors.category = 'Selecciona una categoría.';
     }
 
@@ -139,20 +143,16 @@ export default function ServiceFormModal({
       } else if (formData.validFrom && formData.validUntil < formData.validFrom) {
         errors.validUntil = 'La fecha final debe ser igual o posterior al inicio.';
       }
+    }
 
-      if (!trimmedDesc || trimmedDesc.length < 10) {
-        errors.description = 'Ingresa una descripción (mínimo 10 caracteres).';
-      }
-
-      setFieldErrors(errors);
-      return Object.keys(errors).length === 0;
+    if (!trimmedDesc || trimmedDesc.length < 10) {
+      errors.description = 'Ingresa una descripción (mínimo 10 caracteres).';
     }
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  // Paso 1: Validar y abrir confirmación "¿Estás seguro?"
   const handleRequestSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
@@ -160,22 +160,25 @@ export default function ServiceFormModal({
     }
   };
 
-  // Paso 2: Confirmar guardado y construir payload limpio para FastAPI
   const handleConfirmSave = () => {
     const selectedServiceNames = availableServices
       .filter((s) => formData.serviceIds.includes(s.id))
       .map((s) => s.name.toUpperCase())
       .join(' + ');
 
+    const finalCategory = isPromotion
+      ? derivedPromotionCategory
+      : formData.category;
+
     const payload = {
       name: formData.name.trim(),
-      category: formData.category,
+      category: finalCategory,
       price: canEditPrice ? Number(formData.price) : initialData?.price,
       status: formData.status,
       description: formData.description.trim(),
       ...(isPromotion && {
         serviceIds: formData.serviceIds,
-        serviceIncluded: selectedServiceNames || formData.category.toUpperCase(),
+        serviceIncluded: selectedServiceNames,
         validFrom: formData.validFrom,
         validUntil: formData.validUntil,
       }),
@@ -187,7 +190,7 @@ export default function ServiceFormModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/35 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/35 backdrop-blur-xs p-4"
       onClick={onClose}
     >
       <div
@@ -197,17 +200,17 @@ export default function ServiceFormModal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute flex items-center justify-center transition-colors bg-white border top-8 right-8 w-11 h-11 rounded-2xl border-stone-200/80 text-stone-600 hover:text-brand-primary"
+          className="absolute top-8 right-8 w-11 h-11 rounded-2xl bg-white border border-stone-200/80 flex items-center justify-center text-stone-600 hover:text-brand-primary transition-colors"
           aria-label="Cerrar modal"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="pr-12 mb-6">
+        <div className="mb-6 pr-12">
           <span className="block text-xs font-bold tracking-[0.14em] text-brand-primary uppercase mb-1.5">
             {isEditing ? 'EDITAR REGISTRO' : 'NUEVO REGISTRO'}
           </span>
-          <h3 className="text-3xl font-bold tracking-tight text-stone-900">
+          <h3 className="text-3xl font-bold text-stone-900 tracking-tight">
             {isEditing
               ? isPromotion
                 ? 'Editar promoción'
@@ -216,16 +219,16 @@ export default function ServiceFormModal({
               ? 'Agregar promoción'
               : 'Agregar servicio'}
           </h3>
-          <p className="mt-1 text-sm text-stone-400">
+          <p className="text-sm text-stone-400 mt-1">
             Completa la información para continuar.
           </p>
         </div>
 
         <form onSubmit={handleRequestSubmit} className="space-y-4" noValidate>
-          {/* Fila 1: Nombre y Categoría */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* Fila 1: En Servicio muestra Nombre + Categoría; en Promoción solo Nombre (la categoría se asigna por los servicios) */}
+          <div className={`grid grid-cols-1 ${!isPromotion ? 'sm:grid-cols-2' : ''} gap-4`}>
             <div>
-              <label className="block mb-2 text-xs font-bold text-stone-800">
+              <label className="block text-xs font-bold text-stone-800 mb-2">
                 {isPromotion ? 'Nombre del paquete o promoción' : 'Nombre'}
               </label>
               <input
@@ -245,44 +248,53 @@ export default function ServiceFormModal({
               )}
             </div>
 
-            <div>
-              <label className="block mb-2 text-xs font-bold text-stone-800">
-                Categoría
-              </label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                disabled={Boolean(lockedCategory)}
-                className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none disabled:opacity-70 ${
-                  fieldErrors.category ? 'border-red-400' : 'border-stone-200/90 focus:border-brand-primary'
-                }`}
-              >
-                <option value="">Seleccionar</option>
-                {SERVICE_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-              {fieldErrors.category && (
-                <p className="text-[11px] font-medium text-red-600 mt-1">{fieldErrors.category}</p>
-              )}
-            </div>
+            {!isPromotion && (
+              <div>
+                <label className="block text-xs font-bold text-stone-800 mb-2">
+                  Categoría
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  disabled={Boolean(lockedCategory)}
+                  className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none disabled:opacity-70 ${
+                    fieldErrors.category ? 'border-red-400' : 'border-stone-200/90 focus:border-brand-primary'
+                  }`}
+                >
+                  <option value="">Seleccionar</option>
+                  {SERVICE_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+                {fieldErrors.category && (
+                  <p className="text-[11px] font-medium text-red-600 mt-1">
+                    {fieldErrors.category}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Selector de Servicios Incluidos (Exclusivo de Paquetes y Promociones) */}
+          {/* Selector de Servicios Incluidos (con cálculo automático de categoría / Paquete mixto) */}
           {isPromotion && (
             <div>
-              <label className="block mb-2 text-xs font-bold text-stone-800">
-                Servicios incluidos (Selecciona uno o más)
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-bold text-stone-800">
+                  Servicios incluidos (Selecciona uno o más)
+                </label>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FDECEF] text-brand-primary">
+                  Clasificación: {derivedPromotionCategory}
+                </span>
+              </div>
               <div
                 className={`p-3 rounded-2xl bg-[#FAFAFB] border flex flex-wrap gap-2 ${
                   fieldErrors.serviceIds ? 'border-red-400' : 'border-stone-200/90'
                 }`}
               >
-                {selectableServices.map((srv) => {
+                {availableServices.map((srv) => {
                   const isSelected = formData.serviceIds.includes(srv.id);
                   return (
                     <button
@@ -297,6 +309,13 @@ export default function ServiceFormModal({
                     >
                       {isSelected && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
                       <span>{srv.name}</span>
+                      <span
+                        className={`text-[10px] ${
+                          isSelected ? 'text-brand-soft' : 'text-stone-400'
+                        }`}
+                      >
+                        ({srv.category})
+                      </span>
                     </button>
                   );
                 })}
@@ -309,8 +328,8 @@ export default function ServiceFormModal({
             </div>
           )}
 
-          {/* Fila de Precio, Estado y Calendario de Vigencia */}
-          <div className={`grid grid-cols-1 ${isPromotion ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-4`}>
+          {/* Fila de Precio, Estado y Calendarios de Vigencia */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-xs font-bold text-stone-800">
@@ -342,10 +361,25 @@ export default function ServiceFormModal({
               )}
             </div>
 
+            <div>
+              <label className="block text-xs font-bold text-stone-800 mb-2">
+                Estado
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border border-stone-200/90 text-sm text-stone-800 focus:outline-none focus:border-brand-primary"
+              >
+                <option value="Activo">Activo</option>
+                <option value="Inactivo">Inactivo</option>
+              </select>
+            </div>
+
             {isPromotion && (
               <>
                 <div>
-                  <label className="block mb-2 text-xs font-bold text-stone-800">
+                  <label className="block text-xs font-bold text-stone-800 mb-2">
                     Fecha de inicio
                   </label>
                   <div className="relative">
@@ -368,7 +402,7 @@ export default function ServiceFormModal({
                 </div>
 
                 <div>
-                  <label className="block mb-2 text-xs font-bold text-stone-800">
+                  <label className="block text-xs font-bold text-stone-800 mb-2">
                     Fecha de fin (Vigencia)
                   </label>
                   <div className="relative">
@@ -392,21 +426,6 @@ export default function ServiceFormModal({
                 </div>
               </>
             )}
-            
-            <div>
-              <label className="block mb-2 text-xs font-bold text-stone-800">
-                Estado
-              </label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border border-stone-200/90 text-sm text-stone-800 focus:outline-none focus:border-brand-primary"
-              >
-                <option value="Activo">Activo</option>
-                <option value="Inactivo">Inactivo</option>
-              </select>
-            </div>
           </div>
 
           {/* Descripción */}
@@ -437,7 +456,6 @@ export default function ServiceFormModal({
             )}
           </div>
 
-          {/* Confirmación antes de guardar ("¿Estás seguro? / Guardar cambios") */}
           {showSaveConfirm ? (
             <div className="p-4 rounded-2xl bg-[#FDF2F5] border border-brand-light/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-150">
               <div className="flex items-center gap-2.5 text-brand-primary text-xs font-bold">
@@ -446,25 +464,25 @@ export default function ServiceFormModal({
                   ¿Estás seguro de que deseas guardar los cambios en este registro?
                 </span>
               </div>
-              <div className="flex items-center self-end gap-2 sm:self-auto">
+              <div className="flex items-center gap-2 self-end sm:self-auto">
                 <button
                   type="button"
                   onClick={() => setShowSaveConfirm(false)}
-                  className="px-4 py-2 text-xs font-bold bg-white border rounded-xl border-stone-200 text-stone-700"
+                  className="px-4 py-2 rounded-xl bg-white border border-stone-200 text-stone-700 text-xs font-bold"
                 >
                   Revisar
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmSave}
-                  className="px-4 py-2 text-xs font-bold text-white rounded-xl bg-brand-primary shadow-button"
+                  className="px-4 py-2 rounded-xl bg-brand-primary text-white text-xs font-bold shadow-button"
                 >
                   Sí, guardar cambios
                 </button>
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-end gap-3 pt-5 border-t border-stone-100">
+            <div className="pt-5 border-t border-stone-100 flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={onClose}

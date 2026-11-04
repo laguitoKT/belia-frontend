@@ -9,6 +9,7 @@ import {
   LayoutGrid,
   Table2,
   Pencil,
+  Power,
   Trash2,
   CheckCircle2,
 } from 'lucide-react';
@@ -27,22 +28,27 @@ export default function InventoryPage() {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [selectedStatus, setSelectedStatus] = useState('Todos');
 
   const [openMenuId, setOpenMenuId] = useState(null);
 
-  // Estados de modales CRUD
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [productToDelete, setProductToDelete] = useState(null);
+
+  // Confirmación para Eliminar o Desactivar/Activar manualmente
+  const [confirmState, setConfirmState] = useState({
+    isOpen: false,
+    type: null, // 'delete' | 'toggle-status'
+    product: null,
+  });
+
   const [feedbackBanner, setFeedbackBanner] = useState('');
 
   const showToast = (msg) => {
     setFeedbackBanner(msg);
-    setTimeout(() => setFeedbackBanner(''), 3000);
+    setTimeout(() => setFeedbackBanner(''), 3200);
   };
 
   useEffect(() => {
@@ -78,20 +84,24 @@ export default function InventoryPage() {
 
   const filteredProducts = useMemo(() => {
     return products.filter((prod) => {
-      const statusInfo = getProductStockStatus(prod.quantity, prod.minStock);
+      const statusInfo = getProductStockStatus(
+        prod.quantity,
+        prod.minStock,
+        prod.active
+      );
       const matchesSearch =
         prod.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         prod.unit.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory =
         selectedCategory === 'Todas' || prod.category === selectedCategory;
       const matchesStatus =
-        selectedStatus === 'Todos' || statusInfo.label === selectedStatus;
+        selectedStatus === 'Todos' || statusInfo.shortLabel === selectedStatus;
 
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [products, searchTerm, selectedCategory, selectedStatus]);
 
-  // ==================== AJUSTE RÁPIDO DE CANTIDAD (+1 / -1) ====================
+  // Ajuste rápido de stock (+1 / -1) con desactivación automática al llegar a 0
   const handleQuickStockChange = async (product, delta) => {
     const nextQuantity = Math.max(0, Number(product.quantity) + delta);
     if (nextQuantity === product.quantity) return;
@@ -104,12 +114,51 @@ export default function InventoryPage() {
     setProducts((prev) =>
       prev.map((p) => (p.id === product.id ? updated : p))
     );
+
+    if (nextQuantity === 0) {
+      showToast(
+        `"${product.name}" llegó a 0 unidades y se marcó automáticamente como Inactivo.`
+      );
+    } else {
+      showToast(
+        `Stock de "${product.name}" actualizado a ${nextQuantity} unidades.`
+      );
+    }
+  };
+
+  // Desactivación / Activación manual
+  const handleRequestToggleActive = (product) => {
+    setOpenMenuId(null);
+    if (!product.active && product.quantity <= 0) {
+      showToast(
+        `Agrega al menos 1 unidad a "${product.name}" para poder activarlo.`
+      );
+      return;
+    }
+    setConfirmState({
+      isOpen: true,
+      type: 'toggle-status',
+      product,
+    });
+  };
+
+  const executeToggleActive = async () => {
+    const prod = confirmState.product;
+    if (!prod) return;
+
+    const updated = await inventoryService.updateProduct(prod.id, {
+      ...prod,
+      active: !prod.active,
+    });
+    setProducts((prev) => prev.map((p) => (p.id === prod.id ? updated : p)));
+    setConfirmState({ isOpen: false, type: null, product: null });
     showToast(
-      `Stock de "${product.name}" actualizado a ${nextQuantity} unidades.`
+      `Producto "${prod.name}" marcado como ${
+        updated.active ? 'Activo' : 'Inactivo'
+      }.`
     );
   };
 
-  // ==================== HANDLERS CRUD ====================
   const handleOpenCreate = () => {
     setEditingProduct(null);
     setIsModalOpen(true);
@@ -140,17 +189,18 @@ export default function InventoryPage() {
     setEditingProduct(null);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!productToDelete) return;
-    await inventoryService.deleteProduct(productToDelete.id);
-    setProducts((prev) => prev.filter((p) => p.id !== productToDelete.id));
-    showToast(`Producto "${productToDelete.name}" eliminado.`);
-    setProductToDelete(null);
+  const executeDelete = async () => {
+    const prod = confirmState.product;
+    if (!prod) return;
+    await inventoryService.deleteProduct(prod.id);
+    setProducts((prev) => prev.filter((p) => p.id !== prod.id));
+    setConfirmState({ isOpen: false, type: null, product: null });
+    showToast(`Producto "${prod.name}" eliminado.`);
   };
 
   return (
     <div
-      className="w-full space-y-6"
+      className="space-y-6 w-full"
       onClick={() => openMenuId !== null && setOpenMenuId(null)}
     >
       {feedbackBanner && (
@@ -160,16 +210,16 @@ export default function InventoryPage() {
         </div>
       )}
 
-      {/* Encabezado Superior con botón + Nuevo producto siempre visible */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      {/* Encabezado Superior */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="block mb-1 text-xs font-bold tracking-wider text-brand-primary">
+          <span className="block text-xs font-bold tracking-wider text-brand-primary mb-1">
             Existencias
           </span>
-          <h2 className="text-4xl font-bold tracking-tight text-stone-900">
+          <h2 className="text-4xl font-bold text-stone-900 tracking-tight">
             Inventario
           </h2>
-          <p className="mt-1 text-sm text-stone-400">
+          <p className="text-sm text-stone-400 mt-1">
             Controla los productos que hacen posible cada servicio.
           </p>
         </div>
@@ -186,15 +236,15 @@ export default function InventoryPage() {
 
       {/* Barra de Herramientas */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 pt-1">
-        <div className="flex flex-col items-stretch flex-1 gap-3 sm:flex-row sm:items-center">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
           <div className="relative w-full sm:max-w-md">
-            <Search className="absolute w-4 h-4 -translate-y-1/2 pointer-events-none text-stone-400 left-4 top-1/2" />
+            <Search className="w-4 h-4 text-stone-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nombre..."
-              className="w-full py-3 pr-4 text-xs bg-white border pl-11 rounded-2xl border-stone-100 text-stone-700 placeholder:text-stone-300 shadow-2xs focus:outline-none focus:border-brand-light"
+              className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white border border-stone-100 text-xs text-stone-700 placeholder:text-stone-300 shadow-2xs focus:outline-none focus:border-brand-light"
             />
           </div>
 
@@ -204,7 +254,7 @@ export default function InventoryPage() {
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               aria-label="Filtrar por categoría"
-              className="py-3 pl-10 pr-8 text-xs font-semibold bg-white border appearance-none cursor-pointer rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none"
+              className="pl-10 pr-8 py-3 rounded-2xl bg-white border border-stone-100 text-xs font-semibold text-stone-600 shadow-2xs focus:outline-none cursor-pointer appearance-none"
             >
               {availableCategories.map((cat) => (
                 <option key={cat} value={cat}>
@@ -218,12 +268,13 @@ export default function InventoryPage() {
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
             aria-label="Filtrar por estado de stock"
-            className="px-4 py-3 text-xs font-semibold bg-white border cursor-pointer rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none"
+            className="px-4 py-3 rounded-2xl bg-white border border-stone-100 text-xs font-semibold text-stone-600 shadow-2xs focus:outline-none cursor-pointer"
           >
             <option value="Todos">Estado: Todos</option>
             <option value="Óptimo">Óptimo</option>
             <option value="Bajo">Bajo</option>
             <option value="Crítico">Crítico</option>
+            <option value="Inactivo">Inactivo</option>
           </select>
         </div>
 
@@ -258,7 +309,7 @@ export default function InventoryPage() {
 
       {/* ==================== CONTENIDO DE INVENTARIO ==================== */}
       {isLoading ? (
-        <div className="py-16 text-xs text-center text-stone-400">
+        <div className="py-16 text-center text-xs text-stone-400">
           Cargando inventario...
         </div>
       ) : filteredProducts.length === 0 ? (
@@ -266,67 +317,66 @@ export default function InventoryPage() {
           <p className="text-sm font-bold text-stone-700">
             No se encontraron productos con los filtros seleccionados
           </p>
-          <p className="mt-1 text-xs text-stone-400">
-            Intenta cambiar la categoría o el término de búsqueda.
-          </p>
         </div>
       ) : viewMode === 'table' ? (
-        /* ==================== VISTA 1: TABLA CON CONTROLES RÁPIDOS (- / +) Y ACCIONES ESTILO SERVICIOS ==================== */
+        /* ==================== VISTA 1: TABLA ==================== */
         <div className="bg-white rounded-[28px] border border-stone-100/90 shadow-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-stone-100 text-[11px] font-bold tracking-[0.12em] text-stone-400 uppercase">
-                  <th className="py-5 pr-4 pl-7">PRODUCTO</th>
-                  <th className="px-4 py-5">UNIDAD</th>
-                  <th className="px-4 py-5">CANTIDAD</th>
-                  <th className="px-4 py-5">CATEGORÍA</th>
-                  <th className="px-4 py-5">ESTADO</th>
-                  <th className="py-5 pl-4 text-right pr-7">ACCIONES</th>
+                  <th className="py-5 pl-7 pr-4">PRODUCTO</th>
+                  <th className="py-5 px-4">PRESENTACIÓN / UNIDAD</th>
+                  <th className="py-5 px-4">CANTIDAD <br/>DISPONIBLE</th>
+                  <th className="py-5 px-4">CATEGORÍA</th>
+                  <th className="py-5 px-4">ESTADO</th>
+                  <th className="py-5 pl-4 pr-7 text-right">ACCIONES</th>
                 </tr>
               </thead>
-              <tbody className="text-xs divide-y divide-stone-100">
+              <tbody className="divide-y divide-stone-100 text-xs">
                 {filteredProducts.map((prod) => {
                   const statusInfo = getProductStockStatus(
                     prod.quantity,
-                    prod.minStock
+                    prod.minStock,
+                    prod.active
                   );
 
                   return (
                     <tr
                       key={prod.id}
-                      className="transition-colors hover:bg-surface-bg/60"
+                      className={`hover:bg-surface-bg/60 transition-colors ${
+                        !statusInfo.isActive ? 'opacity-65' : ''
+                      }`}
                     >
-                      <td className="py-4 pr-4 pl-7">
+                      <td className="py-4 pl-7 pr-4">
                         <div className="flex items-center gap-3.5">
                           <div className="w-11 h-11 rounded-2xl bg-[#FDECEF] flex items-center justify-center text-brand-primary shrink-0 overflow-hidden">
                             {prod.imageUrl ? (
                               <img
                                 src={prod.imageUrl}
                                 alt={prod.name}
-                                className="object-cover w-full h-full"
+                                className="w-full h-full object-cover"
                               />
                             ) : (
                               <Box className="w-5 h-5" />
                             )}
                           </div>
-                          <span className="text-sm font-bold text-stone-900">
+                          <span className="font-bold text-stone-900 text-sm">
                             {prod.name}
                           </span>
                         </div>
                       </td>
 
-                      <td className="px-4 py-4 text-stone-500">{prod.unit}</td>
+                      <td className="py-4 px-4 text-stone-500">{prod.unit}</td>
 
-                      {/* Control rápido para descontar (-) o agregar (+) existencias */}
-                      <td className="px-4 py-4">
+                      <td className="py-4 px-4">
                         <div className="inline-flex items-center gap-2.5 bg-surface-bg px-2.5 py-1.5 rounded-2xl border border-stone-200/70">
                           <button
                             type="button"
                             onClick={() => handleQuickStockChange(prod, -1)}
                             disabled={prod.quantity <= 0}
                             title="Descontar 1 unidad"
-                            className="flex items-center justify-center w-6 h-6 transition-colors bg-white border rounded-lg border-stone-200 text-stone-600 hover:text-brand-primary hover:border-brand-light disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="w-6 h-6 rounded-lg bg-white border border-stone-200 flex items-center justify-center text-stone-600 hover:text-brand-primary disabled:opacity-40 transition-colors"
                           >
                             <Minus className="w-3.5 h-3.5" />
                           </button>
@@ -335,27 +385,26 @@ export default function InventoryPage() {
                             <strong className="font-bold text-stone-900">
                               {prod.quantity}
                             </strong>{' '}
-                            disponibles
                           </span>
 
                           <button
                             type="button"
                             onClick={() => handleQuickStockChange(prod, 1)}
                             title="Agregar 1 unidad"
-                            className="flex items-center justify-center w-6 h-6 transition-colors bg-white border rounded-lg border-stone-200 text-stone-600 hover:text-brand-primary hover:border-brand-light"
+                            className="w-6 h-6 rounded-lg bg-white border border-stone-200 flex items-center justify-center text-stone-600 hover:text-brand-primary transition-colors"
                           >
                             <Plus className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
 
-                      <td className="px-4 py-4">
+                      <td className="py-4 px-4">
                         <span className="px-3.5 py-1 rounded-full text-[11px] font-semibold bg-[#FDECEF] text-brand-primary">
                           {prod.category}
                         </span>
                       </td>
 
-                      <td className="px-4 py-4">
+                      <td className="py-4 px-4">
                         <span
                           className={`px-3.5 py-1 rounded-full text-[11px] font-semibold ${statusInfo.badgeClass}`}
                         >
@@ -363,14 +412,27 @@ export default function InventoryPage() {
                         </span>
                       </td>
 
-                      {/* Acciones directas igual que en el módulo de Servicios */}
-                      <td className="py-4 pl-4 text-right pr-7">
+                      <td className="py-4 pl-4 pr-7 text-right">
                         <div className="inline-flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleRequestToggleActive(prod)}
+                            className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold inline-flex items-center gap-1 transition-colors ${
+                              statusInfo.isActive
+                                ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            }`}
+                          >
+                            <Power className="w-3.5 h-3.5" />
+                            <span>
+                              {statusInfo.isActive ? 'Desactivar' : 'Activar'}
+                            </span>
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(prod)}
                             className="px-3.5 py-1.5 rounded-xl bg-[#FADCE6] text-brand-primary text-xs font-bold hover:bg-brand-light/60 inline-flex items-center gap-1.5 transition-colors"
-                            title="Editar producto"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                             <span>Editar</span>
@@ -379,8 +441,14 @@ export default function InventoryPage() {
                           {isAdmin && (
                             <button
                               type="button"
-                              onClick={() => setProductToDelete(prod)}
-                              className="p-2 transition-colors rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50"
+                              onClick={() =>
+                                setConfirmState({
+                                  isOpen: true,
+                                  type: 'delete',
+                                  product: prod,
+                                })
+                              }
+                              className="p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                               title="Eliminar producto"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -396,20 +464,22 @@ export default function InventoryPage() {
           </div>
         </div>
       ) : (
-        /* ==================== VISTA 2: TARJETAS / CARDS CON AJUSTE RÁPIDO (- / +) ==================== */
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        /* ==================== VISTA 2: TARJETAS / CARDS ==================== */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProducts.map((prod) => {
             const statusInfo = getProductStockStatus(
               prod.quantity,
-              prod.minStock
+              prod.minStock,
+              prod.active
             );
 
             return (
               <div
                 key={prod.id}
-                className="bg-white rounded-[30px] p-7 border border-stone-100/90 shadow-card flex flex-col items-center text-center relative hover:border-brand-light/50 transition-all"
+                className={`bg-white rounded-[30px] p-7 border border-stone-100/90 shadow-card flex flex-col items-center text-center relative hover:border-brand-light/50 transition-all ${
+                  !statusInfo.isActive ? 'opacity-70' : ''
+                }`}
               >
-                {/* Menú (...) en la esquina superior derecha */}
                 <div
                   className="absolute top-5 right-6"
                   onClick={(e) => e.stopPropagation()}
@@ -420,7 +490,6 @@ export default function InventoryPage() {
                       setOpenMenuId(openMenuId === prod.id ? null : prod.id)
                     }
                     className="p-1.5 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
-                    aria-label="Opciones de producto"
                   >
                     <MoreHorizontal className="w-4 h-4" />
                   </button>
@@ -435,12 +504,24 @@ export default function InventoryPage() {
                         <Pencil className="w-3.5 h-3.5 text-brand-primary" />
                         Editar producto
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRequestToggleActive(prod)}
+                        className="w-full px-3.5 py-2 flex items-center gap-2 text-stone-700 hover:bg-surface-bg font-medium"
+                      >
+                        <Power className="w-3.5 h-3.5 text-amber-600" />
+                        {statusInfo.isActive ? 'Desactivar' : 'Activar'}
+                      </button>
                       {isAdmin && (
                         <button
                           type="button"
                           onClick={() => {
                             setOpenMenuId(null);
-                            setProductToDelete(prod);
+                            setConfirmState({
+                              isOpen: true,
+                              type: 'delete',
+                              product: prod,
+                            });
                           }}
                           className="w-full px-3.5 py-2 flex items-center gap-2 text-red-600 hover:bg-red-50 font-medium"
                         >
@@ -452,46 +533,41 @@ export default function InventoryPage() {
                   )}
                 </div>
 
-                {/* Icono de cubo o Imagen del producto centrada */}
                 <div className="w-16 h-16 rounded-[22px] bg-[#FDECEF] flex items-center justify-center text-brand-primary mb-5 overflow-hidden shrink-0">
                   {prod.imageUrl ? (
                     <img
                       src={prod.imageUrl}
                       alt={prod.name}
-                      className="object-cover w-full h-full"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     <Box className="w-7 h-7 stroke-[1.8]" />
                   )}
                 </div>
 
-                {/* Nombre del producto */}
                 <h3 className="text-lg font-bold text-stone-900 tracking-tight mb-2.5">
                   {prod.name}
                 </h3>
 
-                {/* Pill de Categoría */}
                 <span className="px-3.5 py-1 rounded-full text-[11px] font-semibold bg-[#FDECEF] text-brand-primary mb-6">
                   {prod.category}
                 </span>
 
-                {/* Bloque central de Cantidad + Unidad con botones rápidos (- / +) */}
                 <div className="flex items-center justify-center gap-4 mb-6">
                   <button
                     type="button"
                     onClick={() => handleQuickStockChange(prod, -1)}
                     disabled={prod.quantity <= 0}
-                    title="Descontar 1 unidad"
-                    className="flex items-center justify-center w-8 h-8 transition-colors border rounded-xl bg-surface-bg border-stone-200 text-stone-600 hover:text-brand-primary hover:border-brand-light disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-8 h-8 rounded-xl bg-surface-bg border border-stone-200 flex items-center justify-center text-stone-600 hover:text-brand-primary disabled:opacity-40 transition-colors"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
 
                   <div className="flex items-center justify-center gap-2.5">
-                    <span className="text-4xl font-bold leading-none tracking-tight text-stone-900">
+                    <span className="text-4xl font-bold text-stone-900 tracking-tight leading-none">
                       {prod.quantity}
                     </span>
-                    <div className="leading-tight text-left">
+                    <div className="text-left leading-tight">
                       <span className="block text-xs text-stone-400">
                         unidades
                       </span>
@@ -504,26 +580,26 @@ export default function InventoryPage() {
                   <button
                     type="button"
                     onClick={() => handleQuickStockChange(prod, 1)}
-                    title="Agregar 1 unidad"
-                    className="flex items-center justify-center w-8 h-8 transition-colors border rounded-xl bg-surface-bg border-stone-200 text-stone-600 hover:text-brand-primary hover:border-brand-light"
+                    className="w-8 h-8 rounded-xl bg-surface-bg border border-stone-200 flex items-center justify-center text-stone-600 hover:text-brand-primary transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
 
-                {/* Badge inferior de Estado (Óptimo / Bajo / Crítico) */}
-                <span
-                  className={`px-4 py-1 rounded-full text-[11px] font-semibold ${statusInfo.badgeClass}`}
+                <button
+                  type="button"
+                  onClick={() => handleRequestToggleActive(prod)}
+                  title="Clic para activar o desactivar manualmente"
+                  className={`px-4 py-1 rounded-full text-[11px] font-semibold transition-colors ${statusInfo.badgeClass}`}
                 >
                   {statusInfo.label}
-                </span>
+                </button>
               </div>
             );
           })}
         </div>
       )}
 
-      {/* Modal para Agregar o Editar Producto */}
       <ProductFormModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -541,15 +617,30 @@ export default function InventoryPage() {
         existingProducts={products}
       />
 
-      {/* Modal de Advertencia antes de Eliminar */}
       <ConfirmDialog
-        isOpen={Boolean(productToDelete)}
-        onClose={() => setProductToDelete(null)}
-        onConfirm={handleConfirmDelete}
-        variant="danger"
-        title={`¿Eliminar "${productToDelete?.name}"?`}
-        message="Este producto se eliminará permanentemente del inventario y dejará de contabilizarse en las existencias del salón."
-        confirmText="Sí, eliminar producto"
+        isOpen={confirmState.isOpen}
+        onClose={() =>
+          setConfirmState({ isOpen: false, type: null, product: null })
+        }
+        onConfirm={
+          confirmState.type === 'delete' ? executeDelete : executeToggleActive
+        }
+        variant={confirmState.type === 'delete' ? 'danger' : 'status'}
+        title={
+          confirmState.type === 'delete'
+            ? `¿Eliminar "${confirmState.product?.name}"?`
+            : `¿${
+                confirmState.product?.active ? 'Desactivar' : 'Activar'
+              } "${confirmState.product?.name}"?`
+        }
+        message={
+          confirmState.type === 'delete'
+            ? 'Este producto se eliminará permanentemente del inventario.'
+            : `¿Estás seguro de cambiar el estado manual de "${confirmState.product?.name}"?`
+        }
+        confirmText={
+          confirmState.type === 'delete' ? 'Sí, eliminar' : 'Sí, cambiar estado'
+        }
       />
     </div>
   );
