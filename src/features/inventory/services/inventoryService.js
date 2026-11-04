@@ -6,7 +6,7 @@ let inventoryStore = [
     name: 'Shampoo hidratante',
     presentation: 'Botella',
     measureUnit: 'L',
-    unit: 'Botella 1 L',
+    unit: 'Botella L',
     quantity: 18,
     minStock: 8,
     category: 'Cabello',
@@ -18,7 +18,7 @@ let inventoryStore = [
     name: 'Tinte profesional #7.1',
     presentation: 'Tubo',
     measureUnit: 'ml',
-    unit: 'Tubo 90 ml',
+    unit: 'Tubo ml',
     quantity: 6,
     minStock: 8,
     category: 'Coloración',
@@ -30,7 +30,7 @@ let inventoryStore = [
     name: 'Esmalte gel nude',
     presentation: 'Frasco',
     measureUnit: 'ml',
-    unit: 'Frasco 15 ml',
+    unit: 'Frasco ml',
     quantity: 12,
     minStock: 6,
     category: 'Uñas',
@@ -42,7 +42,7 @@ let inventoryStore = [
     name: 'Cera para cejas',
     presentation: 'Tarro',
     measureUnit: 'g',
-    unit: 'Tarro 100 g',
+    unit: 'Tarro g',
     quantity: 3,
     minStock: 6,
     category: 'Mirada',
@@ -54,7 +54,7 @@ let inventoryStore = [
     name: 'Mascarilla reparadora',
     presentation: 'Tarro',
     measureUnit: 'ml',
-    unit: 'Tarro 500 ml',
+    unit: 'Tarro ml',
     quantity: 9,
     minStock: 6,
     category: 'Cabello',
@@ -160,7 +160,7 @@ export const inventoryService = {
 
     return new Promise((resolve) => {
       setTimeout(() => {
-        const newProduct = normalizedProductRule( {
+        const newProduct = normalizeProductRule({
           id: Date.now(),
           minStock: 8,
           category: payload.category,
