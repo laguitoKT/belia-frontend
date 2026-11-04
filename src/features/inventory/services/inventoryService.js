@@ -1,90 +1,146 @@
 // import axiosClient from '../../../api/axiosClient';
 
 let inventoryStore = [
-  // Materiales de la categoría Cabello (visibles para Mariana Silva y Admin)
   {
     id: 1,
-    name: 'Shampoo hidratante profesional',
-    unit: 'Botella 1L',
+    name: 'Shampoo hidratante',
+    unit: 'Botella 1 L',
     quantity: 18,
-    minStock: 5,
+    minStock: 8,
     category: 'Cabello',
+    imageUrl: null,
   },
   {
     id: 2,
-    name: 'Protector térmico capilar',
-    unit: 'Spray 250ml',
-    quantity: 4,
-    minStock: 6, // Alerta de stock bajo en Cabello
-    category: 'Cabello',
+    name: 'Tinte profesional #7.1',
+    unit: 'Tubo 90 ml',
+    quantity: 6,
+    minStock: 8,
+    category: 'Coloración',
+    imageUrl: null,
   },
   {
     id: 3,
-    name: 'Mascarilla reparadora de argán',
-    unit: 'Tarro 500ml',
-    quantity: 9,
-    minStock: 4,
-    category: 'Cabello',
+    name: 'Esmalte gel nude',
+    unit: 'Frasco 15 ml',
+    quantity: 12,
+    minStock: 6,
+    category: 'Uñas',
+    imageUrl: null,
   },
   {
     id: 4,
-    name: 'Sérum sellador de puntas',
-    unit: 'Frasco 60ml',
+    name: 'Cera para cejas',
+    unit: 'Tarro 100 g',
     quantity: 3,
-    minStock: 5, // Alerta de stock bajo en Cabello
-    category: 'Cabello',
+    minStock: 6,
+    category: 'Mirada',
+    imageUrl: null,
   },
-  // Materiales de otras áreas (solo visibles para Admin o especialistas de esa área)
   {
     id: 5,
-    name: 'Esmalte gel nude',
-    unit: 'Frasco 15ml',
-    quantity: 12,
-    minStock: 4,
-    category: 'Uñas',
-  },
-  {
-    id: 6,
-    name: 'Base coat vitaminada',
-    unit: 'Frasco 15ml',
-    quantity: 2,
-    minStock: 5, // Alerta de stock bajo en Uñas
-    category: 'Uñas',
-  },
-  {
-    id: 7,
-    name: 'Cera para cejas',
-    unit: 'Tarro 100g',
-    quantity: 3,
-    minStock: 5,
-    category: 'Mirada',
+    name: 'Mascarilla reparadora',
+    unit: 'Tarro 500 ml',
+    quantity: 9,
+    minStock: 6,
+    category: 'Cabello',
+    imageUrl: null,
   },
 ];
 
-export const inventoryService = {
-  /**
-   * Obtiene inventario aplicando el filtro de rol:
-   * - Admin: ve todos los productos de todas las categorías.
-   * - Estilista: solo ve productos donde category === user.specialtyCategory
-   */
-  async getProducts({ user } = {}) {
-    // CUANDO SE INTEGRE FASTAPI:
-    // const params = user?.role !== 'admin' ? { category: user?.specialtyCategory } : {};
-    // const { data } = await axiosClient.get('/inventory/products', { params });
-    // return data;
+// Calcula el estado del producto según su cantidad disponible (Óptimo, Bajo, Crítico)
+export const getProductStockStatus = (quantity, minStock = 8) => {
+  const qty = Number(quantity) || 0;
+  if (qty <= 3) {
+    return {
+      label: 'Crítico',
+      badgeClass: 'bg-[#FDECEF] text-brand-primary',
+      dotClass: 'bg-brand-primary',
+    };
+  }
+  if (qty < minStock) {
+    return {
+      label: 'Bajo',
+      badgeClass: 'bg-[#FEF3E2] text-[#A66A15]',
+      dotClass: 'bg-amber-500',
+    };
+  }
+  return {
+    label: 'Óptimo',
+    badgeClass: 'bg-[#E8F6F0] text-[#1E7E5A]',
+    dotClass: 'bg-emerald-500',
+  };
+};
 
+export const inventoryService = {
+  async getProducts({ user } = {}) {
+    // FastAPI: return (await axiosClient.get('/inventory/products')).data;
     return new Promise((resolve) => {
       setTimeout(() => {
         let results = [...inventoryStore];
 
+        // Filtrado por rol: Mariana (Cabello) ve Cabello y Coloración; Camila (Uñas) ve Uñas; Admin ve todo
         if (user && user.role !== 'admin' && user.specialtyCategory) {
-          results = results.filter(
-            (prod) => prod.category === user.specialtyCategory
-          );
+          const allowed =
+            user.specialtyCategory === 'Cabello'
+              ? ['Cabello', 'Coloración']
+              : [user.specialtyCategory];
+          results = results.filter((p) => allowed.includes(p.category));
         }
 
         resolve(results);
-      }, 150);
+      }, 100);
+    });
+  },
+
+  async createProduct(payload) {
+    // FastAPI con imagen (Multipart FormData):
+    // const formData = new FormData();
+    // Object.entries(payload).forEach(([k, v]) => v !== null && formData.append(k, v));
+    // return (await axiosClient.post('/inventory/products', formData)).data;
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const newProduct = {
+          id: Date.now(),
+          name: payload.name,
+          unit: payload.unit,
+          quantity: Number(payload.quantity),
+          minStock: Number(payload.minStock) || 8,
+          category: payload.category,
+          imageUrl: payload.imageUrl || null,
+        };
+        inventoryStore = [newProduct, ...inventoryStore];
+        resolve(newProduct);
+      }, 100);
+    });
+  },
+
+  async updateProduct(id, payload) {
+    // FastAPI: return (await axiosClient.put(`/inventory/products/${id}`, payload)).data;
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        inventoryStore = inventoryStore.map((p) =>
+          p.id === id
+            ? {
+                ...p,
+                ...payload,
+                quantity: Number(payload.quantity),
+              }
+            : p
+        );
+        resolve(inventoryStore.find((p) => p.id === id));
+      }, 100);
+    });
+  },
+
+  async deleteProduct(id) {
+    // FastAPI: await axiosClient.delete(`/inventory/products/${id}`);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        inventoryStore = inventoryStore.filter((p) => p.id !== id);
+        resolve(true);
+      }, 100);
     });
   },
 };

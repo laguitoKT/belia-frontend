@@ -4,6 +4,7 @@ import LoginPage from '../features/auth/pages/LoginPage';
 import MainLayout from '../components/layout/MainLayout';
 import HomePage from '../features/dashboard/pages/HomePage';
 import ServicesPage from '../features/services/pages/ServicesPage';
+import InventoryPage from '../features/inventory/pages/InventoryPage';
 
 // Componente de ruta protegida para rutas de administrador
 function AdminRoute({ children }) {
@@ -28,7 +29,7 @@ export default function AppRouter() {
             <Route path="/inicio" element={<HomePage />} />
             <Route path="/servicios" element={<ServicesPage />} />
             <Route path="/citas" element={<div className="p-4 text-sm text-stone-500">Módulo de Citas (En construcción)</div>} />
-            <Route path="/inventario" element={<div className="p-4 text-sm text-stone-500">Módulo de Inventario (En construcción)</div>} />
+            <Route path="/inventario" element={<InventoryPage />} />
             <Route path="/clientes" element={<div className="p-4 text-sm text-stone-500">Módulo de Clientes (En construcción)</div>} />
             
             {/* Ruta protegida para administradores */}
