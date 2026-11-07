@@ -6,6 +6,7 @@ import HomePage from '../features/dashboard/pages/HomePage';
 import ServicesPage from '../features/services/pages/ServicesPage';
 import InventoryPage from '../features/inventory/pages/InventoryPage';
 import ClientsPage from '../features/clients/pages/ClientsPage';
+import EmployeesPage from '../features/employees/pages/EmployeesPage';
 
 // Componente de ruta protegida para rutas de administrador
 function AdminRoute({ children }) {
@@ -38,7 +39,7 @@ export default function AppRouter() {
               path="/empleados"
               element={
                 <AdminRoute>
-                  <div className="p-4 text-sm text-stone-500">Módulo de Empleados (Solo Admin)</div>
+                  <EmployeesPage />
                 </AdminRoute>
               }
             />
