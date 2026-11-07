@@ -20,6 +20,7 @@ import {
 } from '../services/inventoryService';
 import ProductFormModal from '../components/ProductFormModal';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
+import ProductDetailModal from '../components/ProductDetailModal';
 
 export default function InventoryPage() {
   const { user, isAdmin } = useAuth();
@@ -36,6 +37,7 @@ export default function InventoryPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [selectedDetailProduct, setSelectedDetailProduct] = useState(null);
 
   // Confirmación para Eliminar o Desactivar/Activar manualmente
   const [confirmState, setConfirmState] = useState({
@@ -50,6 +52,29 @@ export default function InventoryPage() {
     setFeedbackBanner(msg);
     setTimeout(() => setFeedbackBanner(''), 3200);
   };
+
+  const getCategoryCardTheme = (category = '') => {
+  const norm = category.toLowerCase();
+  if (norm.includes('uña')) {
+    return {
+      bg: 'bg-[#E9F7F5]',
+      circle: 'bg-[#D1EFEA]/70',
+      text: 'text-[#207268]',
+    };
+  }
+  if (norm.includes('color')) {
+    return {
+      bg: 'bg-[#FDF4E7]',
+      circle: 'bg-[#F9E7CC]/60',
+      text: 'text-[#9A6728]',
+    };
+  }
+  return {
+    bg: 'bg-[#FDECEF]',
+    circle: 'bg-[#FADADD]/60',
+    text: 'text-brand-primary',
+  };
+};
 
   useEffect(() => {
     const fetchInventory = async () => {
@@ -200,7 +225,7 @@ export default function InventoryPage() {
 
   return (
     <div
-      className="space-y-6 w-full"
+      className="w-full space-y-6"
       onClick={() => openMenuId !== null && setOpenMenuId(null)}
     >
       {feedbackBanner && (
@@ -211,15 +236,15 @@ export default function InventoryPage() {
       )}
 
       {/* Encabezado Superior */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <span className="block text-xs font-bold tracking-wider text-brand-primary mb-1">
+          <span className="block mb-1 text-xs font-bold tracking-wider text-brand-primary">
             Existencias
           </span>
-          <h2 className="text-4xl font-bold text-stone-900 tracking-tight">
+          <h2 className="text-4xl font-bold tracking-tight text-stone-900">
             Inventario
           </h2>
-          <p className="text-sm text-stone-400 mt-1">
+          <p className="mt-1 text-sm text-stone-400">
             Controla los productos que hacen posible cada servicio.
           </p>
         </div>
@@ -236,15 +261,15 @@ export default function InventoryPage() {
 
       {/* Barra de Herramientas */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 pt-1">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+        <div className="flex flex-col items-stretch flex-1 gap-3 sm:flex-row sm:items-center">
           <div className="relative w-full sm:max-w-md">
-            <Search className="w-4 h-4 text-stone-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="absolute w-4 h-4 -translate-y-1/2 pointer-events-none text-stone-400 left-4 top-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nombre..."
-              className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white border border-stone-100 text-xs text-stone-700 placeholder:text-stone-300 shadow-2xs focus:outline-none focus:border-brand-light"
+              className="w-full py-3 pr-4 text-xs bg-white border pl-11 rounded-2xl border-stone-100 text-stone-700 placeholder:text-stone-300 shadow-2xs focus:outline-none focus:border-brand-light"
             />
           </div>
 
@@ -254,7 +279,7 @@ export default function InventoryPage() {
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               aria-label="Filtrar por categoría"
-              className="pl-10 pr-8 py-3 rounded-2xl bg-white border border-stone-100 text-xs font-semibold text-stone-600 shadow-2xs focus:outline-none cursor-pointer appearance-none"
+              className="py-3 pl-10 pr-8 text-xs font-semibold bg-white border appearance-none cursor-pointer rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none"
             >
               {availableCategories.map((cat) => (
                 <option key={cat} value={cat}>
@@ -268,7 +293,7 @@ export default function InventoryPage() {
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
             aria-label="Filtrar por estado de stock"
-            className="px-4 py-3 rounded-2xl bg-white border border-stone-100 text-xs font-semibold text-stone-600 shadow-2xs focus:outline-none cursor-pointer"
+            className="px-4 py-3 text-xs font-semibold bg-white border cursor-pointer rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none"
           >
             <option value="Todos">Estado: Todos</option>
             <option value="Óptimo">Óptimo</option>
@@ -309,7 +334,7 @@ export default function InventoryPage() {
 
       {/* ==================== CONTENIDO DE INVENTARIO ==================== */}
       {isLoading ? (
-        <div className="py-16 text-center text-xs text-stone-400">
+        <div className="py-16 text-xs text-center text-stone-400">
           Cargando inventario...
         </div>
       ) : filteredProducts.length === 0 ? (
@@ -325,15 +350,15 @@ export default function InventoryPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-stone-100 text-[11px] font-bold tracking-[0.12em] text-stone-400 uppercase">
-                  <th className="py-5 pl-7 pr-4">PRODUCTO</th>
-                  <th className="py-5 px-4">PRESENTACIÓN / UNIDAD</th>
-                  <th className="py-5 px-4">CANTIDAD <br/>DISPONIBLE</th>
-                  <th className="py-5 px-4">CATEGORÍA</th>
-                  <th className="py-5 px-4">ESTADO</th>
-                  <th className="py-5 pl-4 pr-7 text-right">ACCIONES</th>
+                  <th className="py-5 pr-4 pl-7">PRODUCTO</th>
+                  <th className="px-4 py-5">PRESENTACIÓN / UNIDAD</th>
+                  <th className="px-4 py-5">CANTIDAD <br/>DISPONIBLE</th>
+                  <th className="px-4 py-5">CATEGORÍA</th>
+                  <th className="px-4 py-5">ESTADO</th>
+                  <th className="py-5 pl-4 text-right pr-7">ACCIONES</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100 text-xs">
+              <tbody className="text-xs divide-y divide-stone-100">
                 {filteredProducts.map((prod) => {
                   const statusInfo = getProductStockStatus(
                     prod.quantity,
@@ -344,39 +369,40 @@ export default function InventoryPage() {
                   return (
                     <tr
                       key={prod.id}
-                      className={`hover:bg-surface-bg/60 transition-colors ${
+                      onClick={() => setSelectedDetailProduct(prod)} 
+                      className={`hover:bg-surface-bg/60 transition-colors cursor-pointer ${
                         !statusInfo.isActive ? 'opacity-65' : ''
                       }`}
                     >
-                      <td className="py-4 pl-7 pr-4">
+                      <td className="py-4 pr-4 pl-7">
                         <div className="flex items-center gap-3.5">
                           <div className="w-11 h-11 rounded-2xl bg-[#FDECEF] flex items-center justify-center text-brand-primary shrink-0 overflow-hidden">
                             {prod.imageUrl ? (
                               <img
                                 src={prod.imageUrl}
                                 alt={prod.name}
-                                className="w-full h-full object-cover"
+                                className="object-cover w-full h-full"
                               />
                             ) : (
                               <Box className="w-5 h-5" />
                             )}
                           </div>
-                          <span className="font-bold text-stone-900 text-sm">
+                          <span className="text-sm font-bold text-stone-900">
                             {prod.name}
                           </span>
                         </div>
                       </td>
 
-                      <td className="py-4 px-4 text-stone-500">{prod.unit}</td>
+                      <td className="px-4 py-4 text-stone-500">{prod.unit}</td>
 
-                      <td className="py-4 px-4">
+                      <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
                         <div className="inline-flex items-center gap-2.5 bg-surface-bg px-2.5 py-1.5 rounded-2xl border border-stone-200/70">
                           <button
                             type="button"
                             onClick={() => handleQuickStockChange(prod, -1)}
                             disabled={prod.quantity <= 0}
                             title="Descontar 1 unidad"
-                            className="w-6 h-6 rounded-lg bg-white border border-stone-200 flex items-center justify-center text-stone-600 hover:text-brand-primary disabled:opacity-40 transition-colors"
+                            className="flex items-center justify-center w-6 h-6 transition-colors bg-white border rounded-lg border-stone-200 text-stone-600 hover:text-brand-primary disabled:opacity-40"
                           >
                             <Minus className="w-3.5 h-3.5" />
                           </button>
@@ -391,20 +417,20 @@ export default function InventoryPage() {
                             type="button"
                             onClick={() => handleQuickStockChange(prod, 1)}
                             title="Agregar 1 unidad"
-                            className="w-6 h-6 rounded-lg bg-white border border-stone-200 flex items-center justify-center text-stone-600 hover:text-brand-primary transition-colors"
+                            className="flex items-center justify-center w-6 h-6 transition-colors bg-white border rounded-lg border-stone-200 text-stone-600 hover:text-brand-primary"
                           >
                             <Plus className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
 
-                      <td className="py-4 px-4">
+                      <td className="px-4 py-4">
                         <span className="px-3.5 py-1 rounded-full text-[11px] font-semibold bg-[#FDECEF] text-brand-primary">
                           {prod.category}
                         </span>
                       </td>
 
-                      <td className="py-4 px-4">
+                      <td className="px-4 py-4">
                         <span
                           className={`px-3.5 py-1 rounded-full text-[11px] font-semibold ${statusInfo.badgeClass}`}
                         >
@@ -412,7 +438,8 @@ export default function InventoryPage() {
                         </span>
                       </td>
 
-                      <td className="py-4 pl-4 pr-7 text-right">
+                      <td className="py-4 pl-4 text-right pr-7"
+                      onClick={(e) => e.stopPropagation()}>
                         <div className="inline-flex items-center gap-1.5">
                           <button
                             type="button"
@@ -448,7 +475,7 @@ export default function InventoryPage() {
                                   product: prod,
                                 })
                               }
-                              className="p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              className="p-2 transition-colors rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50"
                               title="Eliminar producto"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -465,135 +492,175 @@ export default function InventoryPage() {
         </div>
       ) : (
         /* ==================== VISTA 2: TARJETAS / CARDS ==================== */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+/* ==================== VISTA 2: TARJETAS / CARDS (Distribución horizontal estilo Servicios) ==================== */
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {filteredProducts.map((prod) => {
             const statusInfo = getProductStockStatus(
               prod.quantity,
               prod.minStock,
               prod.active
             );
+            const theme = getCategoryCardTheme(prod.category);
 
             return (
               <div
                 key={prod.id}
-                className={`bg-white rounded-[30px] p-7 border border-stone-100/90 shadow-card flex flex-col items-center text-center relative hover:border-brand-light/50 transition-all ${
+                onClick={() => setSelectedDetailProduct?.(prod)}
+                className={`bg-white rounded-[28px] p-3.5 border border-stone-100/90 shadow-card flex items-stretch gap-4 relative hover:border-brand-light/50 transition-all cursor-pointer ${
                   !statusInfo.isActive ? 'opacity-70' : ''
                 }`}
               >
+                {/* Bloque Izquierdo Grande: Imagen del producto o bloque ilustrativo con categoría */}
                 <div
-                  className="absolute top-5 right-6"
-                  onClick={(e) => e.stopPropagation()}
+                  className={`w-32 sm:w-36 rounded-[22px] ${theme.bg} relative overflow-hidden shrink-0 min-h-[152px] flex flex-col justify-between p-4`}
                 >
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setOpenMenuId(openMenuId === prod.id ? null : prod.id)
-                    }
-                    className="p-1.5 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
-                  >
-                    <MoreHorizontal className="w-4 h-4" />
-                  </button>
+                  {prod.imageUrl ? (
+                    <>
+                      <img
+                        src={prod.imageUrl}
+                        alt={prod.name}
+                        className="absolute inset-0 object-cover w-full h-full"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-stone-900/65 via-stone-900/10 to-transparent" />
+                      <div />
+                      <span className="relative z-10 text-[10px] font-bold tracking-[0.14em] uppercase text-white drop-shadow-xs">
+                        {prod.category}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <div
+                        className={`w-16 h-16 rounded-full ${theme.circle} absolute -top-3 -right-3 pointer-events-none`}
+                      />
+                      <Box
+                        className={`w-6 h-6 ${theme.text} relative z-10 mt-1 stroke-[1.8]`}
+                      />
+                      <span
+                        className={`text-[10px] font-bold tracking-[0.14em] uppercase ${theme.text} relative z-10`}
+                      >
+                        {prod.category}
+                      </span>
+                    </>
+                  )}
+                </div>
 
-                  {openMenuId === prod.id && (
-                    <div className="absolute right-0 top-8 w-44 bg-white rounded-2xl shadow-lg border border-stone-100 py-1.5 z-30 text-xs text-left">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEdit(prod)}
-                        className="w-full px-3.5 py-2 flex items-center gap-2 text-stone-700 hover:bg-surface-bg font-medium"
+                {/* Contenido Derecho: Título, Presentación, Cantidad (- / +) y Estado */}
+                <div className="flex flex-col justify-between flex-1 min-w-0 py-2 pr-2">
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-base font-bold leading-snug truncate text-stone-900">
+                        {prod.name}
+                      </h3>
+
+                      {/* Menú (...) */}
+                      <div
+                        className="relative"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <Pencil className="w-3.5 h-3.5 text-brand-primary" />
-                        Editar producto
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRequestToggleActive(prod)}
-                        className="w-full px-3.5 py-2 flex items-center gap-2 text-stone-700 hover:bg-surface-bg font-medium"
-                      >
-                        <Power className="w-3.5 h-3.5 text-amber-600" />
-                        {statusInfo.isActive ? 'Desactivar' : 'Activar'}
-                      </button>
-                      {isAdmin && (
                         <button
                           type="button"
-                          onClick={() => {
-                            setOpenMenuId(null);
-                            setConfirmState({
-                              isOpen: true,
-                              type: 'delete',
-                              product: prod,
-                            });
-                          }}
-                          className="w-full px-3.5 py-2 flex items-center gap-2 text-red-600 hover:bg-red-50 font-medium"
+                          onClick={() =>
+                            setOpenMenuId(
+                              openMenuId === prod.id ? null : prod.id
+                            )
+                          }
+                          className="p-1 transition-colors rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100"
+                          aria-label="Opciones de producto"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          Eliminar
+                          <MoreHorizontal className="w-4 h-4" />
                         </button>
-                      )}
+
+                        {openMenuId === prod.id && (
+                          <div className="absolute right-0 top-7 w-44 bg-white rounded-2xl shadow-lg border border-stone-100 py-1.5 z-30 text-xs text-left">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(prod)}
+                              className="w-full px-3.5 py-2 flex items-center gap-2 text-stone-700 hover:bg-surface-bg font-medium"
+                            >
+                              <Pencil className="w-3.5 h-3.5 text-brand-primary" />
+                              Editar producto
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRequestToggleActive(prod)}
+                              className="w-full px-3.5 py-2 flex items-center gap-2 text-stone-700 hover:bg-surface-bg font-medium"
+                            >
+                              <Power className="w-3.5 h-3.5 text-amber-600" />
+                              {statusInfo.isActive ? 'Desactivar' : 'Activar'}
+                            </button>
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  setConfirmState({
+                                    isOpen: true,
+                                    type: 'delete',
+                                    product: prod,
+                                  });
+                                }}
+                                className="w-full px-3.5 py-2 flex items-center gap-2 text-red-600 hover:bg-red-50 font-medium"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Eliminar
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
 
-                <div className="w-16 h-16 rounded-[22px] bg-[#FDECEF] flex items-center justify-center text-brand-primary mb-5 overflow-hidden shrink-0">
-                  {prod.imageUrl ? (
-                    <img
-                      src={prod.imageUrl}
-                      alt={prod.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Box className="w-7 h-7 stroke-[1.8]" />
-                  )}
-                </div>
-
-                <h3 className="text-lg font-bold text-stone-900 tracking-tight mb-2.5">
-                  {prod.name}
-                </h3>
-
-                <span className="px-3.5 py-1 rounded-full text-[11px] font-semibold bg-[#FDECEF] text-brand-primary mb-6">
-                  {prod.category}
-                </span>
-
-                <div className="flex items-center justify-center gap-4 mb-6">
-                  <button
-                    type="button"
-                    onClick={() => handleQuickStockChange(prod, -1)}
-                    disabled={prod.quantity <= 0}
-                    className="w-8 h-8 rounded-xl bg-surface-bg border border-stone-200 flex items-center justify-center text-stone-600 hover:text-brand-primary disabled:opacity-40 transition-colors"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-
-                  <div className="flex items-center justify-center gap-2.5">
-                    <span className="text-4xl font-bold text-stone-900 tracking-tight leading-none">
-                      {prod.quantity}
-                    </span>
-                    <div className="text-left leading-tight">
-                      <span className="block text-xs text-stone-400">
-                        unidades
-                      </span>
-                      <span className="block text-[11px] text-stone-400">
-                        {prod.unit}
-                      </span>
-                    </div>
+                    {/* Subtítulo: Presentación y Unidad de medición */}
+                    <p className="mt-1 text-xs truncate text-stone-400">
+                      {prod.unit}
+                    </p>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleQuickStockChange(prod, 1)}
-                    className="w-8 h-8 rounded-xl bg-surface-bg border border-stone-200 flex items-center justify-center text-stone-600 hover:text-brand-primary transition-colors"
+                  {/* Pie de tarjeta: Cantidad grande con botones (- / +) a la izquierda y Estado a la derecha */}
+                  <div
+                    className="flex items-end justify-between gap-2 pt-3"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleQuickStockChange(prod, -1)}
+                          disabled={prod.quantity <= 0}
+                          className="flex items-center justify-center w-6 h-6 transition-colors border rounded-lg bg-surface-bg border-stone-200 text-stone-600 hover:text-brand-primary disabled:opacity-40"
+                          title="Descontar 1"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleRequestToggleActive(prod)}
-                  title="Clic para activar o desactivar manualmente"
-                  className={`px-4 py-1 rounded-full text-[11px] font-semibold transition-colors ${statusInfo.badgeClass}`}
-                >
-                  {statusInfo.label}
-                </button>
+                        <span className="text-xl font-bold text-stone-900 tracking-tight leading-none min-w-[24px] text-center">
+                          {prod.quantity}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => handleQuickStockChange(prod, 1)}
+                          className="flex items-center justify-center w-6 h-6 transition-colors border rounded-lg bg-surface-bg border-stone-200 text-stone-600 hover:text-brand-primary"
+                          title="Agregar 1"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <span className="block text-[11px] text-stone-400 mt-1">
+                        unidades disponibles
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleRequestToggleActive(prod)}
+                      title="Clic para activar o desactivar manualmente"
+                      className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-colors ${statusInfo.badgeClass}`}
+                    >
+                      {statusInfo.shortLabel || statusInfo.label}
+                    </button>
+                  </div>
+                </div>
               </div>
             );
           })}
@@ -641,6 +708,13 @@ export default function InventoryPage() {
         confirmText={
           confirmState.type === 'delete' ? 'Sí, eliminar' : 'Sí, cambiar estado'
         }
+      />
+      <ProductDetailModal
+        product={selectedDetailProduct}
+        isOpen={Boolean(selectedDetailProduct)}
+        onClose={() => setSelectedDetailProduct(null)}
+        onEdit={handleOpenEdit}
+        onToggleActive={handleRequestToggleActive}
       />
     </div>
   );

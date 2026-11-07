@@ -7,6 +7,7 @@ let servicesStore = [
     description: 'Lavado, corte y peinado',
     category: 'Cabello',
     price: 450,
+    durationMinutes: 60,
     status: 'Activo',
     theme: 'pink-scissors',
   },
@@ -16,6 +17,7 @@ let servicesStore = [
     description: 'Diagnóstico, tinte y secado',
     category: 'Cabello',
     price: 1250,
+    durationMinutes: 120,
     status: 'Activo',
     theme: 'pink-sparkles',
   },
@@ -25,6 +27,7 @@ let servicesStore = [
     description: 'Limpieza y esmaltado en gel',
     category: 'Uñas',
     price: 380,
+    durationMinutes: 120,
     status: 'Activo',
     theme: 'amber-scissors',
   },
@@ -34,6 +37,7 @@ let servicesStore = [
     description: 'Exfoliación, masaje y esmalte',
     category: 'Uñas',
     price: 520,
+    durationMinutes: 120,
     status: 'Activo',
     theme: 'mint-sparkles',
   },
@@ -43,6 +47,7 @@ let servicesStore = [
     description: 'Perfilado y diseño personalizado',
     category: 'Mirada',
     price: 290,
+    durationMinutes: 60,
     status: 'Inactivo',
     theme: 'pink-scissors',
   },
@@ -51,6 +56,7 @@ let servicesStore = [
     name: 'Lifting de pestañas',
     description: 'Curvatura y tinte semipermanente',
     category: 'Mirada',
+    durationMinutes: 90,
     price: 650,
     status: 'Activo',
     theme: 'pink-sparkles',
@@ -65,7 +71,8 @@ let promotionsStore = [
     serviceIncluded: 'DISEÑO DE CEJAS + LIFTING',
     category: 'Mirada',
     price: 899,
-    validFrom: '2026-11-01', // <-- AGREGAR ESTA LÍNEA
+    durationMinutes: 150,
+    validFrom: '2026-11-01', 
     validUntil: '2026-11-30',
     description: 'Limpieza facial y diseño de cejas.',
     status: 'Activo',
@@ -78,7 +85,8 @@ let promotionsStore = [
     serviceIncluded: 'MANICURA GEL + PEDICURA SPA',
     category: 'Uñas',
     price: 749,
-    validFrom: '2026-11-01', // <-- AGREGAR ESTA LÍNEA
+    durationMinutes: 240, 
+    validFrom: '2026-11-01', 
     validUntil: '2026-12-15',
     description: 'Experiencia spa completa con gel.',
     status: 'Activo',
@@ -91,7 +99,8 @@ let promotionsStore = [
     serviceIncluded: 'CORTE + COLORACIÓN COMPLETA',
     category: 'Cabello',
     price: 1390,
-    validFrom: '2026-11-01', // <-- AGREGAR ESTA LÍNEA
+    durationMinutes: 180, 
+    validFrom: '2026-11-01', 
     validUntil: '2026-11-28',
     description: 'Renueva tu tono y recupera el brillo.',
     status: 'Activo',
@@ -127,6 +136,7 @@ export const catalogService = {
           id: Date.now(),
           ...payload,
           price: Number(payload.price),
+          durationMinutes: Number(payload.durationMinutes) || 60,
           theme: resolveTheme(payload.category, servicesStore.length),
         };
         servicesStore = [newService, ...servicesStore];
@@ -140,7 +150,9 @@ export const catalogService = {
     return new Promise((resolve) => {
       setTimeout(() => {
         servicesStore = servicesStore.map((s) =>
-          s.id === id ? { ...s, ...payload, price: Number(payload.price) } : s
+          s.id === id ? { ...s, ...payload, 
+            durationMinutes: Number(payload.durationMinutes) || s.durationMinutes,
+            price: Number(payload.price) } : s
         );
         resolve(servicesStore.find((s) => s.id === id));
       }, 100);
@@ -188,6 +200,7 @@ export const catalogService = {
           id: Date.now(),
           ...payload,
           price: Number(payload.price),
+          durationMinutes: Number(payload.durationMinutes) || 60,
           theme: resolveTheme(payload.category, promotionsStore.length),
         };
         promotionsStore = [newPromo, ...promotionsStore];
@@ -201,7 +214,9 @@ export const catalogService = {
     return new Promise((resolve) => {
       setTimeout(() => {
         promotionsStore = promotionsStore.map((p) =>
-          p.id === id ? { ...p, ...payload, price: Number(payload.price) } : p
+          p.id === id ? { ...p, ...payload, 
+            durationMinutes: Number(payload.durationMinutes) || p.durationMinutes,
+            price: Number(payload.price) } : p
         );
         resolve(promotionsStore.find((p) => p.id === id));
       }, 100);
