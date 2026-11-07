@@ -349,13 +349,13 @@ export default function InventoryPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-stone-100 text-[11px] font-bold tracking-[0.12em] text-stone-400 uppercase">
+                <tr className=" border-b border-stone-100 text-[11px] font-bold tracking-[0.12em] text-stone-400 uppercase">
                   <th className="py-5 pr-4 pl-7">PRODUCTO</th>
                   <th className="px-4 py-5">PRESENTACIÓN / UNIDAD</th>
-                  <th className="px-4 py-5">CANTIDAD <br/>DISPONIBLE</th>
+                  <th className="px-4 py-5">CANTIDAD DISPONIBLE</th>
                   <th className="px-4 py-5">CATEGORÍA</th>
                   <th className="px-4 py-5">ESTADO</th>
-                  <th className="py-5 pl-4 text-right pr-7">ACCIONES</th>
+                  <th className="py-5 pl-4 text-center">ACCIONES</th>
                 </tr>
               </thead>
               <tbody className="text-xs divide-y divide-stone-100">
@@ -438,7 +438,7 @@ export default function InventoryPage() {
                         </span>
                       </td>
 
-                      <td className="py-4 pl-4 text-right pr-7"
+                      <td className="py-4 pl-4 text-center pr-7"
                       onClick={(e) => e.stopPropagation()}>
                         <div className="inline-flex items-center gap-1.5">
                           <button

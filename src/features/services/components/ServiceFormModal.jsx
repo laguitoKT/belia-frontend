@@ -218,6 +218,7 @@ export default function ServiceFormModal({
         className="relative w-full max-w-[660px] bg-white rounded-[32px] shadow-card border border-stone-100 p-8 sm:p-10 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
+      <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-brand-primary via-brand-accent to-brand-secondary" />
         <button
           type="button"
           onClick={onClose}
@@ -246,7 +247,7 @@ export default function ServiceFormModal({
         </div>
 
         <form onSubmit={handleRequestSubmit} className="space-y-4" noValidate>
-          {/* Fila 1: En Servicio muestra Nombre + Categoría; en Promoción solo Nombre (la categoría se asigna por los servicios) */}
+          {/* Fila 1: En Servicio muestra Nombre + Categoría */}
           <div className={`grid grid-cols-1 ${!isPromotion ? 'sm:grid-cols-2' : ''} gap-4`}>
             <div>
               <label className="block mb-2 text-xs font-bold text-stone-800">
@@ -299,7 +300,7 @@ export default function ServiceFormModal({
             )}
           </div>
 
-          {/* Selector de Servicios Incluidos (con cálculo automático de categoría / Paquete mixto) */}
+          {/* Selector de Servicios Incluidos  */}
           {isPromotion && (
             <div>
               <div className="flex items-center justify-between mb-2">
