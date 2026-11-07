@@ -24,6 +24,7 @@ export default function ServiceFormModal({
     category: lockedCategory || 'Cabello',
     serviceIds: [],
     price: '',
+    durationMinutes: '60', //60 es por defecto, si no se especifica otro valor
     validFrom: '',
     validUntil: '',
     status: 'Activo',
@@ -40,6 +41,7 @@ export default function ServiceFormModal({
         category: initialData.category || lockedCategory || 'Cabello',
         serviceIds: initialData.serviceIds || [],
         price: initialData.price !== undefined ? String(initialData.price) : '',
+        durationMinutes: initialData.durationMinutes !== undefined ? String(initialData.durationMinutes) : '60',
         validFrom: initialData.validFrom || getTodayISO(),
         validUntil: initialData.validUntil || getTodayISO(),
         status: initialData.status || 'Activo',
@@ -51,6 +53,7 @@ export default function ServiceFormModal({
         category: lockedCategory || 'Cabello',
         serviceIds: [],
         price: '',
+        durationMinutes: '60',
         validFrom: getTodayISO(),
         validUntil: getTodayISO(),
         status: 'Activo',
@@ -85,7 +88,15 @@ export default function ServiceFormModal({
       const nextIds = exists
         ? prev.serviceIds.filter((id) => id !== serviceId)
         : [...prev.serviceIds, serviceId];
-      return { ...prev, serviceIds: nextIds };
+
+        const totalMinutes = availableServices
+          .filter((s) => nextIds.includes(s.id))
+          .reduce((acc, s) => acc + (s.durationMinutes || 0), 0);
+
+      return { 
+        ...prev, 
+        serviceIds: nextIds,
+        durationMinutes: totalMinutes > 0 ? String(totalMinutes) : prev.durationMinutes,};
     });
     if (fieldErrors.serviceIds) {
       setFieldErrors((prev) => ({ ...prev, serviceIds: undefined }));
@@ -118,8 +129,17 @@ export default function ServiceFormModal({
       }
     }
 
-    if (!isPromotion && !formData.category) {
-      errors.category = 'Selecciona una categoría.';
+    if (!isPromotion) {
+      const numericDuration = Number(formData.durationMinutes);
+      if (
+        !formData.durationMinutes ||
+        Number.isNaN(numericDuration) ||
+        !Number.isInteger(numericDuration) ||
+        numericDuration < 10 ||
+        numericDuration > 600
+      ) {
+        errors.durationMinutes = 'Ingresa una duración entre 10 y 600 min (10hrs).';
+      }
     }
 
     if (canEditPrice) {
@@ -174,6 +194,7 @@ export default function ServiceFormModal({
       name: formData.name.trim(),
       category: finalCategory,
       price: canEditPrice ? Number(formData.price) : initialData?.price,
+      durationMinutes: Number(formData.durationMinutes),
       status: formData.status,
       description: formData.description.trim(),
       ...(isPromotion && {
@@ -190,7 +211,7 @@ export default function ServiceFormModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/35 backdrop-blur-xs p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/35 backdrop-blur-xs"
       onClick={onClose}
     >
       <div
@@ -200,17 +221,17 @@ export default function ServiceFormModal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-8 right-8 w-11 h-11 rounded-2xl bg-white border border-stone-200/80 flex items-center justify-center text-stone-600 hover:text-brand-primary transition-colors"
+          className="absolute flex items-center justify-center transition-colors bg-white border top-8 right-8 w-11 h-11 rounded-2xl border-stone-200/80 text-stone-600 hover:text-brand-primary"
           aria-label="Cerrar modal"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="mb-6 pr-12">
+        <div className="pr-12 mb-6">
           <span className="block text-xs font-bold tracking-[0.14em] text-brand-primary uppercase mb-1.5">
             {isEditing ? 'EDITAR REGISTRO' : 'NUEVO REGISTRO'}
           </span>
-          <h3 className="text-3xl font-bold text-stone-900 tracking-tight">
+          <h3 className="text-3xl font-bold tracking-tight text-stone-900">
             {isEditing
               ? isPromotion
                 ? 'Editar promoción'
@@ -219,7 +240,7 @@ export default function ServiceFormModal({
               ? 'Agregar promoción'
               : 'Agregar servicio'}
           </h3>
-          <p className="text-sm text-stone-400 mt-1">
+          <p className="mt-1 text-sm text-stone-400">
             Completa la información para continuar.
           </p>
         </div>
@@ -228,7 +249,7 @@ export default function ServiceFormModal({
           {/* Fila 1: En Servicio muestra Nombre + Categoría; en Promoción solo Nombre (la categoría se asigna por los servicios) */}
           <div className={`grid grid-cols-1 ${!isPromotion ? 'sm:grid-cols-2' : ''} gap-4`}>
             <div>
-              <label className="block text-xs font-bold text-stone-800 mb-2">
+              <label className="block mb-2 text-xs font-bold text-stone-800">
                 {isPromotion ? 'Nombre del paquete o promoción' : 'Nombre'}
               </label>
               <input
@@ -250,7 +271,7 @@ export default function ServiceFormModal({
 
             {!isPromotion && (
               <div>
-                <label className="block text-xs font-bold text-stone-800 mb-2">
+                <label className="block mb-2 text-xs font-bold text-stone-800">
                   Categoría
                 </label>
                 <select
@@ -329,7 +350,7 @@ export default function ServiceFormModal({
           )}
 
           {/* Fila de Precio, Estado y Calendarios de Vigencia */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-xs font-bold text-stone-800">
@@ -360,9 +381,36 @@ export default function ServiceFormModal({
                 <p className="text-[11px] font-medium text-red-600 mt-1">{fieldErrors.price}</p>
               )}
             </div>
+           
+              <div>
+                <label className="block mb-2 text-xs font-bold text-stone-800">
+                  Duración (minutos)
+                </label>
+                <input
+                  type="number"
+                  name="durationMinutes"
+                  min="10"
+                  max="600"
+                  step="5"
+                  value={formData.durationMinutes}
+                  onChange={handleChange}
+                  placeholder="Ej. 60"
+                  className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none ${
+                    fieldErrors.durationMinutes
+                      ? 'border-red-400'
+                      : 'border-stone-200/90 focus:border-brand-primary'
+                  }`}
+                />
+                {fieldErrors.durationMinutes && (
+                  <p className="text-[11px] font-medium text-red-600 mt-1">
+                    {fieldErrors.durationMinutes}
+                  </p>
+                )}
+              </div>
+            
 
             <div>
-              <label className="block text-xs font-bold text-stone-800 mb-2">
+              <label className="block mb-2 text-xs font-bold text-stone-800">
                 Estado
               </label>
               <select
@@ -375,11 +423,15 @@ export default function ServiceFormModal({
                 <option value="Inactivo">Inactivo</option>
               </select>
             </div>
-
+          </div>
+          
+          {/* Fila de Fechas de Vigencia */}
+          
+          <div className={`grid grid-cols-1 gap-4 sm:grid-cols-${isPromotion ? '2' : '1'}`}>
             {isPromotion && (
               <>
                 <div>
-                  <label className="block text-xs font-bold text-stone-800 mb-2">
+                  <label className="block mb-2 text-xs font-bold text-stone-800">
                     Fecha de inicio
                   </label>
                   <div className="relative">
@@ -402,7 +454,7 @@ export default function ServiceFormModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-stone-800 mb-2">
+                  <label className="block mb-2 text-xs font-bold text-stone-800">
                     Fecha de fin (Vigencia)
                   </label>
                   <div className="relative">
@@ -464,25 +516,25 @@ export default function ServiceFormModal({
                   ¿Estás seguro de que deseas guardar los cambios en este registro?
                 </span>
               </div>
-              <div className="flex items-center gap-2 self-end sm:self-auto">
+              <div className="flex items-center self-end gap-2 sm:self-auto">
                 <button
                   type="button"
                   onClick={() => setShowSaveConfirm(false)}
-                  className="px-4 py-2 rounded-xl bg-white border border-stone-200 text-stone-700 text-xs font-bold"
+                  className="px-4 py-2 text-xs font-bold bg-white border rounded-xl border-stone-200 text-stone-700"
                 >
                   Revisar
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmSave}
-                  className="px-4 py-2 rounded-xl bg-brand-primary text-white text-xs font-bold shadow-button"
+                  className="px-4 py-2 text-xs font-bold text-white rounded-xl bg-brand-primary shadow-button"
                 >
                   Sí, guardar cambios
                 </button>
               </div>
             </div>
           ) : (
-            <div className="pt-5 border-t border-stone-100 flex items-center justify-end gap-3">
+            <div className="flex items-center justify-end gap-3 pt-5 border-t border-stone-100">
               <button
                 type="button"
                 onClick={onClose}

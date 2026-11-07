@@ -12,12 +12,15 @@ import {
   Power,
   Trash2,
   CheckCircle2,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { catalogService } from '../services/catalogService';
 import ServiceFormModal from '../components/ServiceFormModal';
+import CatalogDetailModal from '../components/CatalogDetailModal';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { parseLocalDate } from '../../../utils/dateUtils';
+
 
 const CARD_THEMES = {
   'pink-scissors': {
@@ -87,6 +90,7 @@ export default function ServicesPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [selectedDetailItem, setSelectedDetailItem] = useState(null);
 
   const [confirmState, setConfirmState] = useState({
     isOpen: false,
@@ -181,7 +185,6 @@ export default function ServicesPage() {
     setEditingItem(null);
   };
 
-  // Advertencia al activar/desactivar tanto en tarjetas como en lista (tabla)
   const handleRequestToggleStatus = (item) => {
     setOpenMenuId(null);
     setConfirmState({
@@ -395,11 +398,12 @@ export default function ServicesPage() {
               const theme = CARD_THEMES[srv.theme] || CARD_THEMES['pink-scissors'];
               const ThemeIcon = theme.icon;
               const isActive = srv.status === 'Activo';
-
               return (
+                // Tarjeta de servicios 
                 <div
                   key={srv.id}
-                  className="bg-white rounded-[28px] p-3.5 border border-stone-100/90 shadow-card flex items-stretch gap-4 relative hover:border-brand-light/50 transition-all"
+                  onClick={() => setSelectedDetailItem(srv)}
+                  className="cursor-pointer bg-white rounded-[28px] p-3.5 border border-stone-100/90 shadow-card flex items-stretch gap-4 relative hover:border-brand-light/50 transition-all"
                 >
                   <div
                     className={`w-28 sm:w-32 rounded-[22px] ${theme.bg} p-4 flex flex-col justify-between relative overflow-hidden shrink-0 min-h-[148px]`}
@@ -461,14 +465,24 @@ export default function ServicesPage() {
                       </p>
                     </div>
 
-                    <div className="flex items-end justify-between gap-2 pt-3">
-                      <span className="text-xl font-bold tracking-tight text-stone-900">
-                        {formatCurrency(srv.price)}
-                      </span>
 
-                      <button
+                    <div className="flex items-end justify-between gap-2 pt-3">
+                      <div>
+                        <span className="block text-xl font-bold leading-none tracking-tight text-stone-900">
+                          {formatCurrency(srv.price)}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[11px] text-stone-400 mt-1">
+                          <Clock className="w-3 h-3" />
+                          {srv.durationMinutes} min
+                        </span>
+                    </div>
+
+                    <button
                         type="button"
-                        onClick={() => handleRequestToggleStatus(srv)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRequestToggleStatus(srv);
+                        }}
                         className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-colors ${
                           isActive
                             ? 'bg-[#E8F6F0] text-[#1E7E5A]'
@@ -484,7 +498,7 @@ export default function ServicesPage() {
             })}
           </div>
         ) : (
-          /* VISTA DE LISTA (TABLA) DE SERVICIOS CON BOTÓN DE DESACTIVAR */
+          /* VISTA DE LISTA (TABLA) DE SERVICIOS*/
           <div className="bg-white rounded-[28px] border border-stone-100/90 shadow-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -493,6 +507,7 @@ export default function ServicesPage() {
                     <th className="py-5 pr-4 pl-7">SERVICIO</th>
                     <th className="px-4 py-5">DESCRIPCIÓN</th>
                     <th className="px-4 py-5">PRECIO</th>
+                    <th className="px-4 py-5">DURACIÓN</th>
                     <th className="px-4 py-5">CATEGORÍA</th>
                     <th className="px-4 py-5">ESTADO</th>
                     <th className="py-5 pl-4 text-right pr-7">ACCIONES</th>
@@ -502,7 +517,10 @@ export default function ServicesPage() {
                   {filteredServices.map((srv) => {
                     const isActive = srv.status === 'Activo';
                     return (
-                      <tr key={srv.id} className="transition-colors hover:bg-surface-bg/60">
+                      // Fila de servicio en la tabla
+                      <tr key={srv.id} 
+                      onClick={() => setSelectedDetailItem(srv)}
+                      className="transition-colors cursor-pointer hover:bg-surface-bg/60">
                         <td className="py-4 pr-4 pl-7">
                           <div className="flex items-center gap-3.5">
                             <div className="w-10 h-10 rounded-2xl bg-[#FDECEF] flex items-center justify-center text-brand-primary shrink-0">
@@ -517,12 +535,22 @@ export default function ServicesPage() {
                         <td className="px-4 py-4 text-sm font-bold text-stone-900">
                           {formatCurrency(srv.price)}
                         </td>
+                        <td className="px-4 py-4 font-medium text-stone-500">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5 text-stone-400" />
+                            {srv.durationMinutes} min
+                          </span>
+                        </td>
+
                         <td className="px-4 py-4">
                           <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-[#FDECEF] text-brand-primary">
                             {srv.category}
                           </span>
                         </td>
-                        <td className="px-4 py-4">
+                        <td
+                          className="px-4 py-4"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <button
                             type="button"
                             onClick={() => handleRequestToggleStatus(srv)}
@@ -535,7 +563,10 @@ export default function ServicesPage() {
                             {srv.status}
                           </button>
                         </td>
-                        <td className="py-4 pl-4 text-right pr-7">
+                        <td 
+                          className="py-4 pl-4 text-right pr-7" 
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <div className="inline-flex items-center gap-1.5">
                             <button
                               type="button"
@@ -580,7 +611,8 @@ export default function ServicesPage() {
               return (
                 <div
                   key={promo.id}
-                  className="bg-white rounded-[28px] p-3.5 border border-stone-100/90 shadow-card flex items-stretch gap-4 relative hover:border-brand-light/50 transition-all"
+                  onClick={() => setSelectedDetailItem(promo)}
+                  className=" cursor-pointer bg-white rounded-[28px] p-3.5 border border-stone-100/90 shadow-card flex items-stretch gap-4 relative hover:border-brand-light/50 transition-all"
                 >
                   <div
                     className={`w-28 sm:w-32 rounded-[22px] ${theme.bg} p-4 flex flex-col justify-between relative overflow-hidden shrink-0 min-h-[156px]`}
@@ -618,7 +650,10 @@ export default function ServicesPage() {
                             <div className="absolute right-0 top-7 w-40 bg-white rounded-2xl shadow-lg border border-stone-100 py-1.5 z-30 text-xs">
                               <button
                                 type="button"
-                                onClick={() => handleOpenEdit(promo)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenEdit(promo);
+                                }}
                                 className="w-full px-3.5 py-2 text-left flex items-center gap-2 text-stone-700 hover:bg-surface-bg font-medium"
                               >
                                 <Pencil className="w-3.5 h-3.5 text-brand-primary" />
@@ -657,14 +692,24 @@ export default function ServicesPage() {
                         <span className="block text-xl font-bold leading-none tracking-tight text-stone-900">
                           {formatCurrency(promo.price)}
                         </span>
-                        <span className="block text-[11px] text-stone-400 mt-1">
-                          {formatPromoPeriod(promo.validFrom, promo.validUntil)}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-stone-400 mt-1">
+                          <span className="inline-flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {promo.durationMinutes || 60} min
+                          </span>
+                          <span>•</span>
+                          <span>
+                            {formatPromoPeriod(promo.validFrom, promo.validUntil)}
+                          </span>
+                        </div>
                       </div>
 
                       <button
                         type="button"
-                        onClick={() => handleOpenEdit(promo)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenEdit(promo);
+                        }}
                         className="px-4 py-2 rounded-2xl bg-[#FADCE6] hover:bg-brand-light/60 text-brand-primary text-xs font-bold transition-colors"
                       >
                         Editar
@@ -676,7 +721,7 @@ export default function ServicesPage() {
             })}
           </div>
         ) : (
-          /* VISTA DE LISTA (TABLA) DE PAQUETES Y PROMOCIONES CON BOTÓN DE DESACTIVAR */
+          /* VISTA DE LISTA (TABLA) DE PAQUETES Y PROMOCIONES*/
           <div className="bg-white rounded-[28px] border border-stone-100/90 shadow-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -685,6 +730,7 @@ export default function ServicesPage() {
                     <th className="py-5 pr-4 pl-7">PAQUETE / PROMOCIÓN</th>
                     <th className="px-4 py-5">SERVICIOS INCLUIDOS</th>
                     <th className="px-4 py-5">VIGENCIA</th>
+                    <th className="px-4 py-5">DURACIÓN</th>
                     <th className="px-4 py-5">PRECIO</th>
                     <th className="px-4 py-5">ESTADO</th>
                     <th className="py-5 pl-4 text-right pr-7">ACCIONES</th>
@@ -694,7 +740,11 @@ export default function ServicesPage() {
                   {filteredPromotions.map((promo) => {
                     const isActive = promo.status === 'Activo';
                     return (
-                      <tr key={promo.id} className="transition-colors hover:bg-surface-bg/60">
+                      // Fila de promoción en la tabla
+                      <tr 
+                        onClick={() => setSelectedDetailItem(promo)}
+                        key={promo.id}
+                        className="transition-colors cursor-pointer hover:bg-surface-bg/60">
                         <td className="py-4 pr-4 pl-7">
                           <div className="flex items-center gap-3.5">
                             <div className="w-10 h-10 rounded-2xl bg-[#FDECEF] flex items-center justify-center text-brand-primary shrink-0">
@@ -710,21 +760,35 @@ export default function ServicesPage() {
                             </div>
                           </div>
                         </td>
+                        
                         <td className="px-4 py-4">
                           <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-[#FDECEF] text-brand-primary">
                             {promo.serviceIncluded}
                           </span>
                         </td>
+
                         <td className="px-4 py-4 font-medium text-stone-500">
                           {formatPromoPeriod(promo.validFrom, promo.validUntil)}
                         </td>
+
+                        <td className="px-4 py-4 font-medium text-stone-500">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5 text-stone-400" />
+                            {promo.durationMinutes || 60} min
+                          </span>
+                        </td>
+
                         <td className="px-4 py-4 text-sm font-bold text-stone-900">
                           {formatCurrency(promo.price)}
                         </td>
+
                         <td className="px-4 py-4">
                           <button
                             type="button"
-                            onClick={() => handleRequestToggleStatus(promo)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRequestToggleStatus(promo);
+                            }}
                             className={`px-3 py-1 rounded-full text-[11px] font-semibold ${
                               isActive
                                 ? 'bg-[#E8F6F0] text-[#1E7E5A]'
@@ -734,11 +798,17 @@ export default function ServicesPage() {
                             {promo.status}
                           </button>
                         </td>
-                        <td className="py-4 pl-4 text-right pr-7">
+                        <td
+                          className="py-4 pl-4 text-right pr-7"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <div className="inline-flex items-center gap-1.5">
                             <button
                               type="button"
-                              onClick={() => handleRequestToggleStatus(promo)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRequestToggleStatus(promo);
+                              }}
                               className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold inline-flex items-center gap-1 transition-colors ${
                                 isActive
                                   ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
@@ -750,7 +820,10 @@ export default function ServicesPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => handleOpenEdit(promo)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenEdit(promo);
+                              }}
                               className="px-3.5 py-1.5 rounded-xl bg-[#FADCE6] text-brand-primary text-xs font-bold hover:bg-brand-light/60 transition-colors"
                             >
                               Editar
@@ -758,7 +831,10 @@ export default function ServicesPage() {
                             {isAdmin && (
                               <button
                                 type="button"
-                                onClick={() => handleRequestDelete(promo)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRequestDelete(promo);
+                                }}
                                 className="p-2 transition-colors rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50"
                                 title="Eliminar"
                               >
@@ -791,6 +867,17 @@ export default function ServicesPage() {
         isAdmin={isAdmin}
         existingItems={activeTab === 'services' ? services : promotions}
         availableServices={services}
+      />
+
+      <CatalogDetailModal
+        item={selectedDetailItem}
+        mode={activeTab === 'services' ? 'service' : 'promotion'}
+        isOpen={Boolean(selectedDetailItem)}
+        onClose={() => setSelectedDetailItem(null)}
+        onEdit={handleOpenEdit}
+        onToggleStatus={handleRequestToggleStatus}
+        formatCurrency={formatCurrency}
+        formatPromoPeriod={formatPromoPeriod}
       />
 
       {/* Modal de Confirmación para Eliminar o Activar/Desactivar */}
