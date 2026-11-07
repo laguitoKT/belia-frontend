@@ -220,30 +220,31 @@ export default function ProductFormModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/35 backdrop-blur-xs p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/35 backdrop-blur-xs"
       onClick={onClose}
     >
       <div
         className="relative w-full max-w-[660px] bg-white rounded-[32px] shadow-card border border-stone-100 p-8 sm:p-10 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
+      <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-brand-primary via-brand-accent to-brand-secondary" />
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-8 right-8 w-11 h-11 rounded-2xl bg-white border border-stone-200/80 flex items-center justify-center text-stone-600 hover:text-brand-primary transition-colors"
+          className="absolute flex items-center justify-center transition-colors bg-white border top-8 right-8 w-11 h-11 rounded-2xl border-stone-200/80 text-stone-600 hover:text-brand-primary"
           aria-label="Cerrar modal"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="mb-6 pr-12">
+        <div className="pr-12 mb-6">
           <span className="block text-xs font-bold tracking-[0.14em] text-brand-primary uppercase mb-1.5">
             {isEditing ? 'EDITAR EXISTENCIA' : 'NUEVO REGISTRO'}
           </span>
-          <h3 className="text-3xl font-bold text-stone-900 tracking-tight">
+          <h3 className="text-3xl font-bold tracking-tight text-stone-900">
             {isEditing ? 'Editar producto' : 'Agregar producto'}
           </h3>
-          <p className="text-sm text-stone-400 mt-1">
+          <p className="mt-1 text-sm text-stone-400">
             Completa la información del insumo para el inventario.
           </p>
         </div>
@@ -251,7 +252,7 @@ export default function ProductFormModal({
         <form onSubmit={handleRequestSubmit} className="space-y-4" noValidate>
           {/* Imagen del producto */}
           <div>
-            <label className="block text-xs font-bold text-stone-800 mb-2">
+            <label className="block mb-2 text-xs font-bold text-stone-800">
               Imagen del producto (Opcional)
             </label>
             <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-[#FAFAFB] border border-stone-200/90">
@@ -260,7 +261,7 @@ export default function ProductFormModal({
                   <img
                     src={formData.imageUrl}
                     alt="Vista previa"
-                    className="w-full h-full object-cover"
+                    className="object-cover w-full h-full"
                   />
                 ) : (
                   <Box className="w-6 h-6" />
@@ -282,7 +283,7 @@ export default function ProductFormModal({
                     <button
                       type="button"
                       onClick={handleRemoveImage}
-                      className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100 transition-colors"
+                      className="inline-flex items-center gap-1 px-3 py-2 text-xs font-bold text-red-600 transition-colors rounded-xl bg-red-50 hover:bg-red-100"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>Quitar</span>
@@ -310,9 +311,9 @@ export default function ProductFormModal({
           </div>
 
           {/* Fila 1: Nombre */}
-          <div className="grid grid-cols-1  gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div>
-              <label className="block text-xs font-bold text-stone-800 mb-2">
+              <label className="block mb-2 text-xs font-bold text-stone-800">
                 Nombre del producto
               </label>
               <input
@@ -336,10 +337,10 @@ export default function ProductFormModal({
           </div>
 
           {/* Fila 2: Categoría, Presentación y Unidad de Medición */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 
             <div>
-              <label className="block text-xs font-bold text-stone-800 mb-2">
+              <label className="block mb-2 text-xs font-bold text-stone-800">
                 Categoría del servicio
               </label>
               <select
@@ -368,7 +369,7 @@ export default function ProductFormModal({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-stone-800 mb-2">
+              <label className="block mb-2 text-xs font-bold text-stone-800">
                 Presentación
               </label>
               <select
@@ -396,7 +397,7 @@ export default function ProductFormModal({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-stone-800 mb-2">
+              <label className="block mb-2 text-xs font-bold text-stone-800">
                 Unidad de medición
               </label>
               <select
@@ -424,10 +425,10 @@ export default function ProductFormModal({
             </div>
           </div>
 
-          {/* Fila 3: Cantidad disponible y Estado (con auto-desactivación en 0) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Fila 3: Cantidad disponible y Estado */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-bold text-stone-800 mb-2">
+              <label className="block mb-2 text-xs font-bold text-stone-800">
                 Cantidad disponible (Stock)
               </label>
               <input
@@ -453,7 +454,7 @@ export default function ProductFormModal({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-stone-800 mb-2">
+              <label className="block mb-2 text-xs font-bold text-stone-800">
                 Estado del producto
               </label>
               <select
@@ -487,25 +488,25 @@ export default function ProductFormModal({
                   ¿Estás seguro de que deseas guardar los cambios en el inventario?
                 </span>
               </div>
-              <div className="flex items-center gap-2 self-end sm:self-auto">
+              <div className="flex items-center self-end gap-2 sm:self-auto">
                 <button
                   type="button"
                   onClick={() => setShowSaveConfirm(false)}
-                  className="px-4 py-2 rounded-xl bg-white border border-stone-200 text-stone-700 text-xs font-bold"
+                  className="px-4 py-2 text-xs font-bold bg-white border rounded-xl border-stone-200 text-stone-700"
                 >
                   Revisar
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmSave}
-                  className="px-4 py-2 rounded-xl bg-brand-primary text-white text-xs font-bold shadow-button"
+                  className="px-4 py-2 text-xs font-bold text-white rounded-xl bg-brand-primary shadow-button"
                 >
                   Sí, guardar cambios
                 </button>
               </div>
             </div>
           ) : (
-            <div className="pt-5 border-t border-stone-100 flex items-center justify-end gap-3">
+            <div className="flex items-center justify-end gap-3 pt-5 border-t border-stone-100">
               <button
                 type="button"
                 onClick={onClose}
