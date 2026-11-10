@@ -23,6 +23,23 @@ export function toISODate(dateObj) {
   return `${year}-${month}-${day}`;
 }
 
+export const toISODateString = toISODate;
+
+export function addDays(isoDateString, days) {
+  const date = parseLocalDate(isoDateString);
+  date.setDate(date.getDate() + days);
+  return toISODate(date);
+}
+
+export function formatLongDate(isoDateString) {
+  return new Intl.DateTimeFormat('es-MX', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(parseLocalDate(isoDateString));
+}
+
 // Formatea para el botón superior, ej: "Lunes, 2 noviembre"
 export function formatDisplayDate(isoDateString) {
   const date = parseLocalDate(isoDateString);
