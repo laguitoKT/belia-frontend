@@ -6,21 +6,47 @@ import {
   Phone,
   Sparkles,
   UserCheck,
-  FileText,
   CheckCircle2,
   AlertCircle,
+  History,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
+import { formatLongDate } from '../../../utils/dateUtils';
 
 export default function AppointmentDetailModal({
   appointment,
   isOpen,
   onClose,
+  // Props usadas desde Inicio (HomePage)
   onStatusChange,
   onGoToModule,
+  // Props usadas desde el Módulo de Citas (AppointmentsPage)
+  onToggleStatus,
+  onEdit,
+  onDelete,
+  clientPreviousVisitsCount,
+  isAdmin = false,
 }) {
   if (!isOpen || !appointment) return null;
 
   const isConfirmed = appointment.status === 'Confirmada';
+  const categoryLabel =
+    appointment.serviceCategory || appointment.category || 'General';
+  const specificationText =
+    appointment.specification ||
+    appointment.notes ||
+    'Sin especificaciones adicionales.';
+
+  const handleChangeStatus = () => {
+    const nextStatus = isConfirmed ? 'Por confirmar' : 'Confirmada';
+    if (onStatusChange) {
+      onStatusChange(appointment.id, nextStatus);
+    } else if (onToggleStatus) {
+      onToggleStatus(appointment);
+      onClose();
+    }
+  };
 
   return (
     <div
@@ -28,7 +54,7 @@ export default function AppointmentDetailModal({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-lg bg-white rounded-[28px] shadow-card border border-stone-100 p-7 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="relative w-full max-w-lg bg-white rounded-[28px] shadow-card border border-stone-100 p-7 overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Barra superior con el gradiente de la marca */}
@@ -48,7 +74,7 @@ export default function AppointmentDetailModal({
         <div className="pr-8 mt-2 mb-6">
           <div className="flex items-center gap-2.5 mb-2">
             <span className="text-[10px] font-bold tracking-[0.16em] text-brand-primary uppercase">
-              DETALLE DE LA CITA #{appointment.id}
+              INFORMACIÓN DE LA CITA 
             </span>
             <span
               className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
@@ -70,7 +96,7 @@ export default function AppointmentDetailModal({
             {appointment.service}
           </h3>
           <p className="text-xs text-stone-400 mt-0.5">
-            Categoría: {appointment.serviceCategory} • Precio estimado: ${appointment.price} MXN
+            Categoría: {categoryLabel} • Precio estimado: ${appointment.price} MXN
           </p>
         </div>
 
@@ -112,12 +138,12 @@ export default function AppointmentDetailModal({
             <div className="min-w-0">
               <p className="text-[11px] font-medium text-stone-400">Empleado</p>
               <p className="font-semibold truncate text-stone-800">
-                {appointment.employee}
+                {appointment.employeeFullName || appointment.employee}
               </p>
             </div>
           </div>
 
-          {/* Horario y Fecha */}
+          {/* Horario */}
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
               <Clock className="w-4 h-4" />
@@ -125,10 +151,27 @@ export default function AppointmentDetailModal({
             <div className="min-w-0">
               <p className="text-[11px] font-medium text-stone-400">Horario</p>
               <p className="font-semibold text-stone-800">
-                {appointment.startTime} - {appointment.endTime} ({appointment.durationHours} h)
+                {appointment.startTime} - {appointment.endTime}{' '}
               </p>
             </div>
           </div>
+
+          {/* Fecha programada */}
+          {appointment.date && (
+            <div className="flex items-center gap-3 pt-2 border-t sm:col-span-2 border-stone-200/60">
+              <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
+                <Calendar className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-[11px] font-medium text-stone-400">
+                  Fecha programada
+                </p>
+                <p className="font-semibold text-stone-800">
+                  {formatLongDate(appointment.date)}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Especificación del servicio / Notas */}
           <div className="flex items-start gap-3 pt-2 border-t sm:col-span-2 border-stone-200/60">
@@ -140,39 +183,96 @@ export default function AppointmentDetailModal({
                 Especificación del servicio
               </p>
               <p className="text-xs font-medium text-stone-700 leading-relaxed mt-0.5">
-                {appointment.notes || 'Sin especificaciones adicionales.'}
+                {specificationText}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Acciones interactivas conectadas al estado */}
-        <div className="flex flex-col items-center justify-between gap-3 mt-6 sm:flex-row">
-          <button
-            type="button"
-            onClick={() =>
-              onStatusChange(
-                appointment.id,
-                isConfirmed ? 'Por confirmar' : 'Confirmada'
-              )
-            }
-            className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
-              isConfirmed
-                ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
-                : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-            }`}
-          >
-            {isConfirmed ? 'Marcar por confirmar' : 'Confirmar cita'}
-          </button>
+        {/* Desglose por tramo cuando la cita incluye 2 o más servicios */}
+          {Array.isArray(appointment.serviceBreakdown) &&
+            appointment.serviceBreakdown.length > 1 && (
+              <div className="pt-3 space-y-2 border-t sm:col-span-2 border-stone-200/60">
+                <p className="text-[11px] font-bold text-brand-primary uppercase tracking-wider">
+                  Orden de atención por servicio
+                </p>
+                {appointment.serviceBreakdown.map((step, idx) => (
+                  <div
+                    key={step.subKey || idx}
+                    className="flex items-center justify-between gap-2 px-3 py-2 text-xs bg-white border rounded-xl border-stone-100"
+                  >
+                    <div>
+                      <span className="font-bold text-stone-800">
+                        {idx + 1}. {step.serviceName}
+                      </span>
+                      <span className="text-[11px] text-stone-400 ml-2">
+                        ({step.startTime} – {step.endTime})
+                      </span>
+                    </div>
+                    <span className="font-semibold text-brand-primary">
+                      {step.employeeName}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
 
-          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+
+        {/* Acciones interactivas (compatibles con Inicio y con el Módulo de Citas) */}
+        <div className="flex flex-col items-center justify-between gap-3 mt-6 sm:flex-row">
+          <div className="flex items-center w-full gap-2 sm:w-auto">
             <button
               type="button"
-              onClick={onGoToModule}
-              className="px-4 py-2.5 rounded-xl bg-surface-bg hover:bg-brand-soft/40 text-stone-700 text-xs font-semibold transition-colors"
+              onClick={handleChangeStatus}
+              className={`flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
+                isConfirmed
+                  ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                  : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+              }`}
             >
-              Ver en módulo de Citas
+              {isConfirmed ? 'Marcar por confirmar' : 'Confirmar cita'}
             </button>
+
+            {isAdmin && onDelete && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onDelete(appointment);
+                }}
+                className="p-2.5 rounded-xl text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+                title="Eliminar cita"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+            {onGoToModule && (
+              <button
+                type="button"
+                onClick={onGoToModule}
+                className="px-4 py-2.5 rounded-xl bg-surface-bg hover:bg-brand-soft/40 text-stone-700 text-xs font-semibold transition-colors"
+              >
+                Ver en módulo de Citas
+              </button>
+            )}
+
+            {onEdit && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onEdit(appointment);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-[#FADCE6] hover:bg-brand-light/60 text-brand-primary text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                <span>Editar cita</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={onClose}

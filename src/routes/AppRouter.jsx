@@ -7,6 +7,7 @@ import ServicesPage from '../features/services/pages/ServicesPage';
 import InventoryPage from '../features/inventory/pages/InventoryPage';
 import ClientsPage from '../features/clients/pages/ClientsPage';
 import EmployeesPage from '../features/employees/pages/EmployeesPage';
+import AppointmentsPage from '../features/appointments/pages/AppointmentsPage';
 
 // Componente de ruta protegida para rutas de administrador
 function AdminRoute({ children }) {
@@ -30,7 +31,7 @@ export default function AppRouter() {
           <Route element={<MainLayout />}>
             <Route path="/inicio" element={<HomePage />} />
             <Route path="/servicios" element={<ServicesPage />} />
-            <Route path="/citas" element={<div className="p-4 text-sm text-stone-500">Módulo de Citas (En construcción)</div>} />
+            <Route path="/citas" element={<AppointmentsPage />} />
             <Route path="/inventario" element={<InventoryPage />} />
             <Route path="/clientes" element={<ClientsPage />} />
             
