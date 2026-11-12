@@ -11,9 +11,9 @@ import {
   LayoutGrid,
   Table2,
   Pencil,
-  Power,
   Trash2,
   CheckCircle2,
+  Power,
 } from 'lucide-react';
 import { employeesService } from '../services/employeesService';
 import EmployeeDetailModal from '../components/EmployeeDetailModal';
@@ -50,7 +50,7 @@ export default function EmployeesPage() {
   // Confirmación para Eliminar o Activar/Desactivar
   const [confirmState, setConfirmState] = useState({
     isOpen: false,
-    type: null, // 'delete' | 'toggle-status'
+    type: null,
     employee: null,
   });
 
@@ -532,7 +532,7 @@ export default function EmployeesPage() {
         existingEmployees={employees}
       />
 
-      {/* Modal 4: Confirmación para Eliminar o Desactivar/Activar */}
+      {/* Confirmación para eliminar o cambiar el estado */}
       <ConfirmDialog
         isOpen={confirmState.isOpen}
         onClose={() =>
@@ -545,9 +545,7 @@ export default function EmployeesPage() {
         title={
           confirmState.type === 'delete'
             ? `¿Eliminar a "${confirmState.employee?.name}"?`
-            : `¿${
-                confirmState.employee?.active ? 'Desactivar' : 'Activar'
-              } a "${confirmState.employee?.name}"?`
+            : `¿${confirmState.employee?.active ? 'Desactivar' : 'Activar'} a "${confirmState.employee?.name}"?`
         }
         message={
           confirmState.type === 'delete'

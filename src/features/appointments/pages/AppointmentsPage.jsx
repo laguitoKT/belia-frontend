@@ -315,13 +315,7 @@ const handleSaveAppointment = async (formData) => {
         {
           name: formData.client,
           phone: formData.clientPhone,
-          email: formData.clientEmail || 'Sin correo registrado',
-          employeeId: formData.employeeId,
-          initialService: formData.service,
-          initialCategory: formData.category,
-          initialPrice: formData.price,
-          initialTime: formData.startTime,
-          notes: formData.specification,
+          email: formData.clientEmail || null,
         },
         user
       );

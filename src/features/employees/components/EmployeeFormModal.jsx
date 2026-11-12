@@ -68,6 +68,7 @@ export default function EmployeeFormModal({
     name: '',
     phone: '',
     email: '',
+    password: '',
     specialty: 'Estilista senior',
     workDaysList: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'],
     workDays: 'Lun–Vie',
@@ -85,6 +86,7 @@ export default function EmployeeFormModal({
         name: initialData.name || '',
         phone: initialData.phone || '',
         email: initialData.email || '',
+        password: '',
         specialty: initialData.specialty || 'Estilista senior',
         workDaysList: parseDaysFromRecord(initialData),
         workDays: initialData.workDays || 'Lun–Vie',
@@ -97,6 +99,7 @@ export default function EmployeeFormModal({
         name: '',
         phone: '',
         email: '',
+        password: '',
         specialty: 'Estilista senior',
         workDaysList: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'],
         workDays: 'Lun–Vie',
@@ -168,6 +171,11 @@ const toggleWorkDay = (dayId) => {
         errors.email = 'Este correo ya está asignado a otro empleado.';
       }
     }
+    if ((!isEditing || formData.password) && formData.password.length < 8) {
+      errors.password = 'La contraseña debe tener al menos 8 caracteres.';
+    } else if (new TextEncoder().encode(formData.password).length > 72) {
+      errors.password = 'La contraseña no puede superar 72 bytes en UTF-8.';
+    }
     if (!formData.workDaysList || formData.workDaysList.length === 0) {
       errors.workDays = 'Selecciona al menos un día laboral de la semana.';
     }
@@ -202,6 +210,7 @@ const toggleWorkDay = (dayId) => {
       name: formData.name.trim(),
       phone: formData.phone.trim(),
       email: formData.email.trim(),
+      ...((!isEditing || formData.password) && { password: formData.password }),
       specialty: matchedSpecialty.label,
       specialtyCategory: matchedSpecialty.category,
       workDaysList: orderedDays,
@@ -341,6 +350,31 @@ const toggleWorkDay = (dayId) => {
             </div>
           </div>
 
+          <div>
+            <label className="block mb-2 text-xs font-bold text-stone-800">
+              {isEditing ? 'Nueva contraseña (opcional)' : 'Contraseña inicial'}
+            </label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              autoComplete="new-password"
+              minLength={8}
+              placeholder={isEditing ? 'Déjala vacía para no cambiarla' : 'Al menos 8 caracteres'}
+              className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none ${
+                fieldErrors.password
+                  ? 'border-red-400'
+                  : 'border-stone-200/90 focus:border-brand-primary'
+              }`}
+            />
+            {fieldErrors.password && (
+              <p className="text-[11px] font-medium text-red-600 mt-1">
+                {fieldErrors.password}
+              </p>
+            )}
+          </div>
+
         {/* Selector de días de la semana */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -416,27 +450,6 @@ const toggleWorkDay = (dayId) => {
             </p>
           )}
           
-          {/* Estado */}
-          <div>
-            <label className="block mb-2 text-xs font-bold text-stone-800">
-              Estado del empleado
-            </label>
-            <select
-              name="active"
-              value={String(formData.active)}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  active: e.target.value === 'true',
-                }))
-              }
-              className="w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border border-stone-200/90 text-sm text-stone-800 focus:outline-none focus:border-brand-primary cursor-pointer"
-            >
-              <option value="true">Activo</option>
-              <option value="false">Inactivo</option>
-            </select>
-          </div>
-
           {showSaveConfirm ? (
             <div className="p-4 rounded-2xl bg-[#FDF2F5] border border-brand-light/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-150">
               <div className="flex items-center gap-2.5 text-brand-primary text-xs font-bold">

@@ -197,7 +197,7 @@ export default function EmployeeDetailModal({
           )}
         </div>
 
-        {/* Pie de modal  Botones de acción: Activar/Desactivar, Editar y Cerrar a la derecha*/} 
+        {/* Acciones del perfil */}
         <div className="flex items-end gap-2 pt-4 mt-6 border-t border-stone-100">
             <button
               type="button"
