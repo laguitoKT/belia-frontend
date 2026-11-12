@@ -1,69 +1,5 @@
-// import axiosClient from '../../../api/axiosClient';
+import axiosClient from '../../../api/axiosClient';
 
-let inventoryStore = [
-  {
-    id: 1,
-    name: 'Shampoo hidratante',
-    presentation: 'Botella',
-    measureUnit: 'L',
-    unit: 'Botella L',
-    quantity: 18,
-    minStock: 8,
-    category: 'Cabello',
-    active: true,
-    imageUrl: null,
-  },
-  {
-    id: 2,
-    name: 'Tinte profesional #7.1',
-    presentation: 'Tubo',
-    measureUnit: 'ml',
-    unit: 'Tubo ml',
-    quantity: 6,
-    minStock: 8,
-    category: 'Coloración',
-    active: true,
-    imageUrl: null,
-  },
-  {
-    id: 3,
-    name: 'Esmalte gel nude',
-    presentation: 'Frasco',
-    measureUnit: 'ml',
-    unit: 'Frasco ml',
-    quantity: 12,
-    minStock: 6,
-    category: 'Uñas',
-    active: true,
-    imageUrl: null,
-  },
-  {
-    id: 4,
-    name: 'Cera para cejas',
-    presentation: 'Tarro',
-    measureUnit: 'g',
-    unit: 'Tarro g',
-    quantity: 3,
-    minStock: 6,
-    category: 'Mirada',
-    active: true,
-    imageUrl: null,
-  },
-  {
-    id: 5,
-    name: 'Mascarilla reparadora',
-    presentation: 'Tarro',
-    measureUnit: 'ml',
-    unit: 'Tarro ml',
-    quantity: 9,
-    minStock: 6,
-    category: 'Cabello',
-    active: true,
-    imageUrl: null,
-  },
-];
-
-// Evalúa tanto si está Inactivo (manual o por llegar a 0) como su nivel de stock
 export const getProductStockStatus = (quantity, minStock = 8, active = true) => {
   const qty = Number(quantity) || 0;
 
@@ -103,95 +39,113 @@ export const getProductStockStatus = (quantity, minStock = 8, active = true) => 
   };
 };
 
-// Regla de negocio: si quantity === 0, active pasa automáticamente a false
-const normalizeProductRule = (payload, previousProduct = null) => {
-  const qty = Number(payload.quantity) || 0;
-  const presentation = payload.presentation || previousProduct?.presentation || 'Botella';
-  const measureUnit = payload.measureUnit || previousProduct?.measureUnit || 'ml';
+const getReferences = async () =>
+  (await axiosClient.get('/api/v1/catalogo/referencias')).data;
 
-  // Si la cantidad llega a 0, se desactiva automáticamente
-  let nextActive = payload.active !== undefined ? Boolean(payload.active) : true;
-  if (qty <= 0) {
-    nextActive = false;
-  } else if (previousProduct && previousProduct.quantity === 0 && qty > 0) {
-    // Si estaba en 0 y se le agrega stock, se reactiva automáticamente
-    nextActive = true;
-  }
-
-  return {
-    ...previousProduct,
-    ...payload,
-    presentation,
-    measureUnit,
-    unit: `${presentation} ${measureUnit}`.trim(),
-    quantity: qty,
-    active: nextActive,
-  };
+const findIdByName = (items, name, idField) => {
+  const item = items.find(
+    (entry) => entry.nombre.toLowerCase() === String(name).toLowerCase()
+  );
+  if (!item) throw new Error(`No existe el catálogo "${name}" en la base de datos.`);
+  return item[idField];
 };
 
+const toProduct = (row) => ({
+  id: row.id_producto,
+  name: row.producto,
+  category: row.categoria,
+  presentation: row.presentacion || '',
+  measureUnit: row.unidad || '',
+  unit: row.presentacion_unidad || '',
+  quantity: Number(row.cantidad_disponible),
+  minStock: 11,
+  active: row.activo,
+  imageUrl: row.imagen_url || null,
+  price: row.precio === null ? null : Number(row.precio),
+  categoryId: row.categoria_id,
+  presentationId: row.presentacion_id,
+  unitId: row.unidad_id,
+});
 
+const toDatabasePayload = async (payload) => {
+  if (payload.imageFile) {
+    throw new Error(
+      'La base de datos solo almacena una URL de imagen. Sube el archivo a un servicio de almacenamiento y guarda su URL.'
+    );
+  }
+  const references = await getReferences();
+  const result = {};
+  if (payload.name !== undefined) result.nombre = payload.name;
+  if (payload.quantity !== undefined) {
+    result.cantidad_existente = Number(payload.quantity);
+  }
+  if (payload.imageUrl !== undefined) result.imagen_url = payload.imageUrl;
+  if (payload.price !== undefined) result.precio = payload.price;
+  if (payload.active !== undefined) result.activo = Boolean(payload.active);
+  if (payload.category !== undefined) {
+    result.categoria_id = findIdByName(
+      references.categorias,
+      payload.category,
+      'id_categoria'
+    );
+  }
+  if (payload.presentation !== undefined) {
+    result.presentacion_id = findIdByName(
+      references.presentaciones,
+      payload.presentation,
+      'id_presentacion'
+    );
+  }
+  if (payload.measureUnit !== undefined) {
+    result.unidad_id = findIdByName(references.unidades, payload.measureUnit, 'id_unidad');
+  }
+  return result;
+};
+
+const getProductFromView = async (id) => {
+  const rows = (await axiosClient.get('/api/v1/inventario/tabla')).data;
+  const row = rows.find((item) => item.id_producto === Number(id));
+  if (!row) throw new Error('No se encontró el producto en el inventario.');
+  return toProduct(row);
+};
 
 export const inventoryService = {
   async getProducts({ user } = {}) {
-    // FastAPI: return (await axiosClient.get('/inventory/products')).data;
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let results = [...inventoryStore];
-
-        // Filtrado por rol: Mariana (Cabello) ve Cabello y Coloración; Camila (Uñas) ve Uñas; Admin ve todo
-        if (user && user.role !== 'admin' && user.specialtyCategory) {
-          const allowed =
-            user.specialtyCategory === 'Cabello'
-              ? ['Cabello', 'Coloración']
-              : [user.specialtyCategory];
-          results = results.filter((p) => allowed.includes(p.category));
-        }
-
-        resolve(results);
-      }, 100);
-    });
-  }, 
+    const rows = (await axiosClient.get('/api/v1/inventario/tabla')).data;
+    let products = rows.map(toProduct);
+    if (user && user.role !== 'admin' && user.specialtyCategory) {
+      const allowed =
+        user.specialtyCategory === 'Cabello'
+          ? ['Cabello', 'Coloración']
+          : [user.specialtyCategory];
+      products = products.filter((product) => allowed.includes(product.category));
+    }
+    return products;
+  },
 
   async createProduct(payload) {
-    // FastAPI con imagen (Multipart FormData):
-    // const formData = new FormData();
-    // Object.entries(payload).forEach(([k, v]) => v !== null && formData.append(k, v));
-    // return (await axiosClient.post('/inventory/products', formData)).data;
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newProduct = normalizeProductRule({
-          id: Date.now(),
-          minStock: 8,
-          category: payload.category,
-          imageUrl: null,
-          ...payload,
-        });
-        inventoryStore = [newProduct, ...inventoryStore];
-        resolve(newProduct);
-      }, 100);
-    });
+    const data = await toDatabasePayload(payload);
+    if (Number(payload.quantity) <= 0) data.activo = false;
+    const created = (await axiosClient.post('/inventario/', data)).data;
+    return getProductFromView(created.id_producto);
   },
 
   async updateProduct(id, payload) {
-    // FastAPI: return (await axiosClient.put(`/inventory/products/${id}`, payload)).data;
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        inventoryStore = inventoryStore.map((p) =>
-          p.id === id ? normalizeProductRule(payload, p) : p
-        );
-        resolve(inventoryStore.find((p) => p.id === id));
-      }, 100);
-    });
+    const current = await axiosClient.get(`/inventario/${id}`);
+    const data = await toDatabasePayload(payload);
+    const nextQuantity = Number(
+      payload.quantity ?? current.data.cantidad_existente
+    );
+    if (nextQuantity <= 0) {
+      data.activo = false;
+    } else if (Number(current.data.cantidad_existente) <= 0) {
+      data.activo = true;
+    }
+    await axiosClient.patch(`/inventario/${id}`, data);
+    return getProductFromView(id);
   },
 
   async deleteProduct(id) {
-    // FastAPI: await axiosClient.delete(`/inventory/products/${id}`);
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        inventoryStore = inventoryStore.filter((p) => p.id !== id);
-        resolve(true);
-      }, 100);
-    });
+    await axiosClient.delete(`/inventario/${id}`);
   },
 };

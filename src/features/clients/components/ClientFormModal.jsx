@@ -1,21 +1,12 @@
 import { useState, useEffect } from 'react';
 import { X, ShieldQuestion } from 'lucide-react';
 
-const SERVICE_OPTIONS = [
-  { name: 'Corte, peinado', category: 'Cabello', price: 650 },
-  { name: 'Tinte completo', category: 'Coloración', price: 1250 },
-  { name: 'Manicura gel', category: 'Uñas', price: 380 },
-  { name: 'Pedicura spa', category: 'Uñas', price: 520 },
-  { name: 'Cejas, pestañas', category: 'Mirada', price: 650 },
-];
-
 export default function ClientFormModal({
   isOpen,
   onClose,
   onSave,
   initialData = null,
   existingClients = [],
-  isAdmin = false,
 }) {
   const isEditing = Boolean(initialData);
 
@@ -23,9 +14,6 @@ export default function ClientFormModal({
     name: '',
     phone: '',
     email: '',
-    initialService: 'Corte, peinado',
-    initialTime: '10:00',
-    employeeId: '2',
     notes: '',
   });
 
@@ -38,9 +26,6 @@ export default function ClientFormModal({
         name: initialData.name || '',
         phone: initialData.phone || '',
         email: initialData.email || '',
-        initialService: 'Corte, peinado',
-        initialTime: '10:00',
-        employeeId: String(initialData.assignedEmployeeIds?.[0] || 2),
         notes: initialData.notes || '',
       });
     } else {
@@ -48,9 +33,6 @@ export default function ClientFormModal({
         name: '',
         phone: '',
         email: '',
-        initialService: 'Corte, peinado',
-        initialTime: '10:00',
-        employeeId: '2',
         notes: '',
       });
     }
@@ -108,22 +90,11 @@ export default function ClientFormModal({
   };
 
   const handleConfirmSave = () => {
-    const selectedSrvObj =
-      SERVICE_OPTIONS.find((s) => s.name === formData.initialService) ||
-      SERVICE_OPTIONS[0];
-
     const payload = {
       name: formData.name.trim(),
       phone: formData.phone.trim(),
       email: formData.email.trim(),
       notes: formData.notes.trim(),
-      employeeId: Number(formData.employeeId),
-      ...(!isEditing && {
-        initialService: selectedSrvObj.name,
-        initialCategory: selectedSrvObj.category,
-        initialPrice: selectedSrvObj.price,
-        initialTime: formData.initialTime,
-      }),
     };
 
     setShowSaveConfirm(false);
@@ -232,59 +203,6 @@ export default function ClientFormModal({
               )}
             </div>
           </div>
-
-          {/* Servicio inicial y hora al registrar un cliente nuevo */}
-          {!isEditing && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block mb-2 text-xs font-bold text-stone-800">
-                  Servicio inicial / reciente
-                </label>
-                <select
-                  name="initialService"
-                  value={formData.initialService}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border border-stone-200/90 text-sm text-stone-800 focus:outline-none focus:border-brand-primary cursor-pointer"
-                >
-                  {SERVICE_OPTIONS.map((srv) => (
-                    <option key={srv.name} value={srv.name}>
-                      {srv.name} ({srv.category})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block mb-2 text-xs font-bold text-stone-800">
-                  Hora de visita
-                </label>
-                <input
-                  type="time"
-                  name="initialTime"
-                  value={formData.initialTime}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border border-stone-200/90 text-sm text-stone-800 focus:outline-none focus:border-brand-primary"
-                />
-              </div>
-            </div>
-          )}
-
-          {isAdmin && !isEditing && (
-            <div>
-              <label className="block mb-2 text-xs font-bold text-stone-800">
-                Especialista asignada
-              </label>
-              <select
-                name="employeeId"
-                value={formData.employeeId}
-                onChange={handleChange}
-                className="w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border border-stone-200/90 text-sm text-stone-800 focus:outline-none focus:border-brand-primary cursor-pointer"
-              >
-                <option value="2">Mariana Silva (Cabello / Coloración)</option>
-                <option value="3">Camila Torres (Uñas)</option>
-              </select>
-            </div>
-          )}
 
           <div>
             <label className="block mb-2 text-xs font-bold text-stone-800">

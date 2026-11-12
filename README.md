@@ -1,5 +1,19 @@
 # React + Vite
 
+## Acceso de empleados
+
+Configura `VITE_API_URL` con la URL del backend (por defecto,
+`http://localhost:8000`). El formulario envía el correo y la contraseña a
+`POST /empleados/login`; el backend comprueba la contraseña con bcrypt. Las
+cuentas existentes con PBKDF2 siguen siendo compatibles y las contraseñas nuevas
+o actualizadas no pueden superar 72 bytes UTF-8. Usa HTTPS fuera del entorno
+local; bcrypt no cifra el tráfico ni sustituye HTTPS.
+
+El backend actual no emite tokens ni exige autenticación o autorización para
+sus endpoints. Las rutas protegidas del frontend solo controlan la navegación y
+no impiden el acceso directo a la API; no utilices esta configuración como
+control de acceso en producción.
+
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
 Currently, two official plugins are available:

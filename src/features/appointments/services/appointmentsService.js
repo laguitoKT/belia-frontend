@@ -1,308 +1,183 @@
-// import axiosClient from '../../../api/axiosClient';
-import { getTodayISO } from '../../../utils/dateUtils';
-import { getClientInitials } from '../../clients/services/clientsService';
+import axiosClient from '../../../api/axiosClient';
 
-const todayISO = getTodayISO();
-
-// Obtiene una fecha dentro del mismo mes actual para poblar la vista mensual como en el mockup
-const getMonthDayISO = (dayNumber) => {
-  const [year, month] = todayISO.split('-');
-  return `${year}-${month}-${String(dayNumber).padStart(2, '0')}`;
-};
-
-let appointmentsStore = [
-  {
-    id: 101,
-    date: todayISO,
-    startTime: '09:00',
-    endTime: '10:00',
-    durationMinutes: 60,
-    serviceId: 1,
-    service: 'Corte + peinado',
-    specification: 'Lavado hidratante, corte en capas largas y secado con ondas suaves.',
-    category: 'Cabello',
-    price: 450,
-    clientId: 1,
-    client: 'Sofía Mendoza',
-    clientPhone: '55 1234 6678',
-    employeeId: 2,
-    employee: 'Mariana',
-    employeeFullName: 'Mariana Silva',
-    status: 'Confirmada',
-    theme: 'wine', // 'wine' | 'pink' | 'amber' | 'mint'
-  },
-  {
-    id: 102,
-    date: todayISO,
-    startTime: '10:30',
-    endTime: '11:15',
-    durationMinutes: 45,
-    serviceId: 3,
-    service: 'Manicura gel',
-    specification: 'Limpieza profunda de cutícula y esmaltado gel tono nude rosado.',
-    category: 'Uñas',
-    price: 380,
-    clientId: 2,
-    client: 'Camila Ruiz',
-    clientPhone: '55 3467 9012',
-    employeeId: 3,
-    employee: 'Paola',
-    employeeFullName: 'Paola García',
-    status: 'Confirmada',
-    theme: 'pink',
-  },
-  {
-    id: 103,
-    date: todayISO,
-    startTime: '12:00',
-    endTime: '13:30',
-    durationMinutes: 90,
-    serviceId: 2,
-    service: 'Tinte completo',
-    specification: 'Aplicación de tinte global #7.1 rubio cenizo medio y ampolleta protectora.',
-    category: 'Coloración',
-    price: 1250,
-    clientId: 3,
-    client: 'Valeria Torres',
-    clientPhone: '55 8765 3321',
-    employeeId: 2,
-    employee: 'Mariana',
-    employeeFullName: 'Mariana Silva',
-    status: 'Por confirmar',
-    theme: 'amber',
-  },
-  {
-    id: 104,
-    date: todayISO,
-    startTime: '15:00',
-    endTime: '16:00',
-    durationMinutes: 60,
-    serviceId: 5,
-    service: 'Diseño de cejas',
-    specification: 'Diseño personalizado con hilo orgánico y laminado de cejas.',
-    category: 'Mirada',
-    price: 290,
-    clientId: 4,
-    client: 'Renata Díaz',
-    clientPhone: '55 4567 8890',
-    employeeId: 2,
-    employee: 'Mariana',
-    employeeFullName: 'Mariana Silva',
-    status: 'Confirmada',
-    theme: 'mint',
-  },
-
-  {
-    id: 105,
-    date: getMonthDayISO(8),
-    startTime: '11:00',
-    endTime: '11:45',
-    durationMinutes: 45,
-    serviceId: 3,
-    service: 'Manicura gel',
-    specification: 'Retoque de gel semipermanente.',
-    category: 'Uñas',
-    price: 380,
-    clientId: 5,
-    client: 'Lucía Herrera',
-    clientPhone: '55 7788 1102',
-    employeeId: 3,
-    employee: 'Paola',
-    employeeFullName: 'Paola García',
-    status: 'Confirmada',
-    theme: 'pink',
-  },
-  {
-    id: 106,
-    date: getMonthDayISO(15),
-    startTime: '10:30',
-    endTime: '11:30',
-    durationMinutes: 60,
-    serviceId: 1,
-    service: 'Corte + peinado',
-    specification: 'Despunte y planchado.',
-    category: 'Cabello',
-    price: 450,
-    clientId: 1,
-    client: 'Sofía Mendoza',
-    clientPhone: '55 1234 6678',
-    employeeId: 2,
-    employee: 'Mariana',
-    employeeFullName: 'Mariana Silva',
-    status: 'Confirmada',
-    theme: 'mint',
-  },
-  {
-    id: 107,
-    date: getMonthDayISO(23),
-    startTime: '13:00',
-    endTime: '15:00',
-    durationMinutes: 120,
-    serviceId: 2,
-    service: 'Coloración',
-    specification: 'Efecto balayage caramelo.',
-    category: 'Coloración',
-    price: 1250,
-    clientId: 3,
-    client: 'Valeria Torres',
-    clientPhone: '55 8765 3321',
-    employeeId: 4,
-    employee: 'Elena',
-    employeeFullName: 'Elena Soto',
-    status: 'Por confirmar',
-    theme: 'amber',
-  },
-];
-
-// Calcula la hora de término sumando minutos a "HH:mm"
 export const calculateEndTime = (startTime = '09:00', durationMinutes = 60) => {
   const [hours, minutes] = startTime.split(':').map(Number);
-  const totalMinutes = hours * 60 + minutes + Number(durationMinutes || 60);
-  const endHours = Math.floor(totalMinutes / 60) % 24;
-  const endMins = totalMinutes % 60;
-  return `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
+  const totalMinutes = hours * 60 + minutes + Number(durationMinutes || 0);
+  return `${String(Math.floor(totalMinutes / 60) % 24).padStart(2, '0')}:${String(
+    totalMinutes % 60
+  ).padStart(2, '0')}`;
 };
 
-// Asigna el tema de color (vino, rosa, ámbar, menta) según categoría y estado
 export const resolveAppointmentTheme = (category = '', status = 'Confirmada') => {
-  if (status === 'Por confirmar') return 'amber';
-  const norm = category.toLowerCase();
-  if (norm.includes('uña')) return 'pink';
-  if (norm.includes('mirada') || norm.includes('ceja') || norm.includes('pestaña')) return 'mint';
-  if (norm.includes('color')) return 'amber';
-  return 'wine';
+  if (status !== 'Confirmada') return 'amber';
+  const normalized = category.toLowerCase();
+  if (normalized.includes('uña')) return 'pink';
+  if (normalized.includes('mirada')) return 'mint';
+  if (normalized.includes('cabello') || normalized.includes('color')) return 'wine';
+  return 'amber';
 };
 
-const enrichAppointment = (apt) => {
-  const durationMins = Number(apt.durationMinutes) || 60;
+const toAppointment = (row) => {
+  const serviceBreakdown = (row.service_breakdown || []).map((detail, index) => ({
+    subKey: `${detail.serviceId}-${detail.employeeId}-${index}`,
+    serviceId: detail.serviceId,
+    serviceName: detail.serviceName,
+    category: detail.category,
+    startTime: detail.startTime,
+    endTime: detail.endTime,
+    durationMinutes: Number(detail.durationMinutes),
+    employeeId: detail.employeeId,
+    employeeName: detail.employeeName,
+    employeeShortName: (detail.employeeName || '').split(' ')[0],
+  }));
+  const categories = [...new Set(serviceBreakdown.map((detail) => detail.category))];
+  const employeeNames = [
+    ...new Set(serviceBreakdown.map((detail) => detail.employeeName)),
+  ];
+  const serviceNames = serviceBreakdown.map((detail) => detail.serviceName);
+  const totalDuration = serviceBreakdown.reduce(
+    (total, detail) => total + detail.durationMinutes,
+    0
+  );
+  const status = row.estado === 'Pendiente' ? 'Por confirmar' : row.estado;
+  const category = categories.length > 1 ? 'Paquete mixto' : categories[0] || row.categoria;
+
   return {
-    ...apt,
-    serviceCategory: apt.category || apt.serviceCategory || 'Cabello',
-    category: apt.category || apt.serviceCategory || 'Cabello',
-    notes: apt.specification || apt.notes || 'Sin especificaciones adicionales.',
-    specification: apt.specification || apt.notes || 'Sin especificaciones adicionales.',
-    durationMinutes: durationMins,
-    durationHours: apt.durationHours || Number((durationMins / 60).toFixed(1)),
-    clientInitials: getClientInitials(apt.client),
-    endTime: apt.endTime || calculateEndTime(apt.startTime, durationMins),
-    theme: apt.theme || resolveAppointmentTheme(apt.category || apt.serviceCategory, apt.status),
+    id: row.id_cita,
+    date: row.fecha,
+    startTime: serviceBreakdown[0]?.startTime || row.hora_inicio,
+    endTime: serviceBreakdown.at(-1)?.endTime || row.hora_fin,
+    durationMinutes: totalDuration || Number(row.duracion_estimada),
+    durationHours: (totalDuration || Number(row.duracion_estimada)) / 60,
+    serviceId: serviceBreakdown[0]?.serviceId || row.servicio_id,
+    service: serviceNames.join(' + ') || row.servicio,
+    specification: row.specification || '',
+    category,
+    categories,
+    serviceCategory: category,
+    price: Number(row.precio),
+    clientId: row.cliente_id,
+    client: row.cliente,
+    clientPhone: row.telefono_cliente || '',
+    employeeId: serviceBreakdown[0]?.employeeId || row.empleado_id,
+    employee: employeeNames.map((name) => name.split(' ')[0]).join(' + '),
+    employeeFullName: employeeNames.join(' | '),
+    status,
+    theme: resolveAppointmentTheme(category, status),
+    serviceBreakdown,
   };
 };
 
-export const appointmentsService = {
-  /**
-   * Obtiene citas filtradas por usuario logueado (y opcionalmente por una fecha específica como en HomePage)
-   */
-  async getAppointments({ date, user } = {}) {
-    // FastAPI: return (await axiosClient.get('/appointments', { params: { date, employee_id: user?.id } })).data;
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let results = appointmentsStore.map(enrichAppointment);
+const getReferences = async () =>
+  (await axiosClient.get('/api/v1/catalogo/referencias')).data;
 
-        // Si se pasa una fecha exacta (ej. desde el módulo de Inicio), filtra ese día
-        if (date) {
-          results = results.filter((apt) => apt.date === date);
-        }
+const toDatabasePayload = async (payload) => {
+  const references = await getReferences();
+  const stateName =
+    payload.status === 'Por confirmar' ? 'Pendiente' : payload.status || 'Pendiente';
+  const state = references.estados.find(
+    (item) => item.nombre.toLowerCase() === stateName.toLowerCase()
+  );
+  if (!state) throw new Error(`No existe el estado "${stateName}" en la base de datos.`);
 
-        // Si no es admin, filtra las citas del trabajador logueado o de su categoría
-        if (user && user.role !== 'admin') {
-          results = results.filter(
-            (apt) =>
-              apt.employeeId === user.id ||
-              apt.category.toLowerCase() === (user.specialtyCategory || '').toLowerCase()
-          );
-        }
-
-        results.sort((a, b) =>
-          `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`)
+  const serviceRows = (await axiosClient.get('/api/v1/catalogo/servicios')).data;
+  const inputDetails = payload.serviceBreakdown?.length
+    ? payload.serviceBreakdown
+    : [
+        {
+          serviceId: payload.serviceId,
+          serviceName: payload.service,
+          employeeId: payload.employeeId,
+          startTime: payload.startTime,
+          endTime:
+            payload.endTime ||
+            calculateEndTime(payload.startTime, payload.durationMinutes || 60),
+        },
+      ];
+  const details = inputDetails.map((detail) => {
+    const service = detail.serviceId
+      ? serviceRows.find(
+          (row) => Number(row.id_servicio) === Number(detail.serviceId)
+        )
+      : serviceRows.find(
+          (row) =>
+            row.servicio.toLowerCase() ===
+            String(detail.serviceName).toLowerCase()
         );
-        resolve(results);
-      }, 100);
-    });
+    if (!service) {
+      throw new Error(
+        `No se encontró el servicio "${detail.serviceName || detail.serviceId}" en el catálogo de la base de datos.`
+      );
+    }
+    return {
+      servicio_id: service.id_servicio,
+      empleado_id: Number(detail.employeeId),
+      fecha_hora_inicio: `${payload.date}T${detail.startTime}:00`,
+      fecha_hora_fin: `${payload.date}T${detail.endTime}:00`,
+    };
+  });
+  const first = details[0];
+  return {
+    cliente_id: Number(payload.clientId),
+    empleado_id: first.empleado_id,
+    servicio_id: first.servicio_id,
+    estado_id: state.id_estado,
+    fecha_hora_inicio: first.fecha_hora_inicio,
+    fecha_hora_fin: first.fecha_hora_fin,
+    notas_detalles: payload.specification || null,
+    precio_total: Number.isFinite(Number(payload.price))
+      ? Number(payload.price)
+      : null,
+    detalles,
+  };
+};
+
+const getAppointmentFromView = async (id) => {
+  const rows = (
+    await axiosClient.get('/api/v1/agenda/citas', { params: { id_cita: id } })
+  ).data;
+  const row = rows.find((item) => item.id_cita === Number(id));
+  if (!row) throw new Error('No se encontró la cita en la agenda.');
+  return toAppointment(row);
+};
+
+export const appointmentsService = {
+  async getAppointments({ date, user } = {}) {
+    const params = date ? { desde: date, hasta: date } : {};
+    const rows = (await axiosClient.get('/api/v1/agenda/citas', { params })).data;
+    let appointments = rows.map(toAppointment);
+    if (user && user.role !== 'admin') {
+      appointments = appointments.filter(
+        (appointment) =>
+          appointment.employeeId === user.id ||
+          appointment.serviceBreakdown.some(
+            (detail) => detail.employeeId === user.id
+          ) ||
+          appointment.category.toLowerCase() ===
+            (user.specialtyCategory || '').toLowerCase()
+      );
+    }
+    return appointments;
   },
 
   async createAppointment(payload) {
-    // FastAPI: return (await axiosClient.post('/appointments', payload)).data;
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const duration = Number(payload.durationMinutes) || 60;
-        const endTime = payload.endTime || calculateEndTime(payload.startTime, duration);
-        const shortEmpName = (payload.employeeFullName || payload.employee || 'Mariana').split(' ')[0];
-
-        const newApt = enrichAppointment({
-          id: Date.now(),
-          date: payload.date,
-          startTime: payload.startTime,
-          endTime,
-          durationMinutes: duration,
-          serviceId: payload.serviceId || null,
-          serviceIds: payload.serviceIds || [],
-          service: payload.service,
-          specification: payload.specification || 'Servicio estándar agendado.',
-          category: payload.category || 'Cabello',
-          categories: payload.categories || [payload.category || 'Cabello'],
-          price: Number(payload.price) || 450,
-          clientId: payload.clientId || null,
-          client: payload.client,
-          clientPhone: payload.clientPhone,
-          employeeId: Number(payload.employeeId) || 2,
-          secondaryEmployeeIds: payload.secondaryEmployeeIds || [],
-          employee: shortEmpName,
-          employeeFullName: payload.employeeFullName || shortEmpName,
-          status: payload.status || 'Pendiente',
-          theme: resolveAppointmentTheme(payload.category, payload.status),
-        });
-
-        appointmentsStore = [...appointmentsStore, newApt];
-        resolve(newApt);
-      }, 100);
-    });
+    const data = await toDatabasePayload(payload);
+    const created = (await axiosClient.post('/citas/', data)).data;
+    return getAppointmentFromView(created.id_cita);
   },
 
   async updateAppointment(id, payload) {
-    // FastAPI: return (await axiosClient.put(`/appointments/${id}`, payload)).data;
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        appointmentsStore = appointmentsStore.map((apt) => {
-          if (apt.id !== id) return apt;
-          const duration = Number(payload.durationMinutes ?? apt.durationMinutes) || 60;
-          const startTime = payload.startTime || apt.startTime;
-          const endTime = payload.endTime || calculateEndTime(startTime, duration);
-          const shortEmpName = (
-            payload.employeeFullName ||
-            payload.employee ||
-            apt.employee
-          ).split(' ')[0];
-
-          return enrichAppointment({
-            ...apt,
-            ...payload,
-            durationMinutes: duration,
-            endTime,
-            employee: shortEmpName,
-            theme: resolveAppointmentTheme(
-              payload.category || apt.category,
-              payload.status || apt.status
-            ),
-          });
-        });
-
-        resolve(appointmentsStore.find((apt) => apt.id === id));
-      }, 100);
-    });
+    const data = await toDatabasePayload(payload);
+    await axiosClient.patch(`/citas/${id}`, data);
+    return getAppointmentFromView(id);
   },
 
   async updateAppointmentStatus(id, nextStatus) {
-    return this.updateAppointment(id, { status: nextStatus });
+    const appointment = await getAppointmentFromView(id);
+    return this.updateAppointment(id, { ...appointment, status: nextStatus });
   },
 
   async deleteAppointment(id) {
-    // FastAPI: await axiosClient.delete(`/appointments/${id}`);
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        appointmentsStore = appointmentsStore.filter((apt) => apt.id !== id);
-        resolve(true);
-      }, 100);
-    });
+    await axiosClient.delete(`/citas/${id}`);
   },
 };

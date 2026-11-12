@@ -642,7 +642,7 @@ export default function AppointmentFormModal({
       employeeId: primaryEmpId,
       employee: uniqueShortNames,
       employeeFullName: uniqueFullNames,
-      serviceBreakdown, // Listo para guardarse en tabla relacional appointment_items en PostgreSQL
+      serviceBreakdown,
     };
 
     setShowSaveConfirm(false);

@@ -23,20 +23,24 @@ export default function LoginPage() {
 
   const { login } = useAuth();
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setErrorMessage('');
-  setIsSubmitting(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setIsSubmitting(true);
 
-  try {
-    await login(formData.username, formData.password);
-    navigate('/inicio');
-  } catch (error) {
-    setErrorMessage('Por favor ingresa tu usuario y contraseña.');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    try {
+      await login(formData.username, formData.password);
+      navigate('/inicio');
+    } catch (error) {
+      setErrorMessage(
+        error.response?.status === 401
+          ? 'Correo o contraseña incorrectos, o cuenta inactiva.'
+          : 'No se pudo iniciar sesión. Revisa la conexión con el servidor e inténtalo de nuevo.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="relative min-h-screen w-full flex flex-col lg:flex-row overflow-hidden bg-[#F8F6F7]">
@@ -117,16 +121,16 @@ const handleSubmit = async (e) => {
                 htmlFor="username"
                 className="block mb-2 text-xs font-semibold text-stone-700"
               >
-                Usuario
+                Correo electrónico
               </label>
               <input
                 id="username"
                 name="username"
                 type="text"
-                autoComplete="username"
+                autoComplete="email"
                 value={formData.username}
                 onChange={handleChange}
-                placeholder="Escribe tu usuario"
+                placeholder="correo@ejemplo.com"
                 className="w-full px-4 py-3.5 rounded-xl bg-surface-input border border-stone-200/80 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
               />
             </div>
