@@ -14,7 +14,7 @@ import {
   CheckCircle2,
   Clock,
 } from 'lucide-react';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '../../../context/useAuth';
 import { catalogService } from '../services/catalogService';
 import ServiceFormModal from '../components/ServiceFormModal';
 import CatalogDetailModal from '../components/CatalogDetailModal';
@@ -83,6 +83,8 @@ export default function ServicesPage() {
   const [services, setServices] = useState([]);
   const [promotions, setPromotions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [operationError, setOperationError] = useState('');
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todas');
@@ -108,6 +110,7 @@ export default function ServicesPage() {
   useEffect(() => {
     const fetchCatalog = async () => {
       setIsLoading(true);
+      setLoadError('');
       try {
         const [srvData, promoData] = await Promise.all([
           catalogService.getServices({ user }),
@@ -116,6 +119,9 @@ export default function ServicesPage() {
         setServices(srvData);
         setPromotions(promoData);
         setSelectedCategory('Todas');
+      } catch (error) {
+        console.error('Error al cargar el catálogo:', error);
+        setLoadError('No se pudo cargar el catálogo. Revisa la conexión y vuelve a intentarlo.');
       } finally {
         setIsLoading(false);
       }
@@ -160,29 +166,35 @@ export default function ServicesPage() {
   };
 
   const handleSaveModal = async (formData) => {
-    if (activeTab === 'services') {
-      if (editingItem) {
-        const updated = await catalogService.updateService(editingItem.id, formData);
-        setServices((prev) => prev.map((s) => (s.id === editingItem.id ? updated : s)));
-        showToast(`Servicio "${updated.name}" actualizado.`);
+    setOperationError('');
+    try {
+      if (activeTab === 'services') {
+        if (editingItem) {
+          const updated = await catalogService.updateService(editingItem.id, formData);
+          setServices((prev) => prev.map((s) => (s.id === editingItem.id ? updated : s)));
+          showToast(`Servicio "${updated.name}" actualizado.`);
+        } else {
+          const created = await catalogService.createService(formData);
+          setServices((prev) => [created, ...prev]);
+          showToast(`Servicio "${created.name}" creado.`);
+        }
       } else {
-        const created = await catalogService.createService(formData);
-        setServices((prev) => [created, ...prev]);
-        showToast(`Servicio "${created.name}" creado.`);
+        if (editingItem) {
+          const updated = await catalogService.updatePromotion(editingItem.id, formData);
+          setPromotions((prev) => prev.map((p) => (p.id === editingItem.id ? updated : p)));
+          showToast(`Promoción "${updated.name}" actualizada.`);
+        } else {
+          const created = await catalogService.createPromotion(formData);
+          setPromotions((prev) => [created, ...prev]);
+          showToast(`Promoción "${created.name}" creada.`);
+        }
       }
-    } else {
-      if (editingItem) {
-        const updated = await catalogService.updatePromotion(editingItem.id, formData);
-        setPromotions((prev) => prev.map((p) => (p.id === editingItem.id ? updated : p)));
-        showToast(`Promoción "${updated.name}" actualizada.`);
-      } else {
-        const created = await catalogService.createPromotion(formData);
-        setPromotions((prev) => [created, ...prev]);
-        showToast(`Promoción "${created.name}" creada.`);
-      }
+      setIsModalOpen(false);
+      setEditingItem(null);
+    } catch (error) {
+      console.error('Error al guardar el catálogo:', error);
+      setOperationError('No se pudo confirmar el guardado. Recarga el catálogo antes de volver a intentarlo.');
     }
-    setIsModalOpen(false);
-    setEditingItem(null);
   };
 
   const handleRequestToggleStatus = (item) => {
@@ -196,21 +208,24 @@ export default function ServicesPage() {
 
   const executeToggleStatus = async (item) => {
     const nextStatus = item.status === 'Activo' ? 'Inactivo' : 'Activo';
-    if (activeTab === 'services') {
-      const updated = await catalogService.updateService(item.id, {
-        ...item,
-        status: nextStatus,
-      });
-      setServices((prev) => prev.map((s) => (s.id === item.id ? updated : s)));
-    } else {
-      const updated = await catalogService.updatePromotion(item.id, {
-        ...item,
-        status: nextStatus,
-      });
-      setPromotions((prev) => prev.map((p) => (p.id === item.id ? updated : p)));
+    setOperationError('');
+    try {
+      if (activeTab === 'services') {
+        const updated = await catalogService.updateService(item.id, { status: nextStatus });
+        setServices((prev) => prev.map((s) => (s.id === item.id ? updated : s)));
+      } else {
+        const updated = await catalogService.updatePromotion(item.id, {
+          ...item,
+          status: nextStatus,
+        });
+        setPromotions((prev) => prev.map((p) => (p.id === item.id ? updated : p)));
+      }
+      setConfirmState({ isOpen: false, type: null, item: null });
+      showToast(`"${item.name}" marcado como ${nextStatus}.`);
+    } catch (error) {
+      console.error('Error al actualizar el estado:', error);
+      setOperationError('No se pudo confirmar el cambio de estado. Recarga el catálogo antes de volver a intentarlo.');
     }
-    setConfirmState({ isOpen: false, type: null, item: null });
-    showToast(`"${item.name}" marcado como ${nextStatus}.`);
   };
 
   const handleRequestDelete = (item) => {
@@ -238,6 +253,14 @@ export default function ServicesPage() {
       className="w-full space-y-6"
       onClick={() => openMenuId !== null && setOpenMenuId(null)}
     >
+      {operationError && (
+        <div role="alert" className="fixed top-6 right-6 z-[70] max-w-md rounded-2xl bg-red-50 border border-red-200 p-4 text-sm text-red-700 shadow-lg">
+          {operationError}
+          <button type="button" onClick={() => setOperationError('')} className="ml-3 font-bold">
+            Cerrar
+          </button>
+        </div>
+      )}
       {feedbackBanner && (
         <div className="fixed bottom-6 right-6 z-40 bg-stone-900 text-white px-4 py-3 rounded-2xl shadow-lg flex items-center gap-2.5 text-xs font-semibold">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -390,6 +413,10 @@ export default function ServicesPage() {
       {isLoading ? (
         <div className="py-16 text-xs text-center text-stone-400">
           Cargando catálogo...
+        </div>
+      ) : loadError ? (
+        <div role="alert" className="py-16 text-sm text-center text-red-600">
+          {loadError}
         </div>
       ) : activeTab === 'services' ? (
         viewMode === 'cards' ? (

@@ -1,4 +1,9 @@
 import axios from 'axios';
+import {
+  clearAuthStorage,
+  SESSION_EXPIRED_EVENT,
+  STORAGE_TOKEN_KEY,
+} from '../utils/authStorage';
 
 const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
@@ -10,7 +15,7 @@ const axiosClient = axios.create({
 // Interceptor de petición: adjunta automáticamente el token JWT si existe
 axiosClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('belia_access_token');
+    const token = localStorage.getItem(STORAGE_TOKEN_KEY);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -24,8 +29,8 @@ axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem('belia_access_token');
-      // Redirección controlada al login cuando expire el token en el backend
+      clearAuthStorage();
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }

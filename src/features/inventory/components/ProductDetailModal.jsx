@@ -5,7 +5,6 @@ import {
   Layers,
   AlertCircle,
   Pencil,
-  Power,
   Droplets,
   LayoutGridCircles,
 } from 'lucide-react';
@@ -16,7 +15,6 @@ export default function ProductDetailModal({
   isOpen,
   onClose,
   onEdit,
-  onToggleActive,
 }) {
   if (!isOpen || !product) return null;
 
@@ -150,22 +148,6 @@ export default function ProductDetailModal({
 
         {/* Botones de acción */}
         <div className="flex flex-wrap items-center justify-between gap-2 mt-6">
-          <button
-            type="button"
-            onClick={() => {
-              onClose();
-              onToggleActive(product);
-            }}
-            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 ${
-              statusInfo.isActive
-                ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
-                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-            }`}
-          >
-            <Power className="w-3.5 h-3.5" />
-            <span>{statusInfo.isActive ? 'Desactivar' : 'Activar'}</span>
-          </button>
-
           <div className="flex items-center gap-2">
             <button
               type="button"

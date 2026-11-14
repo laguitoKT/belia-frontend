@@ -1,9 +1,12 @@
 import axiosClient from '../../../api/axiosClient';
 
+const ACTIVE_STATE_ID = 1;
+const INACTIVE_STATE_ID = 2;
+
 export const getProductStockStatus = (quantity, minStock = 8, active = true) => {
   const qty = Number(quantity) || 0;
 
-  if (!active || qty <= 0) {
+  if (!active) {
     return {
       label: qty <= 0 ? 'Inactivo (Sin stock)' : 'Inactivo',
       shortLabel: 'Inactivo',
@@ -14,7 +17,7 @@ export const getProductStockStatus = (quantity, minStock = 8, active = true) => 
   }
   if (qty <= 3) {
     return {
-      label: 'Crítico',
+      label: 'Activo · Crítico',
       shortLabel: 'Crítico',
       badgeClass: 'bg-[#FDECEF] text-brand-primary',
       dotClass: 'bg-brand-primary',
@@ -23,7 +26,7 @@ export const getProductStockStatus = (quantity, minStock = 8, active = true) => 
   }
   if (qty < minStock) {
     return {
-      label: 'Bajo',
+      label: 'Activo · Bajo',
       shortLabel: 'Bajo',
       badgeClass: 'bg-[#FEF3E2] text-[#A66A15]',
       dotClass: 'bg-amber-500',
@@ -31,7 +34,7 @@ export const getProductStockStatus = (quantity, minStock = 8, active = true) => 
     };
   }
   return {
-    label: 'Óptimo',
+    label: 'Activo · Óptimo',
     shortLabel: 'Óptimo',
     badgeClass: 'bg-[#E8F6F0] text-[#1E7E5A]',
     dotClass: 'bg-emerald-500',
@@ -50,22 +53,36 @@ const findIdByName = (items, name, idField) => {
   return item[idField];
 };
 
-const toProduct = (row) => ({
-  id: row.id_producto,
-  name: row.producto,
-  category: row.categoria,
-  presentation: row.presentacion || '',
-  measureUnit: row.unidad || '',
-  unit: row.presentacion_unidad || '',
-  quantity: Number(row.cantidad_disponible),
-  minStock: 11,
-  active: row.activo,
-  imageUrl: row.imagen_url || null,
-  price: row.precio === null ? null : Number(row.precio),
-  categoryId: row.categoria_id,
-  presentationId: row.presentacion_id,
-  unitId: row.unidad_id,
-});
+const toProduct = (row) => {
+  if (
+    !row ||
+    typeof row.nombre !== 'string' ||
+    !row.nombre.trim() ||
+    row.cantidad_existente == null ||
+    String(row.cantidad_existente).trim() === '' ||
+    !Number.isFinite(Number(row.cantidad_existente)) ||
+    (row.estado_id !== ACTIVE_STATE_ID && row.estado_id !== INACTIVE_STATE_ID)
+  ) {
+    throw new Error('El servidor devolvió un producto de inventario inválido.');
+  }
+
+  return {
+    id: row.id_producto,
+    name: row.nombre,
+    category: row.categoria || '',
+    presentation: row.presentacion || '',
+    measureUnit: row.unidad || '',
+    unit: [row.presentacion, row.unidad].filter(Boolean).join(' / '),
+    quantity: Number(row.cantidad_existente),
+    minStock: 11,
+    active: row.estado_id === ACTIVE_STATE_ID,
+    imageUrl: row.imagen_url || null,
+    price: row.precio == null ? null : Number(row.precio),
+    categoryId: row.categoria_id,
+    presentationId: row.presentacion_id,
+    unitId: row.unidad_id,
+  };
+};
 
 const toDatabasePayload = async (payload) => {
   if (payload.imageFile) {
@@ -73,15 +90,21 @@ const toDatabasePayload = async (payload) => {
       'La base de datos solo almacena una URL de imagen. Sube el archivo a un servicio de almacenamiento y guarda su URL.'
     );
   }
-  const references = await getReferences();
   const result = {};
   if (payload.name !== undefined) result.nombre = payload.name;
   if (payload.quantity !== undefined) {
-    result.cantidad_existente = Number(payload.quantity);
+    const quantity = Number(payload.quantity);
+    if (payload.quantity === null || payload.quantity === '' || !Number.isFinite(quantity) || quantity < 0) {
+      throw new Error('La cantidad del producto debe ser un número igual o mayor a 0.');
+    }
+    result.cantidad_existente = quantity;
+    result.estado_id = quantity === 0 ? INACTIVE_STATE_ID : ACTIVE_STATE_ID;
   }
   if (payload.imageUrl !== undefined) result.imagen_url = payload.imageUrl;
   if (payload.price !== undefined) result.precio = payload.price;
-  if (payload.active !== undefined) result.activo = Boolean(payload.active);
+  const references = payload.category !== undefined || payload.presentation !== undefined || payload.measureUnit !== undefined
+    ? await getReferences()
+    : null;
   if (payload.category !== undefined) {
     result.categoria_id = findIdByName(
       references.categorias,
@@ -103,16 +126,36 @@ const toDatabasePayload = async (payload) => {
 };
 
 const getProductFromView = async (id) => {
-  const rows = (await axiosClient.get('/api/v1/inventario/tabla')).data;
+  const [viewResponse, productResponse] = await Promise.all([
+    axiosClient.get('/api/v1/inventario/tabla'),
+    axiosClient.get(`/inventario/${id}`),
+  ]);
+  const rows = viewResponse.data;
   const row = rows.find((item) => item.id_producto === Number(id));
   if (!row) throw new Error('No se encontró el producto en el inventario.');
-  return toProduct(row);
+  return toProduct({ ...row, ...productResponse.data });
 };
 
 export const inventoryService = {
   async getProducts({ user } = {}) {
-    const rows = (await axiosClient.get('/api/v1/inventario/tabla')).data;
-    let products = rows.map(toProduct);
+    const [viewResponse, firstPage] = await Promise.all([
+      axiosClient.get('/api/v1/inventario/tabla'),
+      axiosClient.get('/inventario/', { params: { skip: 0, limit: 100 } }),
+    ]);
+    const records = [...firstPage.data];
+    let page = firstPage.data;
+    while (page.length === 100) {
+      page = (await axiosClient.get('/inventario/', {
+        params: { skip: records.length, limit: 100 },
+      })).data;
+      records.push(...page);
+    }
+    const byId = new Map(records.map((record) => [record.id_producto, record]));
+    let products = viewResponse.data.map((row) => {
+      const record = byId.get(row.id_producto);
+      if (!record) throw new Error('No se encontró el estado de un producto del inventario.');
+      return toProduct({ ...row, ...record });
+    });
     if (user && user.role !== 'admin' && user.specialtyCategory) {
       const allowed =
         user.specialtyCategory === 'Cabello'
@@ -125,24 +168,26 @@ export const inventoryService = {
 
   async createProduct(payload) {
     const data = await toDatabasePayload(payload);
-    if (Number(payload.quantity) <= 0) data.activo = false;
+    if (data.cantidad_existente === undefined) {
+      throw new Error('La cantidad del producto es obligatoria.');
+    }
     const created = (await axiosClient.post('/inventario/', data)).data;
-    return getProductFromView(created.id_producto);
+    const product = await getProductFromView(created.id_producto);
+    if (product.quantity !== data.cantidad_existente || product.active !== (data.estado_id === ACTIVE_STATE_ID)) {
+      throw new Error('El servidor no confirmó la cantidad y el estado del producto creado.');
+    }
+    return product;
   },
 
   async updateProduct(id, payload) {
-    const current = await axiosClient.get(`/inventario/${id}`);
     const data = await toDatabasePayload(payload);
-    const nextQuantity = Number(
-      payload.quantity ?? current.data.cantidad_existente
-    );
-    if (nextQuantity <= 0) {
-      data.activo = false;
-    } else if (Number(current.data.cantidad_existente) <= 0) {
-      data.activo = true;
-    }
     await axiosClient.patch(`/inventario/${id}`, data);
-    return getProductFromView(id);
+    const product = await getProductFromView(id);
+    if (data.cantidad_existente !== undefined &&
+      (product.quantity !== data.cantidad_existente || product.active !== (data.estado_id === ACTIVE_STATE_ID))) {
+      throw new Error('El servidor no confirmó la cantidad y el estado actualizados.');
+    }
+    return product;
   },
 
   async deleteProduct(id) {

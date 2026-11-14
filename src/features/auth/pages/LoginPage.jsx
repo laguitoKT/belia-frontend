@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ChevronRight } from 'lucide-react';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '../../../context/useAuth';
+import { LoginResponseError } from '../services/authServices';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -33,9 +34,11 @@ export default function LoginPage() {
       navigate('/inicio');
     } catch (error) {
       setErrorMessage(
-        error.response?.status === 401
-          ? 'Correo o contraseña incorrectos, o cuenta inactiva.'
-          : 'No se pudo iniciar sesión. Revisa la conexión con el servidor e inténtalo de nuevo.'
+        error instanceof LoginResponseError
+          ? error.message
+          : error.response?.status === 401
+            ? 'Correo o contraseña incorrectos, o cuenta inactiva.'
+            : 'No se pudo iniciar sesión. Revisa la conexión con el servidor e inténtalo de nuevo.'
       );
     } finally {
       setIsSubmitting(false);

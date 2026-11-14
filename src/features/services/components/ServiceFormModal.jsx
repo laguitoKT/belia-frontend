@@ -351,7 +351,7 @@ export default function ServiceFormModal({
           )}
 
           {/* Fila de Precio, Estado y Calendarios de Vigencia */}
-          <div div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-xs font-bold text-stone-800">

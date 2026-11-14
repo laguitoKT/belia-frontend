@@ -3,7 +3,7 @@ import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import ProfileModal from './ProfileModal';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 
 const sectionNames = {
   '/inicio': 'Inicio',

@@ -1,5 +1,7 @@
 import axiosClient from '../../../api/axiosClient';
 
+const SERVICE_STATUS_IDS = { Activo: 1, Inactivo: 2 };
+
 const resolveTheme = (category, index = 0) => {
   const norm = (category || '').toLowerCase();
   if (norm.includes('uña')) return index % 2 === 0 ? 'amber-scissors' : 'mint-sparkles';
@@ -17,16 +19,22 @@ const findIdByName = (items, name, idField) => {
   return item[idField];
 };
 
-const toService = (row, index = 0) => ({
-  id: row.id_servicio,
-  name: row.servicio,
-  description: row.descripcion || '',
-  category: row.categoria,
-  price: Number(row.precio),
-  durationMinutes: row.duracion_estimada,
-  status: row.estado,
-  theme: resolveTheme(row.categoria, index),
-});
+const toService = (row, index = 0) => {
+  const status = Object.keys(SERVICE_STATUS_IDS).find(
+    (label) => SERVICE_STATUS_IDS[label] === row.estado
+  );
+  if (!status) throw new Error('El servidor devolvió un estado de servicio desconocido.');
+  return {
+    id: row.id_servicio,
+    name: row.servicio,
+    description: row.notas_detalles || '',
+    category: row.categoria,
+    price: Number(row.precio),
+    durationMinutes: row.duracion_estimada,
+    status,
+    theme: resolveTheme(row.categoria, index),
+  };
+};
 
 const toPromotion = (row, services, index = 0) => {
   const serviceIds = row.servicios_ids || [];
@@ -54,7 +62,6 @@ const toPromotion = (row, services, index = 0) => {
 };
 
 const servicePayload = async (payload) => {
-  const references = await getReferences();
   const result = {};
   if (payload.name !== undefined) result.nombre = payload.name;
   if (payload.description !== undefined) result.notas_detalles = payload.description;
@@ -63,6 +70,7 @@ const servicePayload = async (payload) => {
     result.duracion_estimada = Number(payload.durationMinutes);
   }
   if (payload.category !== undefined) {
+    const references = await getReferences();
     result.categoria_id = findIdByName(
       references.categorias,
       payload.category,
@@ -70,7 +78,10 @@ const servicePayload = async (payload) => {
     );
   }
   if (payload.status !== undefined) {
-    result.estado_id = findIdByName(references.estados, payload.status, 'id_estado');
+    if (!Object.hasOwn(SERVICE_STATUS_IDS, payload.status)) {
+      throw new Error('El estado del servicio no es válido.');
+    }
+    result.estado_id = SERVICE_STATUS_IDS[payload.status];
   }
   return result;
 };
@@ -112,6 +123,9 @@ export const catalogService = {
     const rows = (await axiosClient.get('/api/v1/catalogo/servicios')).data;
     const row = rows.find((item) => item.id_servicio === created.id_servicio);
     if (!row) throw new Error('El servicio se creó, pero no apareció en el catálogo.');
+    if (data.estado_id !== undefined && row.estado !== data.estado_id) {
+      throw new Error('El servidor no confirmó el estado del servicio creado.');
+    }
     return toService(row);
   },
 
@@ -121,6 +135,9 @@ export const catalogService = {
     const rows = (await axiosClient.get('/api/v1/catalogo/servicios')).data;
     const row = rows.find((item) => item.id_servicio === Number(id));
     if (!row) throw new Error('No se encontró el servicio actualizado en el catálogo.');
+    if (data.estado_id !== undefined && row.estado !== data.estado_id) {
+      throw new Error('El servidor no confirmó el estado actualizado del servicio.');
+    }
     return toService(row);
   },
 

@@ -15,7 +15,7 @@ import {
   Trash2,
   CheckCircle2,
 } from 'lucide-react';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '../../../context/useAuth';
 import { clientsService } from '../services/clientsService';
 import ClientDetailModal from '../components/ClientDetailModal';
 import ClientHistoryModal from '../components/ClientHistoryModal';

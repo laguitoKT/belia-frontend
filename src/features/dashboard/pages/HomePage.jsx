@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 // Importación de servicios y utilidades
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '../../../context/useAuth';
 import { appointmentsService } from '../../appointments/services/appointmentsService';
 import { inventoryService } from '../../inventory/services/inventoryService';
 import AppointmentDetailModal from '../../appointments/components/AppointmentDetailModal';
