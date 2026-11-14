@@ -15,7 +15,7 @@ const sectionNames = {
 };
 
 export default function MainLayout() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const location = useLocation();
@@ -50,6 +50,7 @@ export default function MainLayout() {
       <ProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
+        onLogout={logout}
         user={user}
       />
     </div>

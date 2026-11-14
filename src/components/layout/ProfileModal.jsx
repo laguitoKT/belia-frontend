@@ -1,6 +1,6 @@
 import { X, Phone, Mail, Sparkles, Clock, ShieldCheck } from 'lucide-react';
 
-export default function ProfileModal({ isOpen, onClose, user }) {
+export default function ProfileModal({ isOpen, onClose, onLogout, user }) {
   if (!isOpen) return null;
 
   return (
@@ -82,10 +82,18 @@ export default function ProfileModal({ isOpen, onClose, user }) {
         </div>
 
         {/* Botón inferior */}
-        <div className="mt-6 flex justify-end">
+        <div className="mt-6 flex flex-col gap-2">
           <button
-            onClick={onClose}
+            type="button"
+            onClick={onLogout}
             className="w-full py-3 rounded-xl bg-brand-primary text-white text-xs font-semibold hover:bg-brand-accent transition-colors"
+          >
+            Cerrar sesión
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-3 rounded-xl border border-stone-200 text-stone-600 text-xs font-semibold hover:bg-surface-bg transition-colors"
           >
             Cerrar perfil
           </button>
