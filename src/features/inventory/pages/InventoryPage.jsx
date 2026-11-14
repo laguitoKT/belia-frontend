@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Plus,
   Minus,
@@ -9,11 +9,10 @@ import {
   LayoutGrid,
   Table2,
   Pencil,
-  Power,
   Trash2,
   CheckCircle2,
 } from 'lucide-react';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '../../../context/useAuth';
 import {
   inventoryService,
   getProductStockStatus,
@@ -28,6 +27,11 @@ export default function InventoryPage() {
   const [viewMode, setViewMode] = useState('table');
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [operationError, setOperationError] = useState('');
+  const pendingStockRef = useRef(new Set());
+  const savingProductRef = useRef(false);
+  const [pendingStock, setPendingStock] = useState(new Set());
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todas');
@@ -39,10 +43,9 @@ export default function InventoryPage() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [selectedDetailProduct, setSelectedDetailProduct] = useState(null);
 
-  // Confirmación para Eliminar o Desactivar/Activar manualmente
   const [confirmState, setConfirmState] = useState({
     isOpen: false,
-    type: null, // 'delete' | 'toggle-status'
+    type: null,
     product: null,
   });
 
@@ -79,10 +82,14 @@ export default function InventoryPage() {
   useEffect(() => {
     const fetchInventory = async () => {
       setIsLoading(true);
+      setLoadError('');
       try {
         const data = await inventoryService.getProducts({ user });
         setProducts(data);
         setSelectedCategory('Todas');
+      } catch (error) {
+        console.error('Error al cargar el inventario:', error);
+        setLoadError('No se pudo cargar el inventario. Revisa la conexión y vuelve a intentarlo.');
       } finally {
         setIsLoading(false);
       }
@@ -90,22 +97,10 @@ export default function InventoryPage() {
     if (user) fetchInventory();
   }, [user]);
 
-  const availableCategories = useMemo(() => {
-    if (!isAdmin && user?.specialtyCategory) {
-      return user.specialtyCategory === 'Cabello'
-        ? ['Todas', 'Cabello', 'Coloración']
-        : [user.specialtyCategory];
-    }
-    return [
-      'Todas',
-      'Cabello',
-      'Coloración',
-      'Uñas',
-      'Mirada',
-      'Maquillaje',
-      'Facial',
-    ];
-  }, [isAdmin, user]);
+  const availableCategories = useMemo(
+    () => ['Todas', ...new Set(products.map((product) => product.category).filter(Boolean))],
+    [products]
+  );
 
   const filteredProducts = useMemo(() => {
     return products.filter((prod) => {
@@ -129,59 +124,31 @@ export default function InventoryPage() {
   // Ajuste rápido de stock (+1 / -1) con desactivación automática al llegar a 0
   const handleQuickStockChange = async (product, delta) => {
     const nextQuantity = Math.max(0, Number(product.quantity) + delta);
-    if (nextQuantity === product.quantity) return;
+    if (nextQuantity === product.quantity || pendingStockRef.current.has(product.id)) return;
 
-    const updated = await inventoryService.updateProduct(product.id, {
-      ...product,
-      quantity: nextQuantity,
-    });
+    pendingStockRef.current.add(product.id);
+    setPendingStock(new Set(pendingStockRef.current));
+    setOperationError('');
+    try {
+      const updated = await inventoryService.updateProduct(product.id, {
+        quantity: nextQuantity,
+      });
 
-    setProducts((prev) =>
-      prev.map((p) => (p.id === product.id ? updated : p))
-    );
-
-    if (nextQuantity === 0) {
-      showToast(
-        `"${product.name}" llegó a 0 unidades y se marcó automáticamente como Inactivo.`
+      setProducts((prev) =>
+        prev.map((p) => (p.id === product.id ? updated : p))
       );
-    } else {
-      showToast(
-        `Stock de "${product.name}" actualizado a ${nextQuantity} unidades.`
-      );
+      if (nextQuantity === 0) {
+        showToast(`"${product.name}" llegó a 0 unidades y se marcó automáticamente como Inactivo.`);
+      } else {
+        showToast(`Stock de "${product.name}" actualizado a ${nextQuantity} unidades.`);
+      }
+    } catch (error) {
+      console.error('Error al actualizar el inventario:', error);
+      setOperationError('No se pudo confirmar la actualización del inventario. Recarga la página para consultar el estado actual.');
+    } finally {
+      pendingStockRef.current.delete(product.id);
+      setPendingStock(new Set(pendingStockRef.current));
     }
-  };
-
-  // Desactivación / Activación manual
-  const handleRequestToggleActive = (product) => {
-    setOpenMenuId(null);
-    if (!product.active && product.quantity <= 0) {
-      showToast(
-        `Agrega al menos 1 unidad a "${product.name}" para poder activarlo.`
-      );
-      return;
-    }
-    setConfirmState({
-      isOpen: true,
-      type: 'toggle-status',
-      product,
-    });
-  };
-
-  const executeToggleActive = async () => {
-    const prod = confirmState.product;
-    if (!prod) return;
-
-    const updated = await inventoryService.updateProduct(prod.id, {
-      ...prod,
-      active: !prod.active,
-    });
-    setProducts((prev) => prev.map((p) => (p.id === prod.id ? updated : p)));
-    setConfirmState({ isOpen: false, type: null, product: null });
-    showToast(
-      `Producto "${prod.name}" marcado como ${
-        updated.active ? 'Activo' : 'Inactivo'
-      }.`
-    );
   };
 
   const handleOpenCreate = () => {
@@ -190,28 +157,42 @@ export default function InventoryPage() {
   };
 
   const handleOpenEdit = (product) => {
+    if (pendingStockRef.current.has(product.id)) {
+      setOperationError('Espera a que termine la actualización de existencias antes de editar el producto.');
+      return;
+    }
     setEditingProduct(product);
     setOpenMenuId(null);
     setIsModalOpen(true);
   };
 
   const handleSaveProduct = async (formData) => {
-    if (editingProduct) {
-      const updated = await inventoryService.updateProduct(
-        editingProduct.id,
-        formData
-      );
-      setProducts((prev) =>
-        prev.map((p) => (p.id === editingProduct.id ? updated : p))
-      );
-      showToast(`Producto "${updated.name}" actualizado.`);
-    } else {
-      const created = await inventoryService.createProduct(formData);
-      setProducts((prev) => [created, ...prev]);
-      showToast(`Producto "${created.name}" agregado al inventario.`);
+    if (savingProductRef.current) return;
+    savingProductRef.current = true;
+    setOperationError('');
+    try {
+      if (editingProduct) {
+        const updated = await inventoryService.updateProduct(
+          editingProduct.id,
+          formData
+        );
+        setProducts((prev) =>
+          prev.map((p) => (p.id === editingProduct.id ? updated : p))
+        );
+        showToast(`Producto "${updated.name}" actualizado.`);
+      } else {
+        const created = await inventoryService.createProduct(formData);
+        setProducts((prev) => [created, ...prev]);
+        showToast(`Producto "${created.name}" agregado al inventario.`);
+      }
+      setIsModalOpen(false);
+      setEditingProduct(null);
+    } catch (error) {
+      console.error('Error al guardar el producto:', error);
+      setOperationError(`No se pudo confirmar el guardado. Recarga el inventario antes de volver a intentarlo. ${error.message || ''}`);
+    } finally {
+      savingProductRef.current = false;
     }
-    setIsModalOpen(false);
-    setEditingProduct(null);
   };
 
   const executeDelete = async () => {
@@ -228,6 +209,14 @@ export default function InventoryPage() {
       className="w-full space-y-6"
       onClick={() => openMenuId !== null && setOpenMenuId(null)}
     >
+      {operationError && (
+        <div role="alert" className="fixed top-6 right-6 z-[70] max-w-md rounded-2xl bg-red-50 border border-red-200 p-4 text-sm text-red-700 shadow-lg">
+          {operationError}
+          <button type="button" onClick={() => setOperationError('')} className="ml-3 font-bold">
+            Cerrar
+          </button>
+        </div>
+      )}
       {feedbackBanner && (
         <div className="fixed bottom-6 right-6 z-40 bg-stone-900 text-white px-4 py-3 rounded-2xl shadow-lg flex items-center gap-2.5 text-xs font-semibold">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -337,6 +326,10 @@ export default function InventoryPage() {
         <div className="py-16 text-xs text-center text-stone-400">
           Cargando inventario...
         </div>
+      ) : loadError ? (
+        <div role="alert" className="py-16 text-sm text-center text-red-600">
+          {loadError}
+        </div>
       ) : filteredProducts.length === 0 ? (
         <div className="bg-white rounded-[28px] p-12 text-center border border-stone-100 shadow-card">
           <p className="text-sm font-bold text-stone-700">
@@ -400,7 +393,7 @@ export default function InventoryPage() {
                           <button
                             type="button"
                             onClick={() => handleQuickStockChange(prod, -1)}
-                            disabled={prod.quantity <= 0}
+                            disabled={prod.quantity <= 0 || pendingStock.has(prod.id)}
                             title="Descontar 1 unidad"
                             className="flex items-center justify-center w-6 h-6 transition-colors bg-white border rounded-lg border-stone-200 text-stone-600 hover:text-brand-primary disabled:opacity-40"
                           >
@@ -416,6 +409,7 @@ export default function InventoryPage() {
                           <button
                             type="button"
                             onClick={() => handleQuickStockChange(prod, 1)}
+                            disabled={pendingStock.has(prod.id)}
                             title="Agregar 1 unidad"
                             className="flex items-center justify-center w-6 h-6 transition-colors bg-white border rounded-lg border-stone-200 text-stone-600 hover:text-brand-primary"
                           >
@@ -441,21 +435,6 @@ export default function InventoryPage() {
                       <td className="py-4 pl-4 text-center pr-7"
                       onClick={(e) => e.stopPropagation()}>
                         <div className="inline-flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleRequestToggleActive(prod)}
-                            className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold inline-flex items-center gap-1 transition-colors ${
-                              statusInfo.isActive
-                                ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
-                                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                            }`}
-                          >
-                            <Power className="w-3.5 h-3.5" />
-                            <span>
-                              {statusInfo.isActive ? 'Desactivar' : 'Activar'}
-                            </span>
-                          </button>
-
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(prod)}
@@ -580,14 +559,6 @@ export default function InventoryPage() {
                               <Pencil className="w-3.5 h-3.5 text-brand-primary" />
                               Editar producto
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleRequestToggleActive(prod)}
-                              className="w-full px-3.5 py-2 flex items-center gap-2 text-stone-700 hover:bg-surface-bg font-medium"
-                            >
-                              <Power className="w-3.5 h-3.5 text-amber-600" />
-                              {statusInfo.isActive ? 'Desactivar' : 'Activar'}
-                            </button>
                             {isAdmin && (
                               <button
                                 type="button"
@@ -626,7 +597,7 @@ export default function InventoryPage() {
                         <button
                           type="button"
                           onClick={() => handleQuickStockChange(prod, -1)}
-                          disabled={prod.quantity <= 0}
+                          disabled={prod.quantity <= 0 || pendingStock.has(prod.id)}
                           className="flex items-center justify-center w-6 h-6 transition-colors border rounded-lg bg-surface-bg border-stone-200 text-stone-600 hover:text-brand-primary disabled:opacity-40"
                           title="Descontar 1"
                         >
@@ -640,6 +611,7 @@ export default function InventoryPage() {
                         <button
                           type="button"
                           onClick={() => handleQuickStockChange(prod, 1)}
+                          disabled={pendingStock.has(prod.id)}
                           className="flex items-center justify-center w-6 h-6 transition-colors border rounded-lg bg-surface-bg border-stone-200 text-stone-600 hover:text-brand-primary"
                           title="Agregar 1"
                         >
@@ -651,14 +623,11 @@ export default function InventoryPage() {
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleRequestToggleActive(prod)}
-                      title="Clic para activar o desactivar manualmente"
-                      className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-colors ${statusInfo.badgeClass}`}
+                    <span
+                      className={`px-3 py-1 rounded-full text-[11px] font-semibold ${statusInfo.badgeClass}`}
                     >
-                      {statusInfo.shortLabel || statusInfo.label}
-                    </button>
+                      {statusInfo.label}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -689,32 +658,17 @@ export default function InventoryPage() {
         onClose={() =>
           setConfirmState({ isOpen: false, type: null, product: null })
         }
-        onConfirm={
-          confirmState.type === 'delete' ? executeDelete : executeToggleActive
-        }
-        variant={confirmState.type === 'delete' ? 'danger' : 'status'}
-        title={
-          confirmState.type === 'delete'
-            ? `¿Eliminar "${confirmState.product?.name}"?`
-            : `¿${
-                confirmState.product?.active ? 'Desactivar' : 'Activar'
-              } "${confirmState.product?.name}"?`
-        }
-        message={
-          confirmState.type === 'delete'
-            ? 'Este producto se eliminará permanentemente del inventario.'
-            : `¿Estás seguro de cambiar el estado manual de "${confirmState.product?.name}"?`
-        }
-        confirmText={
-          confirmState.type === 'delete' ? 'Sí, eliminar' : 'Sí, cambiar estado'
-        }
+        onConfirm={executeDelete}
+        variant="danger"
+        title={`¿Eliminar "${confirmState.product?.name}"?`}
+        message="Este producto se eliminará permanentemente del inventario."
+        confirmText="Sí, eliminar"
       />
       <ProductDetailModal
         product={selectedDetailProduct}
         isOpen={Boolean(selectedDetailProduct)}
         onClose={() => setSelectedDetailProduct(null)}
         onEdit={handleOpenEdit}
-        onToggleActive={handleRequestToggleActive}
       />
     </div>
   );

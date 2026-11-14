@@ -23,18 +23,18 @@ const PRESENTATIONS = [
   'Frasco',
   'Tarro',
   'Caja',
-  'Paquete',
+  'Bolsa',
   'Sobre',
   'Ampolleta',
 ];
 
 const MEASUREMENT_UNITS = [
-  { value: 'ml', label: 'Mililitros (ml)' },
-  { value: 'L', label: 'Litros (L)' },
-  { value: 'g', label: 'Gramos (g)' },
-  { value: 'kg', label: 'Kilogramos (kg)' },
-  { value: 'oz', label: 'Onzas (oz)' },
-  { value: 'pzas', label: 'Piezas (pzas)' },
+  { value: 'Mililitros', label: 'Mililitros (ml)' },
+  { value: 'Litros', label: 'Litros (L)' },
+  { value: 'Gramos', label: 'Gramos (g)' },
+  { value: 'Kilogramos', label: 'Kilogramos (kg)' },
+  { value: 'Onzas', label: 'Onzas (oz)' },
+  { value: 'Piezas', label: 'Piezas (pzas)' },
 ];
 
 export default function ProductFormModal({
@@ -55,7 +55,6 @@ export default function ProductFormModal({
     presentation: '',
     measureUnit: '',
     quantity: '',
-    active: true,
     imageUrl: null,
     imageFile: null,
   });
@@ -72,7 +71,6 @@ export default function ProductFormModal({
         measureUnit: initialData.measureUnit || 'L',
         quantity:
           initialData.quantity !== undefined ? String(initialData.quantity) : '',
-        active: initialData.active !== undefined ? initialData.active : true,
         imageUrl: initialData.imageUrl || null,
         imageFile: null,
       });
@@ -83,7 +81,6 @@ export default function ProductFormModal({
         presentation: '',
         measureUnit: '',
         quantity: '',
-        active: true,
         imageUrl: null,
         imageFile: null,
       });
@@ -96,16 +93,7 @@ export default function ProductFormModal({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => {
-      const updated = { ...prev, [name]: value };
-      // Si la cantidad se pone en 0 en el formulario, desactivar automáticamente
-      if (name === 'quantity' && Number(value) === 0 && value !== '') {
-        updated.active = false;
-      } else if (name === 'quantity' && Number(value) > 0 && prev.quantity === '0') {
-        updated.active = true;
-      }
-      return updated;
-    });
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
     if (fieldErrors[name]) {
       setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
@@ -209,8 +197,6 @@ export default function ProductFormModal({
       presentation: formData.presentation,
       measureUnit: formData.measureUnit,
       quantity: qty,
-      // Si la cantidad es 0, fuerza Inactivo automáticamente
-      active: qty <= 0 ? false : Boolean(formData.active),
       imageUrl: formData.imageUrl,
       imageFile: formData.imageFile,
     };
@@ -454,29 +440,17 @@ export default function ProductFormModal({
             </div>
 
             <div>
-              <label className="block mb-2 text-xs font-bold text-stone-800">
+              <p className="block mb-2 text-xs font-bold text-stone-800">
                 Estado del producto
-              </label>
-              <select
-                name="active"
-                value={Number(formData.quantity) === 0 && formData.quantity !== '' ? 'false' : String(formData.active)}
-                disabled={Number(formData.quantity) === 0 && formData.quantity !== ''}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    active: e.target.value === 'true',
-                  }))
-                }
-                className="w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border border-stone-200/90 text-sm text-stone-800 focus:outline-none disabled:bg-stone-100 disabled:text-stone-500"
-              >
-                <option value="true">Activo</option>
-                <option value="false">Inactivo</option>
-              </select>
-              {Number(formData.quantity) === 0 && formData.quantity !== '' && (
-                <p className="text-[11px] font-medium text-amber-600 mt-1">
-                  Desactivado automáticamente por tener cantidad en 0.
-                </p>
-              )}
+              </p>
+              <div className="w-full px-4 py-3.5 rounded-2xl bg-stone-100 border border-stone-200/90 text-sm text-stone-600">
+                {formData.quantity === '' || !Number.isInteger(Number(formData.quantity)) || Number(formData.quantity) < 0
+                  ? 'Ingresa una cantidad válida'
+                  : Number(formData.quantity) === 0 ? 'Inactivo' : 'Activo'}
+              </div>
+              <p className="text-[11px] font-medium text-stone-500 mt-1">
+                El estado se determina automáticamente según la cantidad.
+              </p>
             </div>
           </div>
 

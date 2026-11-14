@@ -1,6 +1,8 @@
 import axiosClient from '../../../api/axiosClient';
 
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const ACTIVE_STATE_ID = 1;
+const INACTIVE_STATE_ID = 2;
 
 export const getEmployeeInitials = (name = '') => {
   const parts = name.trim().split(/\s+/);
@@ -87,7 +89,7 @@ const enrichEmployee = (employee, schedules, appointments) => {
     workDaysList,
     startTime,
     endTime,
-    active: employee.activo,
+    active: employee.estado_id === ACTIVE_STATE_ID,
     initials: getEmployeeInitials(employee.nombre_completo),
     scheduleFormatted: `${workDays} · ${startTime} – ${endTime}`,
     serviceHistory,
@@ -101,7 +103,9 @@ const toDatabasePayload = (payload) => {
   if (payload.email !== undefined) data.correo = payload.email;
   if (payload.specialty !== undefined) data.especialidad = payload.specialty;
   if (payload.password) data.password = payload.password;
-  if (payload.active !== undefined) data.activo = Boolean(payload.active);
+  if (payload.active !== undefined) {
+    data.estado_id = payload.active ? ACTIVE_STATE_ID : INACTIVE_STATE_ID;
+  }
   if (payload.workDaysList !== undefined) {
     const start = payload.startTime;
     const end = payload.endTime;
@@ -116,9 +120,6 @@ const toDatabasePayload = (payload) => {
     if (data.horarios.some((schedule) => schedule.dia < 0)) {
       throw new Error('El formulario incluye un día de trabajo desconocido.');
     }
-  }
-  if (payload.specialtyCategory !== undefined || !payload.id) {
-    data.rol = 'stylist';
   }
   return data;
 };
@@ -144,7 +145,11 @@ export const employeesService = {
       throw new Error('Debes establecer una contraseña para el nuevo empleado.');
     }
     const created = (
-      await axiosClient.post('/empleados/', toDatabasePayload(payload))
+      await axiosClient.post('/empleados/', {
+        ...toDatabasePayload(payload),
+        rol: 'Empleado',
+        estado_id: ACTIVE_STATE_ID,
+      })
     ).data;
     const employees = await loadEmployees();
     const employee = employees.find((item) => item.id === created.id_empleado);

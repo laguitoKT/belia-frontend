@@ -217,7 +217,7 @@ const toggleWorkDay = (dayId) => {
       workDays: formatDaysToString(orderedDays),
       startTime: formData.startTime,
       endTime: formData.endTime,
-      active: Boolean(formData.active),
+      ...(!isEditing && { active: Boolean(formData.active) }),
     };
 
     setShowSaveConfirm(false);
