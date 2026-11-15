@@ -146,7 +146,7 @@ export default function AppointmentFormModal({
     specification: '',
     date: defaultDate || getTodayISO(),
     startTime: '09:00',
-    status: 'Pendiente',
+    status: 'Por Completar',
   });
 
   const [fieldErrors, setFieldErrors] = useState({});
@@ -655,7 +655,7 @@ export default function AppointmentFormModal({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-[740px] bg-white rounded-[32px] shadow-card border border-stone-100 p-7 sm:p-9 animate-in fade-in zoom-in-95 duration-200 max-h-[93vh] overflow-y-auto"
+        className="responsive-dialog relative w-full max-w-[740px] bg-white rounded-[32px] shadow-card border border-stone-100 p-7 sm:p-9 animate-in fade-in zoom-in-95 duration-200 max-h-[93vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -1134,7 +1134,7 @@ export default function AppointmentFormModal({
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-100">
+            <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-stone-100">
               <button
                 type="button"
                 onClick={onClose}

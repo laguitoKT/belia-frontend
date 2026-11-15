@@ -170,64 +170,64 @@ export default function HomePage() {
       </div>
 
       {/* Tarjetas de Métricas Superiores (KPIs) */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="bg-white rounded-[26px] p-5 border border-stone-100/80 shadow-card flex items-start gap-4">
-          <div className="flex items-center justify-center w-12 h-12 text-white rounded-2xl bg-brand-primary shrink-0">
-            <Calendar className="w-5 h-5" />
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+        <div className="bg-white rounded-[20px] sm:rounded-[26px] p-3 sm:p-5 border border-stone-100/80 shadow-card flex items-start gap-2 sm:gap-4">
+          <div className="flex items-center justify-center w-8 h-8 text-white rounded-xl sm:w-12 sm:h-12 sm:rounded-2xl bg-brand-primary shrink-0">
+            <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <div>
-            <p className="text-xs font-medium text-stone-400">
+          <div className="min-w-0">
+            <p className="text-[11px] leading-tight sm:text-xs font-medium text-stone-400">
               {isAdmin ? 'Citas totales hoy' : 'Mis citas para hoy'}
             </p>
-            <p className="text-3xl font-bold text-stone-900 my-0.5">
+            <p className="text-xl sm:text-3xl font-bold text-stone-900 my-0.5">
               {kpiStats.totalDay}
             </p>
-            <p className="text-[11px] text-stone-400">
+            <p className="text-[10px] leading-tight sm:text-[11px] text-stone-400">
               {kpiStats.confirmedDay} confirmadas
             </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-[26px] p-5 border border-stone-100/80 shadow-card flex items-start gap-4">
-          <div className="flex items-center justify-center w-12 h-12 text-white rounded-2xl bg-brand-accent shrink-0">
-            <CalendarClock  className="w-5 h-5" />
+        <div className="bg-white rounded-[20px] sm:rounded-[26px] p-3 sm:p-5 border border-stone-100/80 shadow-card flex items-start gap-2 sm:gap-4">
+          <div className="flex items-center justify-center w-8 h-8 text-white rounded-xl sm:w-12 sm:h-12 sm:rounded-2xl bg-brand-accent shrink-0">
+            <CalendarClock className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <div>
-            <p className="text-xs font-medium text-stone-400">Tiempo agendado</p>
-            <p className="text-3xl font-bold text-stone-900 my-0.5">
+          <div className="min-w-0">
+            <p className="text-[11px] leading-tight sm:text-xs font-medium text-stone-400">Tiempo agendado</p>
+            <p className="text-xl sm:text-3xl font-bold text-stone-900 my-0.5">
               {kpiStats.totalHours} h
             </p>
-            <p className="text-[11px] text-stone-400">
+            <p className="text-[10px] leading-tight sm:text-[11px] text-stone-400">
               {isAdmin ? 'en todo el salón' : 'de 9 h disponibles'}
             </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-[26px] p-5 border border-stone-100/80 shadow-card flex items-start gap-4">
-          <div className="flex items-center justify-center w-12 h-12 text-white rounded-2xl bg-brand-secondary shrink-0">
-            <Users className="w-5 h-5" />
+        <div className="bg-white rounded-[20px] sm:rounded-[26px] p-3 sm:p-5 border border-stone-100/80 shadow-card flex items-start gap-2 sm:gap-4">
+          <div className="flex items-center justify-center w-8 h-8 text-white rounded-xl sm:w-12 sm:h-12 sm:rounded-2xl bg-brand-secondary shrink-0">
+            <Users className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <div>
-            <p className="text-xs font-medium text-stone-400">
+          <div className="min-w-0">
+            <p className="text-[11px] leading-tight sm:text-xs font-medium text-stone-400">
               {isAdmin ? 'Clientes activos' : 'Mis clientes'}
             </p>
-            <p className="text-3xl font-bold text-stone-900 my-0.5">
+            <p className="text-xl sm:text-3xl font-bold text-stone-900 my-0.5">
               {kpiStats.uniqueClients}
             </p>
-            <p className="text-[11px] text-stone-400">+1 esta semana</p>
+            <p className="text-[10px] leading-tight sm:text-[11px] text-stone-400">+1 esta semana</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-[26px] p-5 border border-stone-100/80 shadow-card flex items-start gap-4">
-          <div className="flex items-center justify-center w-12 h-12 text-white rounded-2xl bg-brand-light shrink-0">
-            <Box className="w-5 h-5" />
+        <div className="bg-white rounded-[20px] sm:rounded-[26px] p-3 sm:p-5 border border-stone-100/80 shadow-card flex items-start gap-2 sm:gap-4">
+          <div className="flex items-center justify-center w-8 h-8 text-white rounded-xl sm:w-12 sm:h-12 sm:rounded-2xl bg-brand-light shrink-0">
+            <Box className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <div>
-            <p className="text-xs font-medium text-stone-400">Alertas de stock</p>
-            <p className="text-3xl font-bold text-stone-900 my-0.5">
+          <div className="min-w-0">
+            <p className="text-[11px] leading-tight sm:text-xs font-medium text-stone-400">Alertas de stock</p>
+            <p className="text-xl sm:text-3xl font-bold text-stone-900 my-0.5">
               {kpiStats.lowStockAlerts}
             </p>
-            <p className="text-[11px] text-stone-400">
+            <p className="text-[10px] leading-tight sm:text-[11px] text-stone-400 break-words">
               {isAdmin ? 'En todo el inventario' : `En área de ${user.specialtyCategory}`}
             </p>
           </div>
@@ -237,7 +237,7 @@ export default function HomePage() {
       {/* Grid Inferior */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Columna Izquierda: Agenda */}
-        <section className="lg:col-span-7 xl:col-span-8 bg-white rounded-[30px] p-7 border border-stone-100/80 shadow-card">
+        <section className="min-w-0 lg:col-span-7 xl:col-span-8 bg-white rounded-[30px] p-4 sm:p-7 border border-stone-100/80 shadow-card">
           <div className="flex items-center justify-between mb-6">
             <div>
               <span className="block text-[10px] font-bold tracking-[0.16em] text-brand-primary uppercase mb-1">

@@ -107,14 +107,14 @@ export default function ClientFormModal({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-[640px] bg-white rounded-[32px] shadow-card border border-stone-100 p-8 sm:p-10 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto"
+        className="responsive-dialog relative w-full max-w-[640px] bg-white rounded-[32px] shadow-card border border-stone-100 p-8 sm:p-10 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
      <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-brand-primary via-brand-accent to-brand-secondary" />
         <button
           type="button"
           onClick={onClose}
-          className="absolute flex items-center justify-center transition-colors bg-white border top-8 right-8 w-11 h-11 rounded-2xl border-stone-200/80 text-stone-600 hover:text-brand-primary"
+          className="absolute flex items-center justify-center transition-colors bg-white border top-5 right-5 sm:top-8 sm:right-8 w-11 h-11 rounded-2xl border-stone-200/80 text-stone-600 hover:text-brand-primary"
           aria-label="Cerrar modal"
         >
           <X className="w-5 h-5" />
@@ -244,7 +244,7 @@ export default function ClientFormModal({
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-end gap-3 pt-5 border-t border-stone-100">
+            <div className="flex flex-wrap items-center justify-end gap-3 pt-5 border-t border-stone-100">
               <button
                 type="button"
                 onClick={onClose}

@@ -230,7 +230,7 @@ const toggleWorkDay = (dayId) => {
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-[650px] bg-white rounded-[32px] shadow-card border border-stone-100 p-8 sm:p-10 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto"
+        className="responsive-dialog relative w-full max-w-[650px] bg-white rounded-[32px] shadow-card border border-stone-100 p-8 sm:p-10 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-brand-primary via-brand-accent to-brand-secondary" />
@@ -238,29 +238,29 @@ const toggleWorkDay = (dayId) => {
         <button
           type="button"
           onClick={onClose}
-          className="absolute flex items-center justify-center transition-colors bg-white border top-8 right-8 w-11 h-11 rounded-2xl border-stone-200/80 text-stone-600 hover:text-brand-primary"
+          className="absolute flex items-center justify-center transition-colors bg-white border top-5 right-5 sm:top-8 sm:right-8 w-11 h-11 rounded-2xl border-stone-200/80 text-stone-600 hover:text-brand-primary"
           aria-label="Cerrar modal"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="pr-12 mb-6">
+        <div className="pr-12 mb-5 sm:pr-16 sm:mb-6">
           <span className="block text-xs font-bold tracking-[0.14em] text-brand-primary uppercase mb-1.5">
             {isEditing ? 'EDITAR ESPECIALISTA' : 'NUEVO REGISTRO'}
           </span>
-          <h3 className="text-3xl font-bold tracking-tight text-stone-900">
+          <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">
             {isEditing ? 'Editar empleado' : 'Agregar empleado'}
           </h3>
-          <p className="mt-1 text-sm text-stone-400">
+          <p className="mt-1 text-xs leading-relaxed sm:text-sm text-stone-400">
             Completa los datos de contacto, especialidad y horario laboral.
           </p>
         </div>
 
-        <form onSubmit={handleRequestSubmit} className="space-y-4" noValidate>
+        <form onSubmit={handleRequestSubmit} className="space-y-3 sm:space-y-4" noValidate>
           {/* Fila 1: Nombre y Especialidad */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
             <div>
-              <label className="block mb-2 text-xs font-bold text-stone-800">
+              <label className="block mb-1.5 sm:mb-2 text-xs font-bold text-stone-800">
                 Nombre completo
               </label>
               <input
@@ -269,7 +269,7 @@ const toggleWorkDay = (dayId) => {
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Ej. Mariana Silva"
-                className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none ${
+                className={`w-full px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#FAFAFB] border text-base sm:text-sm text-stone-800 focus:outline-none ${
                   fieldErrors.name
                     ? 'border-red-400'
                     : 'border-stone-200/90 focus:border-brand-primary'
@@ -283,14 +283,14 @@ const toggleWorkDay = (dayId) => {
             </div>
 
             <div>
-              <label className="block mb-2 text-xs font-bold text-stone-800">
+              <label className="block mb-1.5 sm:mb-2 text-xs font-bold text-stone-800">
                 Especialidad
               </label>
               <select
                 name="specialty"
                 value={formData.specialty}
                 onChange={handleChange}
-                className="w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border border-stone-200/90 text-sm text-stone-800 focus:outline-none focus:border-brand-primary cursor-pointer"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#FAFAFB] border border-stone-200/90 text-base sm:text-sm text-stone-800 focus:outline-none focus:border-brand-primary cursor-pointer"
               >
                 {SPECIALTY_OPTIONS.map((opt) => (
                   <option key={opt.label} value={opt.label}>
@@ -302,9 +302,9 @@ const toggleWorkDay = (dayId) => {
           </div>
 
           {/* Fila 2: Teléfono y Correo electrónico */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
             <div>
-              <label className="block mb-2 text-xs font-bold text-stone-800">
+              <label className="block mb-1.5 sm:mb-2 text-xs font-bold text-stone-800">
                 Teléfono
               </label>
               <input
@@ -313,7 +313,7 @@ const toggleWorkDay = (dayId) => {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="Ej. 55 1298 7781"
-                className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none ${
+                className={`w-full px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#FAFAFB] border text-base sm:text-sm text-stone-800 focus:outline-none ${
                   fieldErrors.phone
                     ? 'border-red-400'
                     : 'border-stone-200/90 focus:border-brand-primary'
@@ -327,7 +327,7 @@ const toggleWorkDay = (dayId) => {
             </div>
 
             <div>
-              <label className="block mb-2 text-xs font-bold text-stone-800">
+              <label className="block mb-1.5 sm:mb-2 text-xs font-bold text-stone-800">
                 Correo electrónico
               </label>
               <input
@@ -336,7 +336,7 @@ const toggleWorkDay = (dayId) => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Ej. mariana@aurora.mx"
-                className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none ${
+                className={`w-full px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#FAFAFB] border text-base sm:text-sm text-stone-800 focus:outline-none ${
                   fieldErrors.email
                     ? 'border-red-400'
                     : 'border-stone-200/90 focus:border-brand-primary'
@@ -351,7 +351,7 @@ const toggleWorkDay = (dayId) => {
           </div>
 
           <div>
-            <label className="block mb-2 text-xs font-bold text-stone-800">
+            <label className="block mb-1.5 sm:mb-2 text-xs font-bold text-stone-800">
               {isEditing ? 'Nueva contraseña (opcional)' : 'Contraseña inicial'}
             </label>
             <input
@@ -362,7 +362,7 @@ const toggleWorkDay = (dayId) => {
               autoComplete="new-password"
               minLength={8}
               placeholder={isEditing ? 'Déjala vacía para no cambiarla' : 'Al menos 8 caracteres'}
-              className={`w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border text-sm text-stone-800 focus:outline-none ${
+              className={`w-full px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#FAFAFB] border text-base sm:text-sm text-stone-800 focus:outline-none ${
                 fieldErrors.password
                   ? 'border-red-400'
                   : 'border-stone-200/90 focus:border-brand-primary'
@@ -376,17 +376,17 @@ const toggleWorkDay = (dayId) => {
           </div>
 
         {/* Selector de días de la semana */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
+          <div className="pt-4 border-t border-stone-100">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-2">
               <label className="block text-xs font-bold text-stone-800">
-                Días laborales (Selecciona los días que trabaja)
+                Días laborales
               </label>
               <span className="text-[11px] font-semibold text-brand-primary">
                 {formatDaysToString(formData.workDaysList) || 'Ninguno seleccionado'}
               </span>
             </div>
             <div
-              className={`p-3 rounded-2xl bg-[#FAFAFB] border flex flex-wrap gap-1 ${
+              className={`p-2 sm:p-3 rounded-2xl bg-[#FAFAFB] border grid grid-cols-4 sm:flex sm:flex-wrap gap-1 ${
                 fieldErrors.workDays ? 'border-red-400' : 'border-stone-200/90'
               }`}
             >
@@ -397,7 +397,9 @@ const toggleWorkDay = (dayId) => {
                     key={day.id}
                     type="button"
                     onClick={() => toggleWorkDay(day.id)}
-                    className={`flex-1 min-w-[74px] py-2.5 px-3 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-1.5 border transition-all ${
+                    aria-label={day.label}
+                    aria-pressed={isSelected}
+                    className={`flex-1 min-w-0 sm:min-w-[74px] min-h-[44px] py-2 px-1 sm:py-2.5 sm:px-3 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-1 border transition-all ${
                       isSelected
                         ? 'bg-brand-primary text-white border-brand-primary shadow-2xs'
                         : 'bg-white text-stone-600 border-stone-200 hover:border-brand-light'
@@ -417,9 +419,9 @@ const toggleWorkDay = (dayId) => {
           </div>
 
           {/* Fila de Horas: Entrada y Salida */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
             <div>
-              <label className="block mb-2 text-xs font-bold text-stone-800">
+              <label className="block mb-1.5 sm:mb-2 text-xs font-bold text-stone-800">
                 Hora de entrada
               </label>
               <input
@@ -427,12 +429,12 @@ const toggleWorkDay = (dayId) => {
                 name="startTime"
                 value={formData.startTime}
                 onChange={handleChange}
-                className="w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border border-stone-200/90 text-sm text-stone-800 focus:outline-none focus:border-brand-primary"
+                className="w-full min-w-0 px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#FAFAFB] border border-stone-200/90 text-base sm:text-sm text-stone-800 focus:outline-none focus:border-brand-primary"
               />
             </div>
 
             <div>
-              <label className="block mb-2 text-xs font-bold text-stone-800">
+              <label className="block mb-1.5 sm:mb-2 text-xs font-bold text-stone-800">
                 Hora de salida
               </label>
               <input
@@ -440,7 +442,7 @@ const toggleWorkDay = (dayId) => {
                 name="endTime"
                 value={formData.endTime}
                 onChange={handleChange}
-                className="w-full px-4 py-3.5 rounded-2xl bg-[#FAFAFB] border border-stone-200/90 text-sm text-stone-800 focus:outline-none focus:border-brand-primary"
+                className="w-full min-w-0 px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#FAFAFB] border border-stone-200/90 text-base sm:text-sm text-stone-800 focus:outline-none focus:border-brand-primary"
               />
             </div>
           </div>
@@ -476,17 +478,17 @@ const toggleWorkDay = (dayId) => {
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-end gap-3 pt-5 border-t border-stone-100">
+            <div className="flex flex-wrap items-center justify-end gap-3 pt-5 border-t border-stone-100">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-3.5 rounded-2xl bg-white border border-stone-200/90 text-xs font-bold text-stone-700 hover:bg-surface-bg transition-colors"
+                className="flex-1 sm:flex-none px-3 sm:px-6 py-3 sm:py-3.5 rounded-2xl bg-white border border-stone-200/90 text-xs font-bold text-stone-700 hover:bg-surface-bg transition-colors"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 transition-opacity"
+                className="flex-1 sm:flex-none px-3 sm:px-6 py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 transition-opacity"
               >
                 Guardar empleado
               </button>

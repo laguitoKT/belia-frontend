@@ -9,6 +9,7 @@ import {
   MoreHorizontal,
   ChevronLeft,
   ChevronRight,
+  X,
 } from 'lucide-react';
 import logo from '../../assets/LogoB2.png';
 
@@ -26,6 +27,8 @@ export default function Sidebar({
   isCollapsed,
   onToggleCollapse,
   onOpenProfile,
+  onClose,
+  onNavigate,
 }) {
   // Filtra los módulos: Empleados solo aparece si user.role === 'admin'
   const visibleNavItems = navItems.filter(
@@ -34,10 +37,23 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`relative h-screen bg-white  flex flex-col justify-between shrink-0 select-none transition-all duration-300 ease-in-out z-30 ${
-        isCollapsed ? 'w-20' : 'w-64'
+      id={onClose ? 'mobile-navigation' : undefined}
+      aria-label="Navegación principal"
+      className={`relative h-full bg-white flex flex-col justify-between shrink-0 select-none transition-all duration-300 ease-in-out z-30 ${
+        isCollapsed ? 'w-20' : 'w-64 max-w-[85vw]'
       }`}
     >
+      {onClose ? (
+        <button
+          type="button"
+          autoFocus
+          onClick={onClose}
+          aria-label="Cerrar menú de navegación"
+          className="absolute z-40 flex items-center justify-center w-9 h-9 rounded-xl right-2 top-2 bg-white text-brand-primary hover:bg-brand-soft"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      ) : (
       <button
         type="button"
         onClick={onToggleCollapse}
@@ -51,6 +67,7 @@ export default function Sidebar({
           <ChevronLeft className="w-4 h-4" />
         )}
       </button>
+      )}
 
       <div className={`p-4 ${isCollapsed ? 'px-3' : 'p-6'} overflow-y-auto overflow-x-hidden`}>
         <div
@@ -90,6 +107,7 @@ export default function Sidebar({
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={onNavigate}
                 title={isCollapsed ? item.name : undefined}
                 className={({ isActive }) =>
                   `relative flex items-center rounded-2xl text-sm font-medium transition-all ${

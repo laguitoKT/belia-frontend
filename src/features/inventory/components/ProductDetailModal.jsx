@@ -32,7 +32,7 @@ export default function ProductDetailModal({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-xl bg-white rounded-[30px] shadow-card border border-stone-100 p-7 sm:p-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="responsive-dialog relative w-full max-w-xl bg-white rounded-[30px] shadow-card border border-stone-100 p-7 sm:p-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-brand-primary via-brand-accent to-brand-secondary" />

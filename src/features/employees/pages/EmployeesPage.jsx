@@ -22,6 +22,7 @@ import EmployeeFormModal from '../components/EmployeeFormModal';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { getCategoryTheme } from '../../../components/ui/categoryThemes';
 import { getInitialsTheme } from '../../../components/ui/initialsThemes';
+import useIsMobile from '../../../utils/useIsMobile';
 
 const CATEGORY_FILTER_OPTIONS = [
   'Todas',
@@ -35,6 +36,7 @@ const CATEGORY_FILTER_OPTIONS = [
 
 export default function EmployeesPage() {
   const [viewMode, setViewMode] = useState('table');
+  const isMobile = useIsMobile();
   const [employees, setEmployees] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -159,7 +161,7 @@ export default function EmployeesPage() {
 
   return (
     <div
-      className="w-full space-y-6"
+      className="responsive-page w-full space-y-6"
       onClick={() => openMenuId !== null && setOpenMenuId(null)}
     >
       {feedbackBanner && (
@@ -186,7 +188,7 @@ export default function EmployeesPage() {
         <button
           type="button"
           onClick={handleOpenCreate}
-          className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 active:scale-[0.99] transition-all self-start sm:self-auto shrink-0"
+          className="inline-flex items-center justify-center w-full gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 active:scale-[0.99] transition-all self-start sm:w-auto sm:self-auto shrink-0"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Nuevo empleado</span>
@@ -195,25 +197,25 @@ export default function EmployeesPage() {
 
       {/* Barra de Herramientas */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 pt-1">
-        <div className="flex flex-col items-stretch flex-1 gap-3 sm:flex-row sm:items-center">
-          <div className="relative w-full sm:max-w-md">
+        <div className="grid grid-cols-2 flex-1 min-w-0 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+          <div className="relative col-span-2 w-full sm:max-w-md">
             <Search className="absolute w-4 h-4 -translate-y-1/2 pointer-events-none text-stone-400 left-4 top-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nombre..."
-              className="w-full py-3 pr-4 text-xs bg-white border pl-11 rounded-2xl border-stone-100 text-stone-700 placeholder:text-stone-300 shadow-2xs focus:outline-none focus:border-brand-light"
+              className="w-full py-2.5 sm:py-3 pr-4 text-xs bg-white border pl-11 rounded-xl sm:rounded-2xl border-stone-100 text-stone-700 placeholder:text-stone-300 shadow-2xs focus:outline-none focus:border-brand-light"
             />
           </div>
 
-          <div className="relative inline-flex items-center">
-            <Filter className="w-3.5 h-3.5 text-stone-500 absolute left-4 pointer-events-none" />
+          <div className="relative inline-flex items-center min-w-0">
+            <Filter className="w-3.5 h-3.5 text-stone-500 absolute left-3 sm:left-4 pointer-events-none" />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               aria-label="Filtrar por área de especialidad"
-              className="py-3 pl-10 pr-8 text-xs font-semibold bg-white border appearance-none cursor-pointer rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none"
+              className="w-full min-w-0 min-h-[40px] py-2 sm:py-3 pl-8 sm:pl-10 pr-3 sm:pr-8 text-xs font-semibold bg-white border appearance-none cursor-pointer rounded-xl sm:rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none sm:w-auto"
             >
               {CATEGORY_FILTER_OPTIONS.map((cat) => (
                 <option key={cat} value={cat}>
@@ -225,7 +227,7 @@ export default function EmployeesPage() {
         </div>
 
         {/* Conmutador de Vista (Tabla / Card) */}
-        <div className="inline-flex items-center p-1 rounded-2xl bg-[#F2EEF0] border border-stone-200/60 self-end md:self-auto">
+        <div className="hidden sm:inline-flex items-center p-1 rounded-2xl bg-[#F2EEF0] border border-stone-200/60 self-end md:self-auto">
           <button
             type="button"
             onClick={() => setViewMode('table')}
@@ -264,7 +266,7 @@ export default function EmployeesPage() {
             No se encontraron empleados con los filtros seleccionados
           </p>
         </div>
-      ) : viewMode === 'table' ? (
+      ) : !isMobile && viewMode === 'table' ? (
         /* ==================== VISTA 1: TABLA ==================== */
         <div className="bg-white rounded-[28px] border border-stone-100/90 shadow-card overflow-hidden">
           <div className="overflow-x-auto">

@@ -17,6 +17,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useAuth } from '../../../context/useAuth';
+import useIsMobile from '../../../utils/useIsMobile';
 import { appointmentsService } from '../services/appointmentsService';
 import { catalogService } from '../../services/services/catalogService';
 import { clientsService } from '../../clients/services/clientsService';
@@ -120,6 +121,9 @@ export default function AppointmentsPage() {
 
   // Tres vistas requeridas: 'list' | 'cards' | 'calendar'
   const [viewMode, setViewMode] = useState('calendar');
+  const [mobileViewMode, setMobileViewMode] = useState('cards');
+  const isMobile = useIsMobile();
+  const activeViewMode = isMobile ? mobileViewMode : viewMode;
 
   // Filtro de periodo: 'day' | 'week' | 'month'
   const [periodFilter, setPeriodFilter] = useState('month');
@@ -369,7 +373,7 @@ const handleSaveAppointment = async (formData) => {
 
   return (
     <div
-      className="w-full space-y-6"
+      className="responsive-page w-full space-y-6"
       onClick={() => openMenuId !== null && setOpenMenuId(null)}
     >
       {feedbackBanner && (
@@ -396,7 +400,7 @@ const handleSaveAppointment = async (formData) => {
         <button
           type="button"
           onClick={() => handleOpenCreate(selectedDate)}
-          className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 active:scale-[0.99] transition-all self-start sm:self-auto shrink-0"
+          className="inline-flex items-center justify-center w-full gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 active:scale-[0.99] transition-all self-start sm:w-auto sm:self-auto shrink-0"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Nueva cita</span>
@@ -405,26 +409,26 @@ const handleSaveAppointment = async (formData) => {
 
       {/* Fila 1 de Herramientas: Buscador + Todos los filtros + Conmutador de 3 Vistas (Lista | Tablero | Calendario) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 pt-1">
-        <div className="flex flex-col items-stretch flex-1 gap-3 sm:flex-row sm:items-center">
-          <div className="relative w-full sm:max-w-md">
+        <div className="grid grid-cols-2 flex-1 min-w-0 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+          <div className="relative col-span-2 w-full sm:max-w-md">
             <Search className="absolute w-4 h-4 -translate-y-1/2 pointer-events-none text-stone-400 left-4 top-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nombre..."
-              className="w-full py-3 pr-4 text-xs bg-white border pl-11 rounded-2xl border-stone-100 text-stone-700 placeholder:text-stone-300 shadow-2xs focus:outline-none focus:border-brand-light"
+              className="w-full py-2.5 sm:py-3 pr-4 text-xs bg-white border pl-11 rounded-xl sm:rounded-2xl border-stone-100 text-stone-700 placeholder:text-stone-300 shadow-2xs focus:outline-none focus:border-brand-light"
             />
           </div>
 
           {/* Filtro de Estado */}
-          <div className="relative inline-flex items-center">
-            <Filter className="w-3.5 h-3.5 text-stone-500 absolute left-4 pointer-events-none" />
+          <div className="relative inline-flex items-center min-w-0">
+            <Filter className="w-3.5 h-3.5 text-stone-500 absolute left-3 sm:left-4 pointer-events-none" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               aria-label="Filtrar por estado de cita"
-              className="py-3 pl-10 pr-8 text-xs font-semibold bg-white border appearance-none cursor-pointer rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none"
+              className="w-full min-w-0 min-h-[40px] py-2 sm:py-3 pl-8 sm:pl-10 pr-3 sm:pr-8 text-xs font-semibold bg-white border appearance-none cursor-pointer rounded-xl sm:rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none sm:w-auto"
             >
               <option value="Todos">Todos los filtros</option>
               <option value="Pendiente">Estado: Pendientes</option>
@@ -439,7 +443,7 @@ const handleSaveAppointment = async (formData) => {
               value={employeeFilter}
               onChange={(e) => setEmployeeFilter(e.target.value)}
               aria-label="Filtrar por especialista"
-              className="px-4 py-3 text-xs font-semibold bg-white border cursor-pointer rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none"
+              className="w-full min-w-0 min-h-[40px] px-3 sm:px-4 py-2 sm:py-3 text-xs font-semibold bg-white border cursor-pointer rounded-xl sm:rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none sm:w-auto"
             >
               <option value="Todos">Especialista: Todas</option>
               {employeesDirectory.map((emp) => (
@@ -457,7 +461,7 @@ const handleSaveAppointment = async (formData) => {
             type="button"
             onClick={() => setViewMode('list')}
             title="Vista de lista"
-            className={`p-2 rounded-xl transition-all ${
+            className={`hidden sm:block p-2 rounded-xl transition-all ${
               viewMode === 'list'
                 ? 'bg-white text-brand-primary shadow-2xs'
                 : 'text-stone-500 hover:text-stone-800'
@@ -467,10 +471,10 @@ const handleSaveAppointment = async (formData) => {
           </button>
           <button
             type="button"
-            onClick={() => setViewMode('cards')}
+            onClick={() => (isMobile ? setMobileViewMode('cards') : setViewMode('cards'))}
             title="Vista de tablero / tarjetas"
             className={`p-2 rounded-xl transition-all ${
-              viewMode === 'cards'
+              activeViewMode === 'cards'
                 ? 'bg-white text-brand-primary shadow-2xs'
                 : 'text-stone-500 hover:text-stone-800'
             }`}
@@ -479,10 +483,10 @@ const handleSaveAppointment = async (formData) => {
           </button>
           <button
             type="button"
-            onClick={() => setViewMode('calendar')}
+            onClick={() => (isMobile ? setMobileViewMode('calendar') : setViewMode('calendar'))}
             title="Vista de calendario"
             className={`p-2 rounded-xl transition-all ${
-              viewMode === 'calendar'
+              activeViewMode === 'calendar'
                 ? 'bg-white text-brand-primary shadow-2xs'
                 : 'text-stone-500 hover:text-stone-800'
             }`}
@@ -494,7 +498,7 @@ const handleSaveAppointment = async (formData) => {
 
       {/* Fila 2: Navegador de Fecha (< | Hoy | > + Mes Año) y Selector de Periodo (Día | Semana | Mes) */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => handleNavigateDate(-1)}
@@ -554,10 +558,10 @@ const handleSaveAppointment = async (formData) => {
         <div className="py-16 text-xs text-center text-stone-400">
           Cargando agenda de trabajo...
         </div>
-      ) : viewMode === 'calendar' ? (
+      ) : activeViewMode === 'calendar' ? (
         /* ==================== VISTA 3: CALENDARIO ==================== */
         <div className="bg-white rounded-[30px] border border-brand-soft shadow-card p-6 overflow-x-auto">
-          <div className="min-w-[840px]">
+          <div className={periodFilter === 'day' ? '' : 'min-w-[840px]'}>
             {/* Encabezados Lun a Dom */}
             {periodFilter !== 'day' && (
               <div className="grid grid-cols-7 gap-3 mb-3 text-center">
@@ -664,7 +668,7 @@ const handleSaveAppointment = async (formData) => {
             Puedes cambiar entre Día, Semana o Mes, o agendar una nueva cita.
           </p>
         </div>
-      ) : viewMode === 'list' ? (
+      ) : activeViewMode === 'list' ? (
         /* ==================== VISTA 1: LISTA / TABLA ==================== */
         <div className="bg-white rounded-[28px] border border-stone-100/90 shadow-card overflow-hidden">
           <div className="overflow-x-auto">
@@ -801,7 +805,7 @@ const handleSaveAppointment = async (formData) => {
                 <div className="flex-1 py-1.5 pr-1 flex flex-col justify-between min-w-0">
                   <div>
                     {/* Fila superior: Badge de estado  */}
-                    <div className="flex items-center justify-between gap-2 mb-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -828,6 +832,7 @@ const handleSaveAppointment = async (formData) => {
                               openMenuId === apt.id ? null : apt.id
                             )
                           }
+                          aria-label="Opciones de la cita"
                           className="p-1 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100"
                         >
                           <MoreHorizontal className="w-4 h-4" />
@@ -891,7 +896,7 @@ const handleSaveAppointment = async (formData) => {
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 text-[11px] text-stone-400">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-stone-400">
                       <span className="inline-flex items-center gap-1.5">
                         <Phone className="w-3 h-3 text-stone-400" />
                         {apt.clientPhone}

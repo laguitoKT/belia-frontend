@@ -20,7 +20,7 @@ export default function ConfirmDialog({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md bg-white rounded-[28px] shadow-card border border-stone-100 p-7 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="responsive-dialog relative w-full max-w-md bg-white rounded-[28px] shadow-card border border-stone-100 p-7 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -66,7 +66,7 @@ export default function ConfirmDialog({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t mt-7 border-stone-100">
+        <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t mt-7 border-stone-100">
           <button
             type="button"
             onClick={onClose}
