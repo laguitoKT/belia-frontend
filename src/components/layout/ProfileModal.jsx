@@ -4,7 +4,7 @@ export default function ProfileModal({ isOpen, onClose, onLogout, user }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 backdrop-blur-xs p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-xs">
       <div 
         className="relative w-full max-w-md bg-white rounded-[28px] shadow-card border border-stone-100 p-7 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
@@ -15,7 +15,7 @@ export default function ProfileModal({ isOpen, onClose, onLogout, user }) {
         {/* Botón cerrar */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-surface-bg flex items-center justify-center text-stone-400 hover:text-brand-primary hover:bg-brand-soft/50 transition-colors"
+          className="absolute flex items-center justify-center w-8 h-8 transition-colors rounded-full top-5 right-5 bg-surface-bg text-stone-400 hover:text-brand-primary hover:bg-brand-soft/50"
           aria-label="Cerrar modal"
         >
           <X className="w-4 h-4" />
@@ -23,7 +23,7 @@ export default function ProfileModal({ isOpen, onClose, onLogout, user }) {
 
         {/* Encabezado del Perfil */}
         <div className="flex items-center gap-4 mt-2 mb-6">
-          <div className="w-16 h-16 rounded-full bg-brand-soft flex items-center justify-center text-brand-primary font-bold text-xl border-2 border-brand-light/40 shrink-0">
+          <div className="flex items-center justify-center w-16 h-16 text-xl font-bold border-2 rounded-full bg-brand-soft text-brand-primary border-brand-light/40 shrink-0">
             {user.initials}
           </div>
           <div>
@@ -31,7 +31,7 @@ export default function ProfileModal({ isOpen, onClose, onLogout, user }) {
               <ShieldCheck className="w-3 h-3" />
               {user.roleLabel}
             </span>
-            <h3 className="text-xl font-bold text-stone-900 tracking-tight">
+            <h3 className="text-xl font-bold tracking-tight text-stone-900">
               {user.name}
             </h3>
           </div>
@@ -40,7 +40,7 @@ export default function ProfileModal({ isOpen, onClose, onLogout, user }) {
         {/* Lista de Información Requerida */}
         <div className="space-y-3.5 bg-surface-bg p-4 rounded-2xl border border-stone-100 text-sm">
           <div className="flex items-center gap-3.5">
-            <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-brand-primary shadow-2xs shrink-0">
+            <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
@@ -50,7 +50,7 @@ export default function ProfileModal({ isOpen, onClose, onLogout, user }) {
           </div>
 
           <div className="flex items-center gap-3.5">
-            <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-brand-primary shadow-2xs shrink-0">
+            <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
               <Phone className="w-4 h-4" />
             </div>
             <div>
@@ -60,7 +60,7 @@ export default function ProfileModal({ isOpen, onClose, onLogout, user }) {
           </div>
 
           <div className="flex items-center gap-3.5">
-            <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-brand-primary shadow-2xs shrink-0">
+            <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
               <Mail className="w-4 h-4" />
             </div>
             <div>
@@ -82,21 +82,15 @@ export default function ProfileModal({ isOpen, onClose, onLogout, user }) {
         </div>
 
         {/* Botón inferior */}
-        <div className="mt-6 flex flex-col gap-2">
+        <div className="flex flex-col gap-2 mt-6">
           <button
             type="button"
             onClick={onLogout}
-            className="w-full py-3 rounded-xl bg-brand-primary text-white text-xs font-semibold hover:bg-brand-accent transition-colors"
+            className="w-full py-3 text-xs font-semibold text-white transition-colors rounded-xl bg-brand-primary hover:bg-brand-accent"
           >
             Cerrar sesión
           </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full py-3 rounded-xl border border-stone-200 text-stone-600 text-xs font-semibold hover:bg-surface-bg transition-colors"
-          >
-            Cerrar perfil
-          </button>
+
         </div>
       </div>
     </div>

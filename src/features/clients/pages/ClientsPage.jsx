@@ -21,6 +21,8 @@ import ClientDetailModal from '../components/ClientDetailModal';
 import ClientHistoryModal from '../components/ClientHistoryModal';
 import ClientFormModal from '../components/ClientFormModal';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
+import { getCategoryTheme } from '../../../components/ui/categoryThemes';
+import { getInitialsTheme } from '../../../components/ui/initialsThemes';
 
 export default function ClientsPage() {
   const { user, isAdmin } = useAuth();
@@ -292,7 +294,10 @@ export default function ClientsPage() {
                 </tr>
               </thead>
               <tbody className="text-xs divide-y divide-stone-100">
-                {filteredClients.map((client) => (
+                {filteredClients.map((client) => {
+                  const theme = getCategoryTheme(client.lastCategory);
+                  const initialsTheme = getInitialsTheme(client.id || client.name);
+                  return (
                   <tr
                     key={client.id}
                     onClick={() => setSelectedDetailClient(client)}
@@ -300,7 +305,7 @@ export default function ClientsPage() {
                   >
                     <td className="py-4 pr-4 pl-7">
                       <div className="flex items-center gap-3.5">
-                        <div className="w-10 h-10 rounded-full bg-[#FDECEF] border-2 border-[#FAF3F5] flex items-center justify-center text-brand-primary font-bold text-xs shrink-0">
+                        <div className={`w-10 h-10 rounded-full ${initialsTheme.background} border-2 border-white flex items-center justify-center ${initialsTheme.text} font-bold text-xs shrink-0`}>
                           {client.initials}
                         </div>
                         <span className="text-sm font-bold text-stone-900">
@@ -314,7 +319,7 @@ export default function ClientsPage() {
                     <td className="px-4 py-4 text-stone-500">{client.email}</td>
 
                     <td className="px-4 py-4">
-                      <span className="px-3.5 py-1 rounded-full text-[11px] font-semibold bg-[#FDECEF] text-brand-primary">
+                      <span className={`px-3.5 py-1 rounded-full text-[11px] font-semibold ${theme.bg} ${theme.text}`}>
                         {client.lastService}
                       </span>
                     </td>
@@ -363,7 +368,8 @@ export default function ClientsPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -371,7 +377,10 @@ export default function ClientsPage() {
       ) : (
         /* ==================== VISTA 2: TARJETAS / CARDS ==================== */
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredClients.map((client) => (
+          {filteredClients.map((client) => {
+            const theme = getCategoryTheme(client.lastCategory);
+            const initialsTheme = getInitialsTheme(client.id || client.name);
+            return (
             <div
               key={client.id}
               onClick={() => setSelectedDetailClient(client)}
@@ -433,7 +442,7 @@ export default function ClientsPage() {
 
               {/* Encabezado */}
               <div className="flex flex-col items-center pb-5 text-center border-b border-stone-100">
-                <div className="w-20 h-20 rounded-full bg-[#FDECEF] border-4 border-[#FAF5F6] flex items-center justify-center text-brand-primary font-bold text-xl mb-3.5">
+                <div className={`w-20 h-20 rounded-full ${initialsTheme.background} border-4 border-white flex items-center justify-center ${initialsTheme.text} font-bold text-xl mb-3.5`}>
                   {client.initials}
                 </div>
                 <h3 className="text-lg font-bold tracking-tight text-stone-900">
@@ -459,7 +468,7 @@ export default function ClientsPage() {
                     <Sparkles className="w-4 h-4 text-brand-primary shrink-0" />
                     <span className="text-stone-400">Último servicio:</span>
                   </div>
-                  <span className="px-3 py-0.5 rounded-full text-[11px] font-semibold bg-[#FDECEF] text-brand-primary">
+                  <span className={`px-3 py-0.5 rounded-full text-[11px] font-semibold ${theme.bg} ${theme.text}`}>
                     {client.lastService}
                   </span>
                 </div>
@@ -485,7 +494,8 @@ export default function ClientsPage() {
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

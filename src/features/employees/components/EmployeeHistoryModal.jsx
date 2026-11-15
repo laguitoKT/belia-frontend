@@ -6,6 +6,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { formatEmployeeServiceDate } from '../services/employeesService';
+import { getInitialsTheme } from '../../../components/ui/initialsThemes';
 
 export default function EmployeeHistoryModal({ employee, isOpen, onClose }) {
   if (!isOpen || !employee) return null;
@@ -15,6 +16,7 @@ export default function EmployeeHistoryModal({ employee, isOpen, onClose }) {
     (acc, item) => acc + (Number(item.price) || 0),
     0
   );
+  const initialsTheme = getInitialsTheme(employee.id || employee.name);
 
   return (
     <div
@@ -38,7 +40,7 @@ export default function EmployeeHistoryModal({ employee, isOpen, onClose }) {
 
         {/* Encabezado */}
         <div className="flex items-center gap-4 pr-12 mb-6 shrink-0">
-          <div className="w-14 h-14 rounded-full bg-[#FDECEF] flex items-center justify-center text-brand-primary font-bold text-base shrink-0">
+          <div className={`w-14 h-14 rounded-full ${initialsTheme.background} flex items-center justify-center ${initialsTheme.text} font-bold text-base shrink-0`}>
             {employee.initials}
           </div>
           <div>
@@ -66,7 +68,9 @@ export default function EmployeeHistoryModal({ employee, isOpen, onClose }) {
               </p>
             </div>
           ) : (
-            history.map((item, idx) => (
+            history.map((item, idx) => {
+              const theme = getCategoryTheme(item.category);
+              return (
               <div
                 key={item.id}
                 className="p-5 transition-all border rounded-2xl bg-surface-bg border-stone-100 hover:border-brand-light/50"
@@ -79,7 +83,7 @@ export default function EmployeeHistoryModal({ employee, isOpen, onClose }) {
                     <h4 className="text-base font-bold text-stone-900">
                       {item.service}
                     </h4>
-                    <span className="px-3 py-0.5 rounded-full text-[11px] font-semibold bg-[#FDECEF] text-brand-primary">
+                    <span className={`px-3 py-0.5 rounded-full text-[11px] font-semibold ${theme.bg} ${theme.text}`}>
                       {item.category}
                     </span>
                   </div>
@@ -134,7 +138,8 @@ export default function EmployeeHistoryModal({ employee, isOpen, onClose }) {
                   </div>
                 )}
               </div>
-            ))
+              );
+            })
           )}
         </div>
 

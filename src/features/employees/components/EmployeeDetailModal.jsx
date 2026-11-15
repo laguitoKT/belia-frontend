@@ -10,6 +10,8 @@ import {
   Power,
 } from 'lucide-react';
 import { formatEmployeeServiceDate } from '../services/employeesService';
+import { getCategoryTheme } from '../../../components/ui/categoryThemes';
+import { getInitialsTheme } from '../../../components/ui/initialsThemes';
 
 export default function EmployeeDetailModal({
   employee,
@@ -23,6 +25,8 @@ export default function EmployeeDetailModal({
 
   const recentThreeServices = (employee.serviceHistory || []).slice(0, 3);
   const isActive = employee.active !== false;
+  const employeeTheme = getCategoryTheme(employee.specialtyCategory);
+  const initialsTheme = getInitialsTheme(employee.id || employee.name);
 
   return (
     <div
@@ -46,7 +50,7 @@ export default function EmployeeDetailModal({
 
         {/* Encabezado */}
         <div className="flex items-center gap-4 pr-8 mt-2 mb-6">
-          <div className="w-16 h-16 rounded-full bg-[#FDECEF] border-4 border-[#FAF5F6] flex items-center justify-center text-brand-primary font-bold text-lg shrink-0">
+          <div className={`w-16 h-16 rounded-full ${initialsTheme.background} border-4 border-white flex items-center justify-center ${initialsTheme.text} font-bold text-lg shrink-0`}>
             {employee.initials}
           </div>
           <div>
@@ -83,7 +87,7 @@ export default function EmployeeDetailModal({
               <p className="text-[11px] font-medium text-stone-400">
                 Especialidad
               </p>
-              <p className="font-bold text-brand-primary">
+              <p className={`font-bold ${employeeTheme.text}`}>
                 {employee.specialty}
               </p>
             </div>
@@ -155,7 +159,9 @@ export default function EmployeeDetailModal({
             </div>
           ) : (
             <div className="space-y-2.5">
-              {recentThreeServices.map((srv) => (
+              {recentThreeServices.map((srv) => {
+                const theme = getCategoryTheme(srv.category);
+                return (
                 <div
                   key={srv.id}
                   className="p-3.5 rounded-2xl bg-[#FAF7F8] border border-stone-100 flex items-center justify-between gap-3"
@@ -165,7 +171,7 @@ export default function EmployeeDetailModal({
                       <span className="text-xs font-bold text-stone-900">
                         {srv.service}
                       </span>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#FDECEF] text-brand-primary">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${theme.bg} ${theme.text}`}>
                         {srv.category}
                       </span>
                     </div>
@@ -192,7 +198,8 @@ export default function EmployeeDetailModal({
                     </span>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -20,6 +20,7 @@ import {
 import ProductFormModal from '../components/ProductFormModal';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import ProductDetailModal from '../components/ProductDetailModal';
+import { getCategoryTheme } from '../../../components/ui/categoryThemes';
 
 export default function InventoryPage() {
   const { user, isAdmin } = useAuth();
@@ -55,29 +56,6 @@ export default function InventoryPage() {
     setFeedbackBanner(msg);
     setTimeout(() => setFeedbackBanner(''), 3200);
   };
-
-  const getCategoryCardTheme = (category = '') => {
-  const norm = category.toLowerCase();
-  if (norm.includes('uña')) {
-    return {
-      bg: 'bg-[#E9F7F5]',
-      circle: 'bg-[#D1EFEA]/70',
-      text: 'text-[#207268]',
-    };
-  }
-  if (norm.includes('color')) {
-    return {
-      bg: 'bg-[#FDF4E7]',
-      circle: 'bg-[#F9E7CC]/60',
-      text: 'text-[#9A6728]',
-    };
-  }
-  return {
-    bg: 'bg-[#FDECEF]',
-    circle: 'bg-[#FADADD]/60',
-    text: 'text-brand-primary',
-  };
-};
 
   useEffect(() => {
     const fetchInventory = async () => {
@@ -358,6 +336,7 @@ export default function InventoryPage() {
                     prod.minStock,
                     prod.active
                   );
+                  const theme = getCategoryTheme(prod.category);
 
                   return (
                     <tr
@@ -369,7 +348,7 @@ export default function InventoryPage() {
                     >
                       <td className="py-4 pr-4 pl-7">
                         <div className="flex items-center gap-3.5">
-                          <div className="w-11 h-11 rounded-2xl bg-[#FDECEF] flex items-center justify-center text-brand-primary shrink-0 overflow-hidden">
+                          <div className={`w-11 h-11 rounded-2xl ${theme.bg} ${theme.text} flex items-center justify-center shrink-0 overflow-hidden`}>
                             {prod.imageUrl ? (
                               <img
                                 src={prod.imageUrl}
@@ -419,7 +398,7 @@ export default function InventoryPage() {
                       </td>
 
                       <td className="px-4 py-4">
-                        <span className="px-3.5 py-1 rounded-full text-[11px] font-semibold bg-[#FDECEF] text-brand-primary">
+                        <span className={`px-3.5 py-1 rounded-full text-[11px] font-semibold ${theme.bg} ${theme.text}`}>
                           {prod.category}
                         </span>
                       </td>
@@ -471,15 +450,14 @@ export default function InventoryPage() {
         </div>
       ) : (
         /* ==================== VISTA 2: TARJETAS / CARDS ==================== */
-/* ==================== VISTA 2: TARJETAS / CARDS (Distribución horizontal estilo Servicios) ==================== */
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredProducts.map((prod) => {
             const statusInfo = getProductStockStatus(
               prod.quantity,
               prod.minStock,
               prod.active
             );
-            const theme = getCategoryCardTheme(prod.category);
+            const theme = getCategoryTheme(prod.category);
 
             return (
               <div
@@ -592,6 +570,8 @@ export default function InventoryPage() {
                     className="flex items-end justify-between gap-2 pt-3"
                     onClick={(e) => e.stopPropagation()}
                   >
+
+                    
                     <div>
                       <div className="flex items-center gap-2">
                         <button
@@ -619,7 +599,7 @@ export default function InventoryPage() {
                         </button>
                       </div>
                       <span className="block text-[11px] text-stone-400 mt-1">
-                        unidades disponibles
+                        disponibles
                       </span>
                     </div>
 

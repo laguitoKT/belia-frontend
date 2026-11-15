@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Calendar,
-  Clock,
+  CalendarClock ,
   Users,
   Box,
   ChevronRight,
@@ -23,7 +23,7 @@ import {
 
 // Función para determinar el color del punto de la línea de tiempo según el estado y categoría del servicio
 const getTimelineDotColor = (apt) => {
-  if (apt.status !== 'Confirmada') return 'bg-amber-500';
+  if (apt.status !== 'Confirmada') return 'bg-brand-secondary';
   switch (apt.serviceCategory) {
     case 'Cabello':
       return 'bg-brand-primary';
@@ -135,7 +135,7 @@ export default function HomePage() {
           </h2>
           <p className="mt-1 text-xs sm:text-sm text-stone-400">
             {isAdmin
-              ? 'Supervisión global de citas, especialistas e inventario de Belia.'
+              ? 'Supervisión general de citas, especialistas e inventario de Belia.'
               : 'Todo listo para una gran jornada en Belia.'}
           </p>
         </div>
@@ -172,7 +172,7 @@ export default function HomePage() {
       {/* Tarjetas de Métricas Superiores (KPIs) */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <div className="bg-white rounded-[26px] p-5 border border-stone-100/80 shadow-card flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#FDF2F4] flex items-center justify-center text-brand-primary shrink-0">
+          <div className="flex items-center justify-center w-12 h-12 text-white rounded-2xl bg-brand-primary shrink-0">
             <Calendar className="w-5 h-5" />
           </div>
           <div>
@@ -189,8 +189,8 @@ export default function HomePage() {
         </div>
 
         <div className="bg-white rounded-[26px] p-5 border border-stone-100/80 shadow-card flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#FEF1F5] flex items-center justify-center text-brand-secondary shrink-0">
-            <Clock className="w-5 h-5" />
+          <div className="flex items-center justify-center w-12 h-12 text-white rounded-2xl bg-brand-accent shrink-0">
+            <CalendarClock  className="w-5 h-5" />
           </div>
           <div>
             <p className="text-xs font-medium text-stone-400">Tiempo agendado</p>
@@ -204,7 +204,7 @@ export default function HomePage() {
         </div>
 
         <div className="bg-white rounded-[26px] p-5 border border-stone-100/80 shadow-card flex items-start gap-4">
-          <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 shrink-0">
+          <div className="flex items-center justify-center w-12 h-12 text-white rounded-2xl bg-brand-secondary shrink-0">
             <Users className="w-5 h-5" />
           </div>
           <div>
@@ -219,7 +219,7 @@ export default function HomePage() {
         </div>
 
         <div className="bg-white rounded-[26px] p-5 border border-stone-100/80 shadow-card flex items-start gap-4">
-          <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 shrink-0">
+          <div className="flex items-center justify-center w-12 h-12 text-white rounded-2xl bg-brand-light shrink-0">
             <Box className="w-5 h-5" />
           </div>
           <div>

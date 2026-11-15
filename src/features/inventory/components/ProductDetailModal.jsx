@@ -9,6 +9,7 @@ import {
   LayoutGridCircles,
 } from 'lucide-react';
 import { getProductStockStatus } from '../services/inventoryService';
+import { getCategoryTheme } from '../../../components/ui/categoryThemes';
 
 export default function ProductDetailModal({
   product,
@@ -23,6 +24,7 @@ export default function ProductDetailModal({
     product.minStock,
     product.active
   );
+  const theme = getCategoryTheme(product.category);
 
   return (
     <div
@@ -46,7 +48,7 @@ export default function ProductDetailModal({
 
         {/* Encabezado con Imagen o Icono del Producto */}
         <div className="flex items-center gap-4 pr-8 mt-2 mb-6">
-          <div className="w-20 h-20 rounded-2xl bg-[#FDECEF] flex items-center justify-center text-brand-primary overflow-hidden shrink-0 border border-brand-light/30">
+          <div className={`w-20 h-20 rounded-2xl ${theme.bg} ${theme.text} flex items-center justify-center overflow-hidden shrink-0 border border-brand-light/30`}>
             {product.imageUrl ? (
               <img
                 src={product.imageUrl}
@@ -88,7 +90,7 @@ export default function ProductDetailModal({
               <p className="text-[11px] font-medium text-stone-400">
                 Categoría del servicio
               </p>
-              <p className="font-bold text-stone-800">{product.category}</p>
+              <p className={`font-bold ${theme.text}`}>{product.category}</p>
             </div>
           </div>
 

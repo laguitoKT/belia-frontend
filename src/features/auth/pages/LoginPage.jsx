@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ChevronRight } from 'lucide-react';
+import { Sparkles, ChevronRight, Eye, EyeClosed } from 'lucide-react';
 import { useAuth } from '../../../context/useAuth';
 import { LoginResponseError } from '../services/authServices';
+import logo from '../../../assets/LogoB2.png';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function LoginPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -47,16 +49,19 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen w-full flex flex-col lg:flex-row overflow-hidden bg-[#F8F6F7]">
-      {/* Fondo izquierdo con gradiente (~70% en pantallas grandes) */}
+      {/* Fondo izquierdo con gradiente  */}
       <div className="relative w-full lg:w-[70%] min-h-[420px] lg:min-h-screen bg-gradient-to-br from-brand-primary via-[#9E1428] to-brand-accent flex flex-col justify-between p-8 sm:p-12 lg:p-16 xl:p-20 text-white overflow-hidden">
         
-        {/* Círculos decorativos sutiles del mockup */}
+        {/* Círculos decorativos, hechos con CSS */}
         <div className="pointer-events-none absolute -top-24 right-12 w-[480px] h-[480px] rounded-full border border-white/10" />
         <div className="pointer-events-none absolute -bottom-48 -left-24 w-[520px] h-[520px] rounded-full bg-brand-accent/25 blur-sm border border-white/5" />
 
         {/* Encabezado de Marca (Belia) */}
         <header className="relative z-10 flex items-center gap-4">
-          <div className="bg-white rounded-sm shadow-sm w-11 h-11 shrink-0" />
+          {/* Logo de Belia */}
+          <div className="flex items-center justify-center w-16 h-16 p-1 bg-white rounded-md shadow-sm shrink-0">
+            <img src={logo} alt="Belia" className="object-contain w-full h-full" />
+          </div>
           <div>
             <h1 className="text-xl font-bold leading-none tracking-tight text-white">
               Belia
@@ -70,7 +75,6 @@ export default function LoginPage() {
         {/* Mensaje Hero Central */}
         <div className="relative z-10 max-w-xl py-12 my-auto lg:py-0">
           <div className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.18em] uppercase text-brand-soft mb-5">
-            <Sparkles className="w-4 h-4 text-brand-light" />
             <span>GESTIÓN EN ARMONÍA</span>
           </div>
 
@@ -90,8 +94,8 @@ export default function LoginPage() {
         <div className="hidden h-6 lg:block" />
       </div>
 
-      {/* Contenedor de la Tarjeta de Inicio de Sesión (Superpuesta en la división) */}
-      <div className="relative z-20 w-full lg:w-[30%] flex items-center justify-left p-6 sm:p-10 lg:p-0">
+      {/* Contenedor de la Tarjeta de Inicio de Sesión  */}
+      <div className="relative z-20 w-full lg:w-[40%] flex items-center justify-left p-6 sm:p-10 lg:p-0">
         <div className="w-full max-w-[440px] lg:-ml-44 xl:-ml-56 bg-white rounded-[32px] shadow-card border border-stone-100 px-8 sm:px-11 pt-10 pb-9 relative">
           
           {/* Detalle superior carmesí en el borde de la tarjeta */}
@@ -145,16 +149,31 @@ export default function LoginPage() {
               >
                 Contraseña
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Escribe tu contraseña"
-                className="w-full px-4 py-3.5 rounded-xl bg-surface-input border border-stone-200/80 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Escribe tu contraseña"
+                  className="w-full px-4 py-3.5 pr-12 rounded-xl bg-surface-input border border-stone-200/80 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  className="absolute inset-y-0 right-0 flex items-center px-4 transition-colors text-stone-400 hover:text-brand-primary focus:outline-none focus:text-brand-primary"
+                >
+                  {showPassword ? (
+                    <EyeClosed className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Opciones secundarias */}
@@ -172,14 +191,17 @@ export default function LoginPage() {
                 </span>
               </label>
 
+              {/* Botón de recuperación de contraseña 
               <button
                 type="button"
                 className="text-xs font-semibold transition-colors text-brand-primary hover:text-brand-accent"
               >
                 ¿Olvidaste tu contraseña?
               </button>
-            </div>
+              */}
 
+            </div>
+            
             {/* Botón Principal con Gradiente */}
             <div className="pt-2">
               <button
@@ -196,7 +218,7 @@ export default function LoginPage() {
           {/* Pie de tarjeta */}
           <div className="text-center mt-7">
             <p className="text-[11px] text-stone-400">
-              Acceso exclusivo para el equipo de Belia.
+              Acceso exclusivo para el salón.
             </p>
           </div>
         </div>

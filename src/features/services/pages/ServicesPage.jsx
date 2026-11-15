@@ -3,8 +3,6 @@ import {
   Plus,
   Search,
   Filter,
-  Scissors,
-  Sparkles,
   MoreHorizontal,
   LayoutGrid,
   Table2,
@@ -19,35 +17,8 @@ import { catalogService } from '../services/catalogService';
 import ServiceFormModal from '../components/ServiceFormModal';
 import CatalogDetailModal from '../components/CatalogDetailModal';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
+import { getThemeByKey } from '../../../components/ui/categoryThemes';
 import { parseLocalDate } from '../../../utils/dateUtils';
-
-
-const CARD_THEMES = {
-  'pink-scissors': {
-    bg: 'bg-[#FDECEF]',
-    circle: 'bg-[#FADADD]/60',
-    text: 'text-brand-primary',
-    icon: Scissors,
-  },
-  'pink-sparkles': {
-    bg: 'bg-[#FDECEF]',
-    circle: 'bg-[#FADADD]/60',
-    text: 'text-[#C82344]',
-    icon: Sparkles,
-  },
-  'amber-scissors': {
-    bg: 'bg-[#FDF4E7]',
-    circle: 'bg-[#F9E7CC]/60',
-    text: 'text-[#9A6728]',
-    icon: Scissors,
-  },
-  'mint-sparkles': {
-    bg: 'bg-[#E9F7F5]',
-    circle: 'bg-[#D1EFEA]/70',
-    text: 'text-[#207268]',
-    icon: Sparkles,
-  },
-};
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat('es-MX', {
@@ -56,7 +27,6 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-// Formatea '2026-11-30' -> 'Hasta 30 nov' para coincidir con el mockup
 const formatPromoPeriod = (fromISO, untilISO) => {
   const formatShort = (iso) => {
     if (!iso || !iso.includes('-')) return iso || '';
@@ -96,7 +66,7 @@ export default function ServicesPage() {
 
   const [confirmState, setConfirmState] = useState({
     isOpen: false,
-    type: null, // 'delete' | 'toggle-status'
+    type: null,
     item: null,
   });
 
@@ -422,7 +392,7 @@ export default function ServicesPage() {
         viewMode === 'cards' ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredServices.map((srv) => {
-              const theme = CARD_THEMES[srv.theme] || CARD_THEMES['pink-scissors'];
+              const theme = getThemeByKey(srv.theme);
               const ThemeIcon = theme.icon;
               const isActive = srv.status === 'Activo';
               return (
@@ -542,6 +512,8 @@ export default function ServicesPage() {
                 </thead>
                 <tbody className="text-xs divide-y divide-stone-100">
                   {filteredServices.map((srv) => {
+                    const theme = getThemeByKey(srv.theme);
+                    const ThemeIcon = theme.icon;
                     const isActive = srv.status === 'Activo';
                     return (
                       // Fila de servicio en la tabla
@@ -550,8 +522,8 @@ export default function ServicesPage() {
                       className="transition-colors cursor-pointer hover:bg-surface-bg/60">
                         <td className="py-4 pr-4 pl-7">
                           <div className="flex items-center gap-3.5">
-                            <div className="w-10 h-10 rounded-2xl bg-[#FDECEF] flex items-center justify-center text-brand-primary shrink-0">
-                              <Scissors className="w-4 h-4" />
+                            <div className={`w-10 h-10 rounded-2xl ${theme.bg} ${theme.text} flex items-center justify-center shrink-0`}>
+                              <ThemeIcon className="w-4 h-4" />
                             </div>
                             <span className="text-sm font-bold text-stone-900">
                               {srv.name}
@@ -570,10 +542,11 @@ export default function ServicesPage() {
                         </td>
 
                         <td className="px-4 py-4">
-                          <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-[#FDECEF] text-brand-primary">
+                          <span className={`px-3 py-1 rounded-full text-[11px] font-semibold ${theme.bg} ${theme.text}`}>
                             {srv.category}
                           </span>
                         </td>
+                        
                         <td
                           className="px-4 py-4"
                           onClick={(e) => e.stopPropagation()}
@@ -631,7 +604,7 @@ export default function ServicesPage() {
         viewMode === 'cards' ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredPromotions.map((promo) => {
-              const theme = CARD_THEMES[promo.theme] || CARD_THEMES['pink-scissors'];
+              const theme = getThemeByKey(promo.theme);
               const ThemeIcon = theme.icon;
               const isActive = promo.status === 'Activo';
 
@@ -731,16 +704,7 @@ export default function ServicesPage() {
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenEdit(promo);
-                        }}
-                        className="px-4 py-2 rounded-2xl bg-[#FADCE6] hover:bg-brand-light/60 text-brand-primary text-xs font-bold transition-colors"
-                      >
-                        Editar
-                      </button>
+
                     </div>
                   </div>
                 </div>
@@ -765,6 +729,8 @@ export default function ServicesPage() {
                 </thead>
                 <tbody className="text-xs divide-y divide-stone-100">
                   {filteredPromotions.map((promo) => {
+                    const theme = getThemeByKey(promo.theme);
+                    const ThemeIcon = theme.icon;
                     const isActive = promo.status === 'Activo';
                     return (
                       // Fila de promoción en la tabla
@@ -774,8 +740,8 @@ export default function ServicesPage() {
                         className="transition-colors cursor-pointer hover:bg-surface-bg/60">
                         <td className="py-4 pr-4 pl-7">
                           <div className="flex items-center gap-3.5">
-                            <div className="w-10 h-10 rounded-2xl bg-[#FDECEF] flex items-center justify-center text-brand-primary shrink-0">
-                              <Sparkles className="w-4 h-4" />
+                            <div className={`w-10 h-10 rounded-2xl ${theme.bg} ${theme.text} flex items-center justify-center shrink-0`}>
+                              <ThemeIcon className="w-4 h-4" />
                             </div>
                             <div>
                               <span className="block text-sm font-bold text-stone-900">
@@ -788,13 +754,13 @@ export default function ServicesPage() {
                           </div>
                         </td>
                         
-                        <td className="px-4 py-4">
-                          <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-[#FDECEF] text-brand-primary">
+                        <td className="px-4 py-4 text-ellipsis overflow-hidden whitespace-nowrap max-w-[200px]">
+                          <span className={`px-3 py-1 rounded-full text-[11px] font-semibold ${theme.bg} ${theme.text}`}>
                             {promo.serviceIncluded}
                           </span>
                         </td>
 
-                        <td className="px-4 py-4 font-medium text-stone-500">
+                        <td className="px-4 py-4 font-medium text-center text-stone-500">
                           {formatPromoPeriod(promo.validFrom, promo.validUntil)}
                         </td>
 

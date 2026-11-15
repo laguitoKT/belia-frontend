@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import logo from '../../assets/LogoB2.png';
 
 const navItems = [
   { name: 'Inicio', path: '/inicio', icon: Home, adminOnly: false },
@@ -33,7 +34,7 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`relative h-screen bg-white border-r border-stone-100 flex flex-col justify-between shrink-0 select-none transition-all duration-300 ease-in-out z-30 ${
+      className={`relative h-screen bg-white  flex flex-col justify-between shrink-0 select-none transition-all duration-300 ease-in-out z-30 ${
         isCollapsed ? 'w-20' : 'w-64'
       }`}
     >
@@ -42,32 +43,33 @@ export default function Sidebar({
         onClick={onToggleCollapse}
         aria-label={isCollapsed ? 'Expandir menú lateral' : 'Colapsar menú lateral'}
         title={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
-        className="absolute z-40 flex items-center justify-center w-6 h-6 transition-colors bg-white border rounded-full shadow-xs -right-3 top-8 border-stone-200 text-stone-500 hover:text-brand-primary hover:border-brand-light"
+        className="absolute z-40 flex items-center justify-center w-6 h-6 transition-colors rounded-lg shadow-xs bg-stone-50 hover:bg-brand-primary -right-3 top-8 border-brand-soft text-brand-primary hover:text-brand-soft hover:border-brand-primary"
       >
         {isCollapsed ? (
-          <ChevronRight className="w-3.5 h-3.5" />
+          <ChevronRight className="w-4 h-4" />
         ) : (
-          <ChevronLeft className="w-3.5 h-3.5" />
+          <ChevronLeft className="w-4 h-4" />
         )}
       </button>
 
       <div className={`p-4 ${isCollapsed ? 'px-3' : 'p-6'} overflow-y-auto overflow-x-hidden`}>
         <div
-          className={`flex items-center mb-10 ${
+          className={`flex items-center mb-10 bg-brand-primary p-3 pl-3  rounded-2xl ${
             isCollapsed ? 'justify-center' : 'gap-3.5 pl-1'
           }`}
         >
-          <div className="flex items-center justify-center w-10 h-10 text-sm font-bold text-white shadow-xs bg-brand-primary rounded-xs shrink-0">
-            {isCollapsed ? 'B' : ''}
+          {/* Logo de Belia */}
+          <div className="flex items-center justify-center w-8 h-8 p-1 text-sm font-bold text-white bg-white rounded-lg shadow-xs shrink-0">
+            <img src={logo} alt="Belia" className="object-contain w-full h-full" />
           </div>
 
           {!isCollapsed && (
             <div className="overflow-hidden whitespace-nowrap">
-              <h1 className="text-lg font-bold leading-none tracking-tight text-stone-900">
+              <h1 className="font-bold leading-none tracking-tight text-white text-md">
                 Belia
               </h1>
-              <p className="text-[9px] font-semibold tracking-[0.2em] text-stone-400 uppercase mt-1.5">
-                GESTIÓN DEL SALÓN
+              <p className="text-[9px] font-semibold tracking-[0.2em] text-white uppercase mt-1.5">
+                GESTIÓN DE SALÓN
               </p>
             </div>
           )}
@@ -109,7 +111,7 @@ export default function Sidebar({
                       }`}
                     >
                       <Icon
-                        className={`w-4 h-4 shrink-0 ${
+                        className={`w-3.5 h-3.5 shrink-0 ${
                           isActive ? 'text-brand-primary' : 'text-stone-400'
                         }`}
                       />
