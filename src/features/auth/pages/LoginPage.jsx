@@ -50,7 +50,7 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen w-full flex flex-col lg:flex-row overflow-hidden bg-[#F8F6F7]">
       {/* Fondo izquierdo con gradiente  */}
-      <div className="relative w-full lg:w-[70%] min-h-[420px] lg:min-h-screen bg-gradient-to-br from-brand-primary via-[#9E1428] to-brand-accent flex flex-col justify-between p-8 sm:p-12 lg:p-16 xl:p-20 text-white overflow-hidden">
+      <div className="relative w-full lg:w-[70%] lg:min-h-screen bg-gradient-to-br from-brand-primary via-[#9E1428] to-brand-accent flex flex-col justify-between p-6 sm:p-12 lg:p-16 xl:p-20 text-white overflow-hidden">
         
         {/* Círculos decorativos, hechos con CSS */}
         <div className="pointer-events-none absolute -top-24 right-12 w-[480px] h-[480px] rounded-full border border-white/10" />
@@ -73,12 +73,12 @@ export default function LoginPage() {
         </header>
 
         {/* Mensaje Hero Central */}
-        <div className="relative z-10 max-w-xl py-12 my-auto lg:py-0">
+        <div className="relative z-10 max-w-xl py-8 my-auto sm:py-12 lg:py-0">
           <div className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.18em] uppercase text-brand-soft mb-5">
             <span>GESTIÓN EN ARMONÍA</span>
           </div>
 
-          <h2 className="text-4xl sm:text-5xl xl:text-[56px] font-bold tracking-tight leading-[1.08] text-white mb-6">
+          <h2 className="text-3xl sm:text-5xl xl:text-[56px] font-bold tracking-tight leading-[1.08] text-white mb-6">
             Todo tu salón,
             <br />
             en un solo lugar.

@@ -1,10 +1,21 @@
-import { Search, Bell, Shield } from 'lucide-react';
+import { Menu } from 'lucide-react';
 
-export default function Topbar({ currentSection = 'Inicio', user, onOpenProfile }) {
+export default function Topbar({ currentSection = 'Inicio', user, onOpenProfile, onOpenMenu, isMobileMenuOpen, menuButtonRef }) {
   return (
-    <header className="flex flex-col justify-between w-full px-8 py-4 bg-white sm:flex-row sm:items-center mb-3">
+    <header className="flex items-center justify-between w-full gap-3 px-4 py-4 mb-3 bg-white sm:px-6 lg:px-8">
       {/* Breadcrumb izquierdo + Badge de alcance según el rol */}
       <div className="flex items-center gap-3">
+        <button
+          type="button"
+          ref={menuButtonRef}
+          onClick={onOpenMenu}
+          aria-label="Abrir menú de navegación"
+          aria-expanded={isMobileMenuOpen}
+          aria-controls={isMobileMenuOpen ? 'mobile-navigation' : undefined}
+          className="flex items-center justify-center w-10 h-10 rounded-xl text-brand-primary hover:bg-brand-soft/40 lg:hidden"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
         <div className="flex items-center gap-2 text-xs font-medium text-stone-400">
           <span>Belia</span>
           <span>/</span>

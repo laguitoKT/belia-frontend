@@ -17,3 +17,36 @@
     @apply antialiased bg-surface-bg text-stone-900 selection:bg-brand-soft selection:text-brand-primary;
   }
 }
+
+@media (max-width: 1023px) {
+  .responsive-page table {
+    min-width: 800px;
+  }
+}
+
+@media (max-width: 639px) {
+  .responsive-page select {
+    max-width: 100%;
+  }
+
+  .responsive-page .fixed[role='alert'],
+  .responsive-page .fixed.bottom-6 {
+    left: 1rem;
+    right: 1rem;
+    max-width: none;
+  }
+
+  .responsive-dialog {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 639px), (max-height: 700px) {
+  .responsive-dialog {
+    max-height: calc(100dvh - 2rem);
+  }
+
+  .responsive-dialog:not(.history-dialog) {
+    overflow-y: auto;
+  }
+}

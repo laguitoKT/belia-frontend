@@ -24,7 +24,7 @@ export default function EmployeeHistoryModal({ employee, isOpen, onClose }) {
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl bg-white rounded-[32px] shadow-card border border-stone-100 p-7 sm:p-9 overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col"
+        className="responsive-dialog history-dialog relative w-full max-w-2xl bg-white rounded-[32px] shadow-card border border-stone-100 p-7 sm:p-9 overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-brand-primary via-brand-accent to-brand-secondary" />

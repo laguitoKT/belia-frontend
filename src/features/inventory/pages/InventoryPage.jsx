@@ -13,6 +13,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '../../../context/useAuth';
+import useIsMobile from '../../../utils/useIsMobile';
 import {
   inventoryService,
   getProductStockStatus,
@@ -26,6 +27,7 @@ export default function InventoryPage() {
   const { user, isAdmin } = useAuth();
 
   const [viewMode, setViewMode] = useState('table');
+  const isMobile = useIsMobile();
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -184,7 +186,7 @@ export default function InventoryPage() {
 
   return (
     <div
-      className="w-full space-y-6"
+      className="responsive-page w-full space-y-6"
       onClick={() => openMenuId !== null && setOpenMenuId(null)}
     >
       {operationError && (
@@ -219,7 +221,7 @@ export default function InventoryPage() {
         <button
           type="button"
           onClick={handleOpenCreate}
-          className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 active:scale-[0.99] transition-all self-start sm:self-auto shrink-0"
+          className="inline-flex items-center justify-center w-full gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 active:scale-[0.99] transition-all self-start sm:w-auto sm:self-auto shrink-0"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Nuevo producto</span>
@@ -228,25 +230,25 @@ export default function InventoryPage() {
 
       {/* Barra de Herramientas */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 pt-1">
-        <div className="flex flex-col items-stretch flex-1 gap-3 sm:flex-row sm:items-center">
-          <div className="relative w-full sm:max-w-md">
+        <div className="grid grid-cols-2 flex-1 min-w-0 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+          <div className="relative col-span-2 w-full sm:max-w-md">
             <Search className="absolute w-4 h-4 -translate-y-1/2 pointer-events-none text-stone-400 left-4 top-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nombre..."
-              className="w-full py-3 pr-4 text-xs bg-white border pl-11 rounded-2xl border-stone-100 text-stone-700 placeholder:text-stone-300 shadow-2xs focus:outline-none focus:border-brand-light"
+              className="w-full py-2.5 sm:py-3 pr-4 text-xs bg-white border pl-11 rounded-xl sm:rounded-2xl border-stone-100 text-stone-700 placeholder:text-stone-300 shadow-2xs focus:outline-none focus:border-brand-light"
             />
           </div>
 
-          <div className="relative inline-flex items-center">
-            <Filter className="w-3.5 h-3.5 text-stone-500 absolute left-4 pointer-events-none" />
+          <div className="relative inline-flex items-center min-w-0">
+            <Filter className="w-3.5 h-3.5 text-stone-500 absolute left-3 sm:left-4 pointer-events-none" />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               aria-label="Filtrar por categoría"
-              className="py-3 pl-10 pr-8 text-xs font-semibold bg-white border appearance-none cursor-pointer rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none"
+              className="w-full min-w-0 min-h-[40px] py-2 sm:py-3 pl-8 sm:pl-10 pr-3 sm:pr-8 text-xs font-semibold bg-white border appearance-none cursor-pointer rounded-xl sm:rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none sm:w-auto"
             >
               {availableCategories.map((cat) => (
                 <option key={cat} value={cat}>
@@ -260,7 +262,7 @@ export default function InventoryPage() {
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
             aria-label="Filtrar por estado de stock"
-            className="px-4 py-3 text-xs font-semibold bg-white border cursor-pointer rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none"
+            className="w-full min-w-0 min-h-[40px] px-3 sm:px-4 py-2 sm:py-3 text-xs font-semibold bg-white border cursor-pointer rounded-xl sm:rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none sm:w-auto"
           >
             <option value="Todos">Estado: Todos</option>
             <option value="Óptimo">Óptimo</option>
@@ -271,7 +273,7 @@ export default function InventoryPage() {
         </div>
 
         {/* Conmutador de Vista (Tabla / Card) */}
-        <div className="inline-flex items-center p-1 rounded-2xl bg-[#F2EEF0] border border-stone-200/60 self-end md:self-auto">
+        <div className="hidden sm:inline-flex items-center p-1 rounded-2xl bg-[#F2EEF0] border border-stone-200/60 self-end md:self-auto">
           <button
             type="button"
             onClick={() => setViewMode('table')}
@@ -314,7 +316,7 @@ export default function InventoryPage() {
             No se encontraron productos con los filtros seleccionados
           </p>
         </div>
-      ) : viewMode === 'table' ? (
+      ) : !isMobile && viewMode === 'table' ? (
         /* ==================== VISTA 1: TABLA ==================== */
         <div className="bg-white rounded-[28px] border border-stone-100/90 shadow-card overflow-hidden">
           <div className="overflow-x-auto">
@@ -469,7 +471,7 @@ export default function InventoryPage() {
               >
                 {/* Bloque Izquierdo Grande: Imagen del producto o bloque ilustrativo con categoría */}
                 <div
-                  className={`w-32 sm:w-36 rounded-[22px] ${theme.bg} relative overflow-hidden shrink-0 min-h-[152px] flex flex-col justify-between p-4`}
+                  className={`w-20 sm:w-36 rounded-[22px] ${theme.bg} relative overflow-hidden shrink-0 min-h-[152px] flex flex-col justify-between p-3 sm:p-4`}
                 >
                   {prod.imageUrl ? (
                     <>
@@ -567,7 +569,7 @@ export default function InventoryPage() {
 
                   {/* Pie de tarjeta: Cantidad grande con botones (- / +) a la izquierda y Estado a la derecha */}
                   <div
-                    className="flex items-end justify-between gap-2 pt-3"
+                    className="flex flex-wrap items-end justify-between gap-2 pt-3"
                     onClick={(e) => e.stopPropagation()}
                   >
 

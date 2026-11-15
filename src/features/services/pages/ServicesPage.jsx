@@ -13,6 +13,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { useAuth } from '../../../context/useAuth';
+import useIsMobile from '../../../utils/useIsMobile';
 import { catalogService } from '../services/catalogService';
 import ServiceFormModal from '../components/ServiceFormModal';
 import CatalogDetailModal from '../components/CatalogDetailModal';
@@ -49,6 +50,7 @@ export default function ServicesPage() {
 
   const [activeTab, setActiveTab] = useState('services');
   const [viewMode, setViewMode] = useState('cards');
+  const isMobile = useIsMobile();
 
   const [services, setServices] = useState([]);
   const [promotions, setPromotions] = useState([]);
@@ -220,7 +222,7 @@ export default function ServicesPage() {
 
   return (
     <div
-      className="w-full space-y-6"
+      className="responsive-page w-full space-y-6"
       onClick={() => openMenuId !== null && setOpenMenuId(null)}
     >
       {operationError && (
@@ -259,7 +261,7 @@ export default function ServicesPage() {
               setEditingItem(null);
               setIsModalOpen(true);
             }}
-            className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 transition-all self-start sm:self-auto"
+            className="inline-flex items-center justify-center w-full gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 transition-all self-start sm:w-auto sm:self-auto"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>
@@ -270,14 +272,14 @@ export default function ServicesPage() {
       </div>
 
       {/* Pestañas */}
-      <div className="flex items-center gap-8 border-b border-stone-200/80">
+      <div className="flex items-center gap-4 overflow-x-auto border-b sm:gap-8 border-stone-200/80">
         <button
           type="button"
           onClick={() => {
             setActiveTab('services');
             setOpenMenuId(null);
           }}
-          className={`pb-3.5 flex items-center gap-2 text-xs font-bold border-b-2 transition-all ${
+          className={`pb-3.5 flex shrink-0 items-center gap-2 text-xs font-bold border-b-2 transition-all ${
             activeTab === 'services'
               ? 'border-brand-primary text-brand-primary'
               : 'border-transparent text-stone-400 hover:text-stone-700'
@@ -301,7 +303,7 @@ export default function ServicesPage() {
             setActiveTab('promotions');
             setOpenMenuId(null);
           }}
-          className={`pb-3.5 flex items-center gap-2 text-xs font-bold border-b-2 transition-all ${
+          className={`pb-3.5 flex shrink-0 items-center gap-2 text-xs font-bold border-b-2 transition-all ${
             activeTab === 'promotions'
               ? 'border-brand-primary text-brand-primary'
               : 'border-transparent text-stone-400 hover:text-stone-700'
@@ -322,25 +324,25 @@ export default function ServicesPage() {
 
       {/* Buscador, Filtro y Selector de Vista */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 pt-1">
-        <div className="flex flex-col items-stretch flex-1 gap-3 sm:flex-row sm:items-center">
-          <div className="relative w-full sm:max-w-md">
+        <div className="grid grid-cols-2 flex-1 min-w-0 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+          <div className="relative col-span-2 w-full sm:max-w-md">
             <Search className="absolute w-4 h-4 -translate-y-1/2 pointer-events-none text-stone-400 left-4 top-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nombre..."
-              className="w-full py-3 pr-4 text-xs bg-white border pl-11 rounded-2xl border-stone-100 text-stone-700 placeholder:text-stone-300 shadow-2xs focus:outline-none focus:border-brand-light"
+              className="w-full py-2.5 sm:py-3 pr-4 text-xs bg-white border pl-11 rounded-xl sm:rounded-2xl border-stone-100 text-stone-700 placeholder:text-stone-300 shadow-2xs focus:outline-none focus:border-brand-light"
             />
           </div>
 
-          <div className="relative inline-flex items-center">
-            <Filter className="w-3.5 h-3.5 text-stone-500 absolute left-4 pointer-events-none" />
+          <div className="relative inline-flex items-center min-w-0">
+            <Filter className="w-3.5 h-3.5 text-stone-500 absolute left-3 sm:left-4 pointer-events-none" />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               aria-label="Filtrar por tipo de servicio"
-              className="py-3 pl-10 pr-8 text-xs font-semibold bg-white border appearance-none cursor-pointer rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none"
+              className="w-full min-w-0 min-h-[40px] py-2 sm:py-3 pl-8 sm:pl-10 pr-3 sm:pr-8 text-xs font-semibold bg-white border appearance-none cursor-pointer rounded-xl sm:rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none sm:w-auto"
             >
               {availableCategories.map((cat) => (
                 <option key={cat} value={cat}>
@@ -351,7 +353,7 @@ export default function ServicesPage() {
           </div>
         </div>
 
-        <div className="inline-flex items-center p-1 rounded-2xl bg-[#F2EEF0] border border-stone-200/60 self-end md:self-auto">
+        <div className="hidden sm:inline-flex items-center p-1 rounded-2xl bg-[#F2EEF0] border border-stone-200/60 self-end md:self-auto">
           <button
             type="button"
             onClick={() => setViewMode('table')}
@@ -389,7 +391,7 @@ export default function ServicesPage() {
           {loadError}
         </div>
       ) : activeTab === 'services' ? (
-        viewMode === 'cards' ? (
+        isMobile || viewMode === 'cards' ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredServices.map((srv) => {
               const theme = getThemeByKey(srv.theme);
@@ -403,7 +405,7 @@ export default function ServicesPage() {
                   className="cursor-pointer bg-white rounded-[28px] p-3.5 border border-stone-100/90 shadow-card flex items-stretch gap-4 relative hover:border-brand-light/50 transition-all"
                 >
                   <div
-                    className={`w-28 sm:w-32 rounded-[22px] ${theme.bg} p-4 flex flex-col justify-between relative overflow-hidden shrink-0 min-h-[148px]`}
+                    className={`w-20 sm:w-32 rounded-[22px] ${theme.bg} p-3 sm:p-4 flex flex-col justify-between relative overflow-hidden shrink-0 min-h-[148px]`}
                   >
                     <div
                       className={`w-16 h-16 rounded-full ${theme.circle} absolute -top-3 -right-3 pointer-events-none`}
@@ -429,6 +431,7 @@ export default function ServicesPage() {
                             onClick={() =>
                               setOpenMenuId(openMenuId === srv.id ? null : srv.id)
                             }
+                            aria-label="Opciones del servicio"
                             className="p-1 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100"
                           >
                             <MoreHorizontal className="w-4 h-4" />
@@ -463,7 +466,7 @@ export default function ServicesPage() {
                     </div>
 
 
-                    <div className="flex items-end justify-between gap-2 pt-3">
+                    <div className="flex flex-wrap items-end justify-between gap-2 pt-3">
                       <div>
                         <span className="block text-xl font-bold leading-none tracking-tight text-stone-900">
                           {formatCurrency(srv.price)}
@@ -498,16 +501,16 @@ export default function ServicesPage() {
           /* VISTA DE LISTA (TABLA) DE SERVICIOS*/
           <div className="bg-white rounded-[28px] border border-stone-100/90 shadow-card overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full !min-w-0 sm:!min-w-[800px] lg:!min-w-0 table-fixed sm:table-auto text-left border-collapse">
                 <thead>
                   <tr className="border-b border-stone-100 text-[11px] font-bold tracking-[0.12em] text-stone-400 uppercase">
-                    <th className="py-5 pr-4 pl-7">SERVICIO</th>
-                    <th className="px-4 py-5">DESCRIPCIÓN</th>
-                    <th className="px-4 py-5">PRECIO</th>
-                    <th className="px-4 py-5">DURACIÓN</th>
-                    <th className="px-4 py-5">CATEGORÍA</th>
-                    <th className="px-4 py-5">ESTADO</th>
-                    <th className="py-5 pl-4 text-right pr-7">ACCIONES</th>
+                    <th className="py-4 pl-3 pr-1 sm:py-5 sm:pr-4 sm:pl-7">SERVICIO</th>
+                    <th className="hidden px-4 py-5 sm:table-cell">DESCRIPCIÓN</th>
+                    <th className="w-[66px] px-1 py-4 sm:w-auto sm:px-4 sm:py-5">PRECIO</th>
+                    <th className="hidden px-4 py-5 sm:table-cell">DURACIÓN</th>
+                    <th className="hidden px-4 py-5 sm:table-cell">CATEGORÍA</th>
+                    <th className="hidden px-4 py-5 sm:table-cell">ESTADO</th>
+                    <th className="w-[88px] py-4 pl-1 pr-3 text-right sm:w-auto sm:py-5 sm:pl-4 sm:pr-7">ACCIONES</th>
                   </tr>
                 </thead>
                 <tbody className="text-xs divide-y divide-stone-100">
@@ -520,35 +523,42 @@ export default function ServicesPage() {
                       <tr key={srv.id} 
                       onClick={() => setSelectedDetailItem(srv)}
                       className="transition-colors cursor-pointer hover:bg-surface-bg/60">
-                        <td className="py-4 pr-4 pl-7">
-                          <div className="flex items-center gap-3.5">
-                            <div className={`w-10 h-10 rounded-2xl ${theme.bg} ${theme.text} flex items-center justify-center shrink-0`}>
+                        <td className="py-3 pl-3 pr-1 sm:py-4 sm:pr-4 sm:pl-7">
+                          <div className="flex items-center gap-3.5 min-w-0">
+                            <div className={`w-10 h-10 rounded-2xl ${theme.bg} ${theme.text} hidden sm:flex items-center justify-center shrink-0`}>
                               <ThemeIcon className="w-4 h-4" />
                             </div>
-                            <span className="text-sm font-bold text-stone-900">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedDetailItem(srv);
+                              }}
+                              className="min-w-0 text-left text-sm font-bold text-stone-900 [overflow-wrap:anywhere] sm:[overflow-wrap:normal]"
+                            >
                               {srv.name}
-                            </span>
+                            </button>
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-stone-500">{srv.description}</td>
-                        <td className="px-4 py-4 text-sm font-bold text-stone-900">
+                        <td className="hidden px-4 py-4 text-stone-500 sm:table-cell">{srv.description}</td>
+                        <td className="px-1 py-3 text-xs font-bold break-all text-stone-900 sm:px-4 sm:py-4 sm:text-sm sm:break-normal">
                           {formatCurrency(srv.price)}
                         </td>
-                        <td className="px-4 py-4 font-medium text-stone-500">
+                        <td className="hidden px-4 py-4 font-medium text-stone-500 sm:table-cell">
                           <span className="inline-flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5 text-stone-400" />
                             {srv.durationMinutes} min
                           </span>
                         </td>
 
-                        <td className="px-4 py-4">
+                        <td className="hidden px-4 py-4 sm:table-cell">
                           <span className={`px-3 py-1 rounded-full text-[11px] font-semibold ${theme.bg} ${theme.text}`}>
                             {srv.category}
                           </span>
                         </td>
                         
                         <td
-                          className="px-4 py-4"
+                          className="hidden px-4 py-4 sm:table-cell"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
@@ -564,28 +574,30 @@ export default function ServicesPage() {
                           </button>
                         </td>
                         <td 
-                          className="py-4 pl-4 text-right pr-7" 
+                          className="py-3 pl-1 pr-3 text-right sm:py-4 sm:pl-4 sm:pr-7"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <div className="inline-flex items-center gap-1.5">
+                          <div className="inline-flex items-center gap-0 sm:gap-1.5">
                             <button
                               type="button"
                               onClick={() => handleRequestToggleStatus(srv)}
-                              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold inline-flex items-center gap-1 transition-colors ${
+                              className={`w-9 h-9 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1.5 rounded-xl text-[11px] font-bold inline-flex items-center justify-center gap-1 transition-colors ${
                                 isActive
                                   ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
                                   : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
                               }`}
                               title={isActive ? 'Desactivar servicio' : 'Activar servicio'}
+                              aria-label={isActive ? 'Desactivar servicio' : 'Activar servicio'}
                             >
                               <Power className="w-3.5 h-3.5" />
-                              <span>{isActive ? 'Desactivar' : 'Activar'}</span>
+                              <span className="sr-only sm:not-sr-only">{isActive ? 'Desactivar' : 'Activar'}</span>
                             </button>
                             <button
                               type="button"
                               onClick={() => handleOpenEdit(srv)}
-                              className="p-2 transition-colors rounded-xl text-stone-400 hover:text-brand-primary hover:bg-brand-soft/40"
+                              className="inline-flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:p-2 transition-colors rounded-xl text-stone-400 hover:text-brand-primary hover:bg-brand-soft/40"
                               title="Editar"
+                              aria-label="Editar servicio"
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
@@ -601,7 +613,7 @@ export default function ServicesPage() {
         )
       ) : (
         /* ==================== PESTAÑA 2: PAQUETES Y PROMOCIONES ==================== */
-        viewMode === 'cards' ? (
+        isMobile || viewMode === 'cards' ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredPromotions.map((promo) => {
               const theme = getThemeByKey(promo.theme);
@@ -615,7 +627,7 @@ export default function ServicesPage() {
                   className=" cursor-pointer bg-white rounded-[28px] p-3.5 border border-stone-100/90 shadow-card flex items-stretch gap-4 relative hover:border-brand-light/50 transition-all"
                 >
                   <div
-                    className={`w-28 sm:w-32 rounded-[22px] ${theme.bg} p-4 flex flex-col justify-between relative overflow-hidden shrink-0 min-h-[156px]`}
+                    className={`w-20 sm:w-32 rounded-[22px] ${theme.bg} p-3 sm:p-4 flex flex-col justify-between relative overflow-hidden shrink-0 min-h-[156px]`}
                   >
                     <div
                       className={`w-16 h-16 rounded-full ${theme.circle} absolute -top-3 -right-3 pointer-events-none`}
@@ -641,6 +653,7 @@ export default function ServicesPage() {
                             onClick={() =>
                               setOpenMenuId(openMenuId === promo.id ? null : promo.id)
                             }
+                            aria-label="Opciones de la promoción"
                             className="p-1 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100"
                           >
                             <MoreHorizontal className="w-4 h-4" />
@@ -687,7 +700,7 @@ export default function ServicesPage() {
                       </p>
                     </div>
 
-                    <div className="flex items-end justify-between gap-2 pt-3">
+                    <div className="flex flex-wrap items-end justify-between gap-2 pt-3">
                       <div>
                         <span className="block text-xl font-bold leading-none tracking-tight text-stone-900">
                           {formatCurrency(promo.price)}
@@ -715,16 +728,16 @@ export default function ServicesPage() {
           /* VISTA DE LISTA (TABLA) DE PAQUETES Y PROMOCIONES*/
           <div className="bg-white rounded-[28px] border border-stone-100/90 shadow-card overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full !min-w-0 sm:!min-w-[800px] lg:!min-w-0 table-fixed sm:table-auto text-left border-collapse">
                 <thead>
                   <tr className="border-b border-stone-100 text-[11px] font-bold tracking-[0.12em] text-stone-400 uppercase">
-                    <th className="py-5 pr-4 pl-7">PAQUETE / PROMOCIÓN</th>
-                    <th className="px-4 py-5">SERVICIOS INCLUIDOS</th>
-                    <th className="px-4 py-5">VIGENCIA</th>
-                    <th className="px-4 py-5">DURACIÓN</th>
-                    <th className="px-4 py-5">PRECIO</th>
-                    <th className="px-4 py-5">ESTADO</th>
-                    <th className="py-5 pl-4 text-right pr-7">ACCIONES</th>
+                    <th className="py-4 pl-3 pr-1 sm:py-5 sm:pr-4 sm:pl-7">PAQUETE / PROMOCIÓN</th>
+                    <th className="hidden px-4 py-5 sm:table-cell">SERVICIOS INCLUIDOS</th>
+                    <th className="hidden px-4 py-5 sm:table-cell">VIGENCIA</th>
+                    <th className="hidden px-4 py-5 sm:table-cell">DURACIÓN</th>
+                    <th className="w-[66px] px-1 py-4 sm:w-auto sm:px-4 sm:py-5">PRECIO</th>
+                    <th className="hidden px-4 py-5 sm:table-cell">ESTADO</th>
+                    <th className="w-[124px] py-4 pl-1 pr-3 text-right sm:w-auto sm:py-5 sm:pl-4 sm:pr-7">ACCIONES</th>
                   </tr>
                 </thead>
                 <tbody className="text-xs divide-y divide-stone-100">
@@ -738,44 +751,51 @@ export default function ServicesPage() {
                         onClick={() => setSelectedDetailItem(promo)}
                         key={promo.id}
                         className="transition-colors cursor-pointer hover:bg-surface-bg/60">
-                        <td className="py-4 pr-4 pl-7">
-                          <div className="flex items-center gap-3.5">
-                            <div className={`w-10 h-10 rounded-2xl ${theme.bg} ${theme.text} flex items-center justify-center shrink-0`}>
+                        <td className="py-3 pl-3 pr-1 sm:py-4 sm:pr-4 sm:pl-7">
+                          <div className="flex items-center gap-3.5 min-w-0">
+                            <div className={`w-10 h-10 rounded-2xl ${theme.bg} ${theme.text} hidden sm:flex items-center justify-center shrink-0`}>
                               <ThemeIcon className="w-4 h-4" />
                             </div>
-                            <div>
-                              <span className="block text-sm font-bold text-stone-900">
+                            <div className="min-w-0">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedDetailItem(promo);
+                                }}
+                                className="block text-left text-sm font-bold text-stone-900 [overflow-wrap:anywhere] sm:[overflow-wrap:normal]"
+                              >
                                 {promo.name}
-                              </span>
-                              <span className="text-[11px] text-stone-400">
+                              </button>
+                              <span className="hidden sm:inline text-[11px] text-stone-400">
                                 {promo.description}
                               </span>
                             </div>
                           </div>
                         </td>
                         
-                        <td className="px-4 py-4 text-ellipsis overflow-hidden whitespace-nowrap max-w-[200px]">
+                        <td className="hidden px-4 py-4 text-ellipsis overflow-hidden whitespace-nowrap max-w-[200px] sm:table-cell">
                           <span className={`px-3 py-1 rounded-full text-[11px] font-semibold ${theme.bg} ${theme.text}`}>
                             {promo.serviceIncluded}
                           </span>
                         </td>
 
-                        <td className="px-4 py-4 font-medium text-center text-stone-500">
+                        <td className="hidden px-4 py-4 font-medium text-center text-stone-500 sm:table-cell">
                           {formatPromoPeriod(promo.validFrom, promo.validUntil)}
                         </td>
 
-                        <td className="px-4 py-4 font-medium text-stone-500">
+                        <td className="hidden px-4 py-4 font-medium text-stone-500 sm:table-cell">
                           <span className="inline-flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5 text-stone-400" />
                             {promo.durationMinutes || 60} min
                           </span>
                         </td>
 
-                        <td className="px-4 py-4 text-sm font-bold text-stone-900">
+                        <td className="px-1 py-3 text-xs font-bold break-all text-stone-900 sm:px-4 sm:py-4 sm:text-sm sm:break-normal">
                           {formatCurrency(promo.price)}
                         </td>
 
-                        <td className="px-4 py-4">
+                        <td className="hidden px-4 py-4 sm:table-cell">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -792,24 +812,25 @@ export default function ServicesPage() {
                           </button>
                         </td>
                         <td
-                          className="py-4 pl-4 text-right pr-7"
+                          className="py-3 pl-1 pr-3 text-right sm:py-4 sm:pl-4 sm:pr-7"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <div className="inline-flex items-center gap-1.5">
+                          <div className="inline-flex items-center gap-0 sm:gap-1.5">
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleRequestToggleStatus(promo);
                               }}
-                              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold inline-flex items-center gap-1 transition-colors ${
+                              className={`w-9 h-9 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1.5 rounded-xl text-[11px] font-bold inline-flex items-center justify-center gap-1 transition-colors ${
                                 isActive
                                   ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
                                   : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
                               }`}
+                              aria-label={isActive ? 'Desactivar promoción' : 'Activar promoción'}
                             >
                               <Power className="w-3.5 h-3.5" />
-                              <span>{isActive ? 'Desactivar' : 'Activar'}</span>
+                              <span className="sr-only sm:not-sr-only">{isActive ? 'Desactivar' : 'Activar'}</span>
                             </button>
                             <button
                               type="button"
@@ -817,9 +838,11 @@ export default function ServicesPage() {
                                 e.stopPropagation();
                                 handleOpenEdit(promo);
                               }}
-                              className="px-3.5 py-1.5 rounded-xl bg-[#FADCE6] text-brand-primary text-xs font-bold hover:bg-brand-light/60 transition-colors"
+                              className="inline-flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-3.5 sm:py-1.5 rounded-xl bg-[#FADCE6] text-brand-primary text-xs font-bold hover:bg-brand-light/60 transition-colors"
+                              aria-label="Editar promoción"
                             >
-                              Editar
+                              <Pencil className="w-4 h-4 sm:hidden" />
+                              <span className="sr-only sm:not-sr-only">Editar</span>
                             </button>
                             {isAdmin && (
                               <button
@@ -828,8 +851,9 @@ export default function ServicesPage() {
                                   e.stopPropagation();
                                   handleRequestDelete(promo);
                                 }}
-                                className="p-2 transition-colors rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50"
+                                className="inline-flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:p-2 transition-colors rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50"
                                 title="Eliminar"
+                                aria-label="Eliminar promoción"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
