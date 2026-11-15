@@ -1,11 +1,10 @@
 import axiosClient from '../../../api/axiosClient';
+import { getCategoryTheme } from '../../../components/ui/categoryThemes';
 
 const SERVICE_STATUS_IDS = { Activo: 1, Inactivo: 2 };
 
-const resolveTheme = (category, index = 0) => {
-  const norm = (category || '').toLowerCase();
-  if (norm.includes('uña')) return index % 2 === 0 ? 'amber-scissors' : 'mint-sparkles';
-  return index % 2 === 0 ? 'pink-scissors' : 'pink-sparkles';
+const resolveTheme = (category) => {
+  return getCategoryTheme(category).key;
 };
 
 const getReferences = async () =>
@@ -19,7 +18,7 @@ const findIdByName = (items, name, idField) => {
   return item[idField];
 };
 
-const toService = (row, index = 0) => {
+const toService = (row) => {
   const status = Object.keys(SERVICE_STATUS_IDS).find(
     (label) => SERVICE_STATUS_IDS[label] === row.estado
   );
@@ -32,11 +31,11 @@ const toService = (row, index = 0) => {
     price: Number(row.precio),
     durationMinutes: row.duracion_estimada,
     status,
-    theme: resolveTheme(row.categoria, index),
+    theme: resolveTheme(row.categoria),
   };
 };
 
-const toPromotion = (row, services, index = 0) => {
+const toPromotion = (row, services) => {
   const serviceIds = row.servicios_ids || [];
   const includedServices = services.filter((service) =>
     serviceIds.includes(service.id)
@@ -57,7 +56,7 @@ const toPromotion = (row, services, index = 0) => {
     validUntil: row.fecha_fin,
     description: row.descripcion || '',
     status: row.estado,
-    theme: resolveTheme(categories[0], index),
+    theme: resolveTheme(categories.length === 1 ? categories[0] : 'Paquete mixto'),
   };
 };
 
@@ -151,9 +150,7 @@ export const catalogService = {
       axiosClient.get('/api/v1/catalogo/servicios'),
     ]);
     const services = serviceRows.data.map(toService);
-    let promotions = packageRows.data.map((row, index) =>
-      toPromotion(row, services, index)
-    );
+    let promotions = packageRows.data.map((row) => toPromotion(row, services));
 
     if (user && user.role !== 'admin' && user.specialtyCategory) {
       const allowedIds = new Set(

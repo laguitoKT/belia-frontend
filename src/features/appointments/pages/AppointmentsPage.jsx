@@ -379,7 +379,7 @@ const handleSaveAppointment = async (formData) => {
         </div>
       )}
 
-      {/* Encabezado Superior fiel a los 3 mockups */}
+      {/* Encabezado Superior*/}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <span className="block mb-1 text-xs font-bold tracking-wider text-brand-primary">
@@ -526,7 +526,7 @@ const handleSaveAppointment = async (formData) => {
           </h3>
         </div>
 
-        {/* Selector Día | Semana | Mes fiel a los mockups */}
+        {/* Selector Día | Semana | Mes*/}
         <div className="inline-flex items-center p-1 rounded-2xl bg-[#F2EEF0] border border-stone-200/60 text-xs font-bold">
           {[
             { id: 'day', label: 'Día' },
@@ -556,7 +556,7 @@ const handleSaveAppointment = async (formData) => {
         </div>
       ) : viewMode === 'calendar' ? (
         /* ==================== VISTA 3: CALENDARIO ==================== */
-        <div className="bg-white rounded-[30px] border border-stone-100/90 shadow-card p-6 overflow-x-auto">
+        <div className="bg-white rounded-[30px] border border-brand-soft shadow-card p-6 overflow-x-auto">
           <div className="min-w-[840px]">
             {/* Encabezados Lun a Dom */}
             {periodFilter !== 'day' && (
@@ -591,7 +591,7 @@ const handleSaveAppointment = async (formData) => {
                       isSelectedDay
                         ? 'bg-[#FFF9FA] border-[#E57399] shadow-2xs'
                         : cell.isCurrentMonth
-                        ? 'bg-white border-stone-100 hover:border-stone-200'
+                        ? 'bg-white border-brand-soft/80 hover:border-brand-accent/50'
                         : 'bg-[#FAFAFB] border-stone-100/60 opacity-55'
                     }`}
                   >

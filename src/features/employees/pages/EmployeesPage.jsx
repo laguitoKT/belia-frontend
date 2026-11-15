@@ -20,6 +20,8 @@ import EmployeeDetailModal from '../components/EmployeeDetailModal';
 import EmployeeHistoryModal from '../components/EmployeeHistoryModal';
 import EmployeeFormModal from '../components/EmployeeFormModal';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
+import { getCategoryTheme } from '../../../components/ui/categoryThemes';
+import { getInitialsTheme } from '../../../components/ui/initialsThemes';
 
 const CATEGORY_FILTER_OPTIONS = [
   'Todas',
@@ -167,7 +169,7 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {/* Encabezado Superior fiel a image_79f66e.png */}
+      {/* Encabezado Superior*/}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <span className="block mb-1 text-xs font-bold tracking-wider text-brand-primary">
@@ -263,7 +265,7 @@ export default function EmployeesPage() {
           </p>
         </div>
       ) : viewMode === 'table' ? (
-        /* ==================== VISTA 1: TABLA (Fiel a image_79f66e.png) ==================== */
+        /* ==================== VISTA 1: TABLA ==================== */
         <div className="bg-white rounded-[28px] border border-stone-100/90 shadow-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -280,6 +282,8 @@ export default function EmployeesPage() {
               <tbody className="text-xs divide-y divide-stone-100">
                 {filteredEmployees.map((emp) => {
                   const isActive = emp.active !== false;
+                  const theme = getCategoryTheme(emp.specialtyCategory);
+                  const initialsTheme = getInitialsTheme(emp.id || emp.name);
                   return (
                     <tr
                       key={emp.id}
@@ -290,7 +294,7 @@ export default function EmployeesPage() {
                     >
                       <td className="py-4 pr-4 pl-7">
                         <div className="flex items-center gap-3.5">
-                          <div className="w-10 h-10 rounded-full bg-[#FDECEF] border-2 border-[#FAF3F5] flex items-center justify-center text-brand-primary font-bold text-xs shrink-0">
+                          <div className={`w-10 h-10 rounded-full ${initialsTheme.background} border-2 border-white flex items-center justify-center ${initialsTheme.text} font-bold text-xs shrink-0`}>
                             {emp.initials}
                           </div>
                           <span className="text-sm font-bold text-stone-900">
@@ -304,7 +308,7 @@ export default function EmployeesPage() {
                       <td className="px-4 py-4 text-stone-500">{emp.email}</td>
 
                       <td className="px-4 py-4">
-                        <span className="px-3.5 py-1 rounded-full text-[11px] font-semibold bg-[#FDECEF] text-brand-primary">
+                        <span className={`px-3.5 py-1 rounded-full text-[11px] font-semibold ${theme.bg} ${theme.text}`}>
                           {emp.specialty}
                         </span>
                       </td>
@@ -374,10 +378,12 @@ export default function EmployeesPage() {
           </div>
         </div>
       ) : (
-        /* ==================== VISTA 2: TARJETAS / CARDS (Fiel a image_79f651.png) ==================== */
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        /* ==================== VISTA 2: TARJETAS / CARDS  ==================== */
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredEmployees.map((emp) => {
             const isActive = emp.active !== false;
+            const theme = getCategoryTheme(emp.specialtyCategory);
+            const initialsTheme = getInitialsTheme(emp.id || emp.name);
             return (
               <div
                 key={emp.id}
@@ -452,13 +458,13 @@ export default function EmployeesPage() {
 
                 {/* Encabezado centrado: Avatar con iniciales + Nombre + Pill de Especialidad */}
                 <div className="flex flex-col items-center pb-5 text-center border-b border-stone-100">
-                  <div className="w-20 h-20 rounded-full bg-[#FDECEF] border-4 border-[#FAF5F6] flex items-center justify-center text-brand-primary font-bold text-xl mb-3.5">
+                  <div className={`w-20 h-20 rounded-full ${initialsTheme.background} border-4 border-white flex items-center justify-center ${initialsTheme.text} font-bold text-xl mb-3.5`}>
                     {emp.initials}
                   </div>
                   <h3 className="mb-2 text-lg font-bold tracking-tight text-stone-900">
                     {emp.name}
                   </h3>
-                  <span className="px-3.5 py-1 rounded-full text-[11px] font-semibold bg-[#FDECEF] text-brand-primary">
+                  <span className={`px-3.5 py-1 rounded-full text-[11px] font-semibold ${theme.bg} ${theme.text}`}>
                     {emp.specialty}
                   </span>
                 </div>

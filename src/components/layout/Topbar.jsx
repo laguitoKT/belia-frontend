@@ -2,7 +2,7 @@ import { Search, Bell, Shield } from 'lucide-react';
 
 export default function Topbar({ currentSection = 'Inicio', user, onOpenProfile }) {
   return (
-    <header className="flex flex-col justify-between w-full gap-4 px-8 py-5 sm:flex-row sm:items-center">
+    <header className="flex flex-col justify-between w-full px-8 py-4 bg-white sm:flex-row sm:items-center mb-3">
       {/* Breadcrumb izquierdo + Badge de alcance según el rol */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 text-xs font-medium text-stone-400">
@@ -10,18 +10,21 @@ export default function Topbar({ currentSection = 'Inicio', user, onOpenProfile 
           <span>/</span>
           <span className="text-stone-600">{currentSection}</span>
         </div>
-
+        {/* Badge de alcance según el rol 
         <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-brand-soft/60 text-brand-primary">
           <Shield className="w-3 h-3" />
           {user.role === 'admin'
             ? 'Vista Admin: Todo el salón'
             : `Área: ${user.specialtyCategory}`}
         </span>
+        */}
+        
       </div>
 
       {/* Controles derechos */}
       <div className="flex items-center gap-3">
-        {/* Buscador */}
+        {/* Buscador *
+        
         <div className="relative w-full sm:w-56">
           <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
@@ -30,7 +33,8 @@ export default function Topbar({ currentSection = 'Inicio', user, onOpenProfile 
             className="w-full py-2 pr-4 text-xs transition-all bg-white border rounded-full pl-9 border-stone-100 text-stone-700 placeholder:text-stone-300 shadow-2xs focus:outline-none focus:border-brand-light"
           />
         </div>
-
+        */}
+        
         {/* Campana de notificaciones */}
         {/* 
         <button

@@ -1,7 +1,5 @@
 import {
   X,
-  Scissors,
-  Sparkles,
   Clock,
   Calendar,
   Tag,
@@ -9,6 +7,7 @@ import {
   Pencil,
   Power,
 } from 'lucide-react';
+import { getThemeByKey } from '../../../components/ui/categoryThemes';
 
 export default function CatalogDetailModal({
   item,
@@ -24,6 +23,8 @@ export default function CatalogDetailModal({
 
   const isPromotion = mode === 'promotion';
   const isActive = item.status === 'Activo';
+  const theme = getThemeByKey(item.theme);
+  const ThemeIcon = theme.icon;
 
   return (
     <div
@@ -47,12 +48,8 @@ export default function CatalogDetailModal({
 
         {/* Encabezado */}
         <div className="flex items-start gap-4 pr-8 mt-2 mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-[#FDECEF] flex items-center justify-center text-brand-primary shrink-0">
-            {isPromotion ? (
-              <Sparkles className="w-6 h-6" />
-            ) : (
-              <Scissors className="w-6 h-6" />
-            )}
+          <div className={`w-14 h-14 rounded-2xl ${theme.bg} ${theme.text} flex items-center justify-center shrink-0`}>
+            <ThemeIcon className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -83,9 +80,9 @@ export default function CatalogDetailModal({
             </div>
             <div>
               <p className="text-[11px] font-medium text-stone-400">
-                {isPromotion ? 'Clasificación BD' : 'Categoría / Tipo'}
+                {isPromotion ? 'Tipo de paquete' : 'Categoría / Tipo'}
               </p>
-              <p className="font-bold text-stone-800">{item.category}</p>
+              <p className={`font-bold ${theme.text}`}>{item.category}</p>
             </div>
           </div>
 
@@ -136,7 +133,7 @@ export default function CatalogDetailModal({
               <p className="text-[11px] font-medium text-stone-400 mb-1">
                 Servicios incluidos en el paquete
               </p>
-              <span className="inline-block px-3 py-1 rounded-xl text-xs font-bold bg-[#FDECEF] text-brand-primary">
+              <span className={`inline-block px-3 py-1 rounded-xl text-xs font-bold ${theme.bg} ${theme.text}`}>
                 {item.serviceIncluded}
               </span>
             </div>

@@ -10,6 +10,8 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { formatVisitDateTime } from '../services/clientsService';
+import { getCategoryTheme } from '../../../components/ui/categoryThemes';
+import { getInitialsTheme } from '../../../components/ui/initialsThemes';
 
 export default function ClientDetailModal({
   client,
@@ -22,6 +24,8 @@ export default function ClientDetailModal({
 
   // Últimos 3 servicios realizados
   const recentThreeVisits = (client.visits || []).slice(0, 3);
+  const clientTheme = getCategoryTheme(client.lastCategory);
+  const initialsTheme = getInitialsTheme(client.id || client.name);
 
   return (
     <div
@@ -45,7 +49,7 @@ export default function ClientDetailModal({
 
         {/* Encabezado del Cliente */}
         <div className="flex items-center gap-4 pr-8 mt-2 mb-6">
-          <div className="w-16 h-16 rounded-full bg-[#FDECEF] border-4 border-[#FAF5F6] flex items-center justify-center text-brand-primary font-bold text-lg shrink-0">
+          <div className={`w-16 h-16 rounded-full ${initialsTheme.background} border-4 border-white flex items-center justify-center ${initialsTheme.text} font-bold text-lg shrink-0`}>
             {client.initials}
           </div>
           <div>
@@ -90,7 +94,7 @@ export default function ClientDetailModal({
               <p className="text-[11px] font-medium text-stone-400">
                 Último servicio
               </p>
-              <p className="font-bold text-brand-primary">{client.lastService}</p>
+              <p className={`font-bold ${clientTheme.text}`}>{client.lastService}</p>
             </div>
           </div>
 
@@ -150,7 +154,9 @@ export default function ClientDetailModal({
             </div>
           ) : (
             <div className="space-y-2.5">
-              {recentThreeVisits.map((visit) => (
+              {recentThreeVisits.map((visit) => {
+                const theme = getCategoryTheme(visit.category);
+                return (
                 <div
                   key={visit.id}
                   className="p-3.5 rounded-2xl bg-[#FAF7F8] border border-stone-100 flex items-center justify-between gap-3"
@@ -160,7 +166,7 @@ export default function ClientDetailModal({
                       <span className="text-xs font-bold text-stone-900">
                         {visit.service}
                       </span>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#FDECEF] text-brand-primary">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${theme.bg} ${theme.text}`}>
                         {visit.category}
                       </span>
                     </div>
@@ -186,7 +192,8 @@ export default function ClientDetailModal({
                     </span>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -8,12 +8,14 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { formatVisitDateTime } from '../services/clientsService';
+import { getInitialsTheme } from '../../../components/ui/initialsThemes';
 
 export default function ClientHistoryModal({ client, isOpen, onClose }) {
   if (!isOpen || !client) return null;
 
   const visits = client.visits || [];
   const totalSpent = visits.reduce((acc, v) => acc + (Number(v.price) || 0), 0);
+  const initialsTheme = getInitialsTheme(client.id || client.name);
 
   return (
     <div
@@ -37,7 +39,7 @@ export default function ClientHistoryModal({ client, isOpen, onClose }) {
 
         {/* Encabezado del Historial */}
         <div className="flex items-center gap-4 pr-12 mb-6 shrink-0">
-          <div className="w-14 h-14 rounded-full bg-[#FDECEF] flex items-center justify-center text-brand-primary font-bold text-base shrink-0">
+          <div className={`w-14 h-14 rounded-full ${initialsTheme.background} flex items-center justify-center ${initialsTheme.text} font-bold text-base shrink-0`}>
             {client.initials}
           </div>
           <div>
@@ -66,7 +68,9 @@ export default function ClientHistoryModal({ client, isOpen, onClose }) {
               </p>
             </div>
           ) : (
-            visits.map((visit, idx) => (
+            visits.map((visit, idx) => {
+              const theme = getCategoryTheme(visit.category);
+              return (
               <div
                 key={visit.id}
                 className="p-5 transition-all border rounded-2xl bg-surface-bg border-stone-100 hover:border-brand-light/50"
@@ -79,7 +83,7 @@ export default function ClientHistoryModal({ client, isOpen, onClose }) {
                     <h4 className="text-base font-bold text-stone-900">
                       {visit.service}
                     </h4>
-                    <span className="px-3 py-0.5 rounded-full text-[11px] font-semibold bg-[#FDECEF] text-brand-primary">
+                    <span className={`px-3 py-0.5 rounded-full text-[11px] font-semibold ${theme.bg} ${theme.text}`}>
                       {visit.category}
                     </span>
                   </div>
@@ -133,7 +137,8 @@ export default function ClientHistoryModal({ client, isOpen, onClose }) {
                   </div>
                 )}
               </div>
-            ))
+              );
+            })
           )}
         </div>
 
