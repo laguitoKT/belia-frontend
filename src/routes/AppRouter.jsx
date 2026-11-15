@@ -19,6 +19,11 @@ function AdminRoute({ children }) {
   return children;
 }
 
+function LoginRoute() {
+  const { user } = useAuth();
+  return user ? <Navigate to="/inicio" replace /> : <LoginPage />;
+}
+
 // Componente principal del enrutador de la aplicación
 export default function AppRouter() {
   return (
@@ -26,7 +31,7 @@ export default function AppRouter() {
       <BrowserRouter>
         <Routes>
           {/* Rutas públicas */}
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/login" element={<LoginRoute />} />
 
     
           <Route element={<MainLayout />}>
