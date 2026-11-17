@@ -1,4 +1,5 @@
 import axiosClient from '../../../api/axiosClient';
+import { toAppointmentStatus } from '../../appointments/services/appointmentStatus';
 
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const ACTIVE_STATE_ID = 1;
@@ -72,8 +73,8 @@ const enrichEmployee = (employee, schedules, appointments) => {
           date: appointment.fecha,
           startTime: detail.startTime,
           endTime: detail.endTime,
-          status: appointment.estado,
-          notes: appointment.specification || '',
+          status: toAppointmentStatus(appointment.estado),
+          notes: appointment.especificaciones ?? '',
         }));
     })
     .sort((a, b) => `${b.date} ${b.startTime}`.localeCompare(`${a.date} ${a.startTime}`));
