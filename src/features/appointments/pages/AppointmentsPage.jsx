@@ -196,16 +196,28 @@ export default function AppointmentsPage() {
     }
   };
 
-  // Etiqueta del mes/periodo actual (ej. "Mayo 2025" o "Noviembre 2026")
+  // Etiqueta del periodo actual; en la vista diaria incluye la fecha seleccionada.
   const periodTitleLabel = useMemo(() => {
     const d = parseLocalDate(selectedDate);
+    if (periodFilter === 'day') {
+      const dayLabel = new Intl.DateTimeFormat('es-MX', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }).format(d);
+
+      return dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1);
+    }
+
     const monthName = new Intl.DateTimeFormat('es-MX', {
       month: 'long',
     }).format(d);
+
     const capitalizedMonth =
       monthName.charAt(0).toUpperCase() + monthName.slice(1);
     return `${capitalizedMonth} ${d.getFullYear()}`;
-  }, [selectedDate]);
+  }, [selectedDate, periodFilter]);
 
   // Filtrado por texto, estado, empleado y periodo (Día, Semana o Mes)
   const filteredAppointments = useMemo(() => {
@@ -598,7 +610,7 @@ const handleSaveAppointment = async (formData) => {
                         : 'bg-[#FAFAFB] border-stone-100/60 opacity-55'
                     }`}
                   >
-                    {/* Número de día (con círculo vino si está seleccionado como el día 20 del mockup) */}
+                    {/* Número de día  */}
                     <div className="flex items-center justify-between mb-2">
                       <span
                         className={`inline-flex items-center justify-center text-xs font-bold ${
@@ -675,6 +687,7 @@ const handleSaveAppointment = async (formData) => {
               <thead>
                 <tr className="border-b border-stone-100 text-[11px] font-bold tracking-[0.12em] text-stone-400 uppercase">
                   <th className="py-5 pr-4 pl-7">HORARIO</th>
+                  <th className="px-4 py-5">DÍA</th>
                   <th className="px-4 py-5">SERVICIO / ESPECIFICACIÓN</th>
                   <th className="px-4 py-5">CLIENTE</th>
                   <th className="px-4 py-5">EMPLEADO</th>
@@ -698,6 +711,14 @@ const handleSaveAppointment = async (formData) => {
                         <span className="block text-[11px] text-stone-400 mt-0.5">
                           {apt.endTime}
                         </span>
+                      </td>
+
+                      {/* Columna Día: Fecha en formato DD/MM/AAAA */}
+                      <td className="px-4 py-4 font-medium text-stone-500">
+                        {new Intl.DateTimeFormat('es-MX', {
+                          day: '2-digit',
+                          month: '2-digit',
+                        }).format(parseLocalDate(apt.date))}
                       </td>
 
                       {/* Columna Servicio + Especificación */}
@@ -775,7 +796,7 @@ const handleSaveAppointment = async (formData) => {
         </div>
       ) : (
         /* ==================== VISTA 2: TABLERO / CARDS==================== */
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredAppointments.map((apt) => {
             const theme =
               APPOINTMENT_THEMES[apt.theme] || APPOINTMENT_THEMES.wine;
@@ -886,12 +907,9 @@ const handleSaveAppointment = async (formData) => {
 
                   {/* Cliente (Avatar iniciales + Nombre), Teléfono y Empleado */}
                   <div className="pt-3 space-y-1.5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-full bg-[#FDECEF] flex items-center justify-center text-brand-primary font-bold text-[10px] shrink-0">
-                        {apt.clientInitials}
-                      </div>
+                    <div className="flex items-center gap-2">
                       <span className="text-xs font-medium truncate text-stone-800">
-                        {apt.client}
+                        Cliente: {apt.client}
                       </span>
                     </div>
 

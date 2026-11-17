@@ -32,7 +32,7 @@ export default function ProductDetailModal({
       onClick={onClose}
     >
       <div
-        className="responsive-dialog relative w-full max-w-xl bg-white rounded-[30px] shadow-card border border-stone-100 p-7 sm:p-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="responsive-dialog relative w-full max-w-3xl bg-white rounded-[30px] shadow-card border border-stone-100 p-7 sm:p-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-brand-primary via-brand-accent to-brand-secondary" />
@@ -63,7 +63,7 @@ export default function ProductDetailModal({
           <div>
             <div className="flex items-center gap-2 mb-1.5">
               <span className="text-[10px] font-bold tracking-[0.14em] text-brand-primary uppercase">
-                FICHA DE INSUMO #{product.id}
+                INFORMACIÓN DE PRODUCTO #{product.id}
               </span>
               <span
                 className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${statusInfo.badgeClass}`}
@@ -83,7 +83,7 @@ export default function ProductDetailModal({
         {/* Especificaciones del Producto */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-surface-bg p-4 rounded-2xl border border-stone-100 text-sm">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
+            <div className="flex items-center justify-center bg-brand-soft/50 w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
               <LayoutGridCircles className="w-4 h-4" />
             </div>
             <div>
@@ -95,7 +95,7 @@ export default function ProductDetailModal({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
+            <div className="flex items-center justify-center bg-brand-soft/50 w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
               <Layers className="w-4 h-4" />
             </div>
             <div>
@@ -109,7 +109,7 @@ export default function ProductDetailModal({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
+            <div className="flex items-center justify-center bg-brand-soft/50 w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
               <Box className="w-4 h-4" />
             </div>
             <div>
@@ -123,7 +123,7 @@ export default function ProductDetailModal({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
+            <div className="flex items-center justify-center bg-brand-soft/50 w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
               <Droplets className="w-4 h-4" />
             </div>
             <div>

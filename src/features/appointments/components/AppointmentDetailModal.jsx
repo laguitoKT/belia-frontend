@@ -25,12 +25,25 @@ export default function AppointmentDetailModal({
   onToggleStatus,
   onEdit,
   onDelete,
-  clientPreviousVisitsCount,
   isAdmin = false,
 }) {
   if (!isOpen || !appointment) return null;
 
   const isConfirmed = appointment.status === 'Confirmada';
+  const serviceBreakdown = Array.isArray(appointment.serviceBreakdown)
+    ? appointment.serviceBreakdown
+    : [];
+  const serviceNames = serviceBreakdown
+    .map((step) => step.serviceName)
+    .filter(Boolean);
+  const serviceTitle =
+    serviceNames.length > 0 ? serviceNames.join(' + ') : appointment.service;
+  const hasMultipleEmployees =
+    new Set(
+      serviceBreakdown
+        .map((step) => step.employeeId || step.employeeName)
+        .filter(Boolean)
+    ).size > 1;
   const categoryLabel =
     appointment.serviceCategory || appointment.category || 'General';
   const specificationText =
@@ -54,7 +67,7 @@ export default function AppointmentDetailModal({
       onClick={onClose}
     >
       <div
-        className="responsive-dialog relative w-full max-w-lg bg-white rounded-[28px] shadow-card border border-stone-100 p-7 overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto"
+        className="responsive-dialog relative w-full max-w-2xl bg-white rounded-[28px] shadow-card border border-stone-100 p-7 overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Barra superior con el gradiente de la marca */}
@@ -93,10 +106,10 @@ export default function AppointmentDetailModal({
           </div>
 
           <h3 className="text-2xl font-bold tracking-tight text-stone-900">
-            {appointment.service}
+            {serviceTitle}
           </h3>
           <p className="text-xs text-stone-400 mt-0.5">
-            Categoría: {categoryLabel} • Precio estimado: ${appointment.price} MXN
+            Categoría: {categoryLabel} • Precio total: ${appointment.price} MXN
           </p>
         </div>
 
@@ -104,7 +117,7 @@ export default function AppointmentDetailModal({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-surface-bg p-4 rounded-2xl border border-stone-100 text-sm">
           {/* Cliente */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
+            <div className="flex items-center justify-center bg-brand-soft/50 w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
               <User className="w-4 h-4" />
             </div>
             <div className="min-w-0">
@@ -117,8 +130,8 @@ export default function AppointmentDetailModal({
 
           {/* Teléfono del cliente */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
-              <Phone className="w-4 h-4" />
+            <div className="flex items-center justify-center bg-brand-soft/50 w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
+              <Phone className="w-4 h-4"/>
             </div>
             <div className="min-w-0">
               <p className="text-[11px] font-medium text-stone-400">
@@ -132,7 +145,7 @@ export default function AppointmentDetailModal({
 
           {/* Empleado asignado */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
+            <div className="flex items-center justify-center bg-brand-soft/50 w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
               <UserCheck className="w-4 h-4" />
             </div>
             <div className="min-w-0">
@@ -145,7 +158,7 @@ export default function AppointmentDetailModal({
 
           {/* Horario */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
+            <div className="flex items-center justify-center bg-brand-soft/50 w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
               <Clock className="w-4 h-4" />
             </div>
             <div className="min-w-0">
@@ -159,7 +172,7 @@ export default function AppointmentDetailModal({
           {/* Fecha programada */}
           {appointment.date && (
             <div className="flex items-center gap-3 pt-2 border-t sm:col-span-2 border-stone-200/60">
-              <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
+              <div className="flex items-center justify-center bg-brand-soft/50 w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
                 <Calendar className="w-4 h-4" />
               </div>
               <div>
@@ -175,7 +188,7 @@ export default function AppointmentDetailModal({
 
           {/* Especificación del servicio / Notas */}
           <div className="flex items-start gap-3 pt-2 border-t sm:col-span-2 border-stone-200/60">
-            <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-brand-primary shadow-2xs shrink-0 mt-0.5">
+            <div className="w-9 h-9 rounded-xl bg-brand-soft/50 flex items-center justify-center text-brand-primary shadow-2xs shrink-0 mt-0.5">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
@@ -189,36 +202,35 @@ export default function AppointmentDetailModal({
           </div>
         </div>
 
-        {/* Desglose por tramo cuando la cita incluye 2 o más servicios */}
-          {Array.isArray(appointment.serviceBreakdown) &&
-            appointment.serviceBreakdown.length > 1 && (
-              <div className="pt-3 space-y-2 border-t sm:col-span-2 border-stone-200/60">
-                <p className="text-[11px] font-bold text-brand-primary uppercase tracking-wider">
-                  Orden de atención por servicio
-                </p>
-                {appointment.serviceBreakdown.map((step, idx) => (
-                  <div
-                    key={step.subKey || idx}
-                    className="flex items-center justify-between gap-2 px-3 py-2 text-xs bg-white border rounded-xl border-stone-100"
-                  >
-                    <div>
-                      <span className="font-bold text-stone-800">
-                        {idx + 1}. {step.serviceName}
-                      </span>
-                      <span className="text-[11px] text-stone-400 ml-2">
-                        ({step.startTime} – {step.endTime})
-                      </span>
-                    </div>
-                    <span className="font-semibold text-brand-primary">
-                      {step.employeeName}
-                    </span>
-                  </div>
-                ))}
+        {/* Desglose de servicio, empleado y horario */}
+        {(serviceBreakdown.length > 1 || hasMultipleEmployees) && (
+          <div className="p-4 mt-4 space-y-2 border rounded-2xl bg-surface-bg border-stone-100">
+            <p className="text-[11px] font-bold tracking-wider text-brand-primary uppercase">
+              Distribución de la cita
+            </p>
+            {serviceBreakdown.map((step, idx) => (
+              <div
+                key={step.subKey || idx}
+                className="flex flex-col gap-1 px-3 py-2 text-xs bg-white border rounded-xl border-stone-100 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <span className="font-bold text-stone-800">
+                    {idx + 1}. {step.serviceName}
+                  </span>
+                  <span className="block text-[11px] text-stone-400 sm:inline sm:ml-2">
+                    {step.startTime} – {step.endTime}
+                  </span>
+                </div>
+                <span className="font-semibold text-brand-primary">
+                  {step.employeeName || 'Empleado no asignado'}
+                </span>
               </div>
-            )}
+            ))}
+          </div>
+        )}
 
 
-        {/* Acciones interactivas (compatibles con Inicio y con el Módulo de Citas) */}
+        {/* Acciones interactivas */}
         <div className="flex flex-col items-center justify-between gap-3 mt-6 sm:flex-row">
           <div className="flex items-center w-full gap-2 sm:w-auto">
             <button

@@ -198,7 +198,7 @@ export default function HomePage() {
               {kpiStats.totalHours} h
             </p>
             <p className="text-[10px] leading-tight sm:text-[11px] text-stone-400">
-              {isAdmin ? 'en todo el salón' : 'de 9 h disponibles'}
+              {isAdmin ? 'en todo el salón hoy' : 'de 9 h disponibles'}
             </p>
           </div>
         </div>
@@ -214,7 +214,12 @@ export default function HomePage() {
             <p className="text-xl sm:text-3xl font-bold text-stone-900 my-0.5">
               {kpiStats.uniqueClients}
             </p>
+             {/*
             <p className="text-[10px] leading-tight sm:text-[11px] text-stone-400">+1 esta semana</p>
+            Nota: Este KPI podría mejorarse mostrando un incremento real comparado con la semana anterior */}
+            <p className="text-[10px] leading-tight sm:text-[11px] text-stone-400">
+              {isAdmin ? 'En todo el salón' : `En área de ${user.specialtyCategory}`}
+            </p>
           </div>
         </div>
 
@@ -267,7 +272,7 @@ export default function HomePage() {
                   onClick={() => setSelectedDate(day.fullDate)}
                   className={`py-3 rounded-2xl flex flex-col items-center justify-center transition-all ${
                     isSelected
-                      ? 'bg-gradient-to-b from-brand-accent to-brand-primary text-white shadow-button'
+                      ? 'bg-brand-secondary text-white shadow-button'
                       : 'bg-transparent text-stone-400 hover:bg-surface-bg'
                   }`}
                 >

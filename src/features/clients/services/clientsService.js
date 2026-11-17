@@ -2,6 +2,8 @@ import axiosClient from '../../../api/axiosClient';
 import { getTodayISO } from '../../../utils/dateUtils';
 import { toAppointmentStatus } from '../../appointments/services/appointmentStatus';
 
+const BREAKDOWN_MARKER = '[[BELIA_SERVICE_BREAKDOWN]]';
+
 export const getClientInitials = (name = '') => {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 0 || !parts[0]) return 'CL';
@@ -41,37 +43,66 @@ const enrichClient = (row, visits) => {
   };
 };
 
-const appointmentVisits = (appointment) => {
-  const details = appointment.service_breakdown?.length
-    ? appointment.service_breakdown
-    : [
-        {
-          serviceId: appointment.servicio_id,
-          serviceName: appointment.servicio,
-          category: appointment.categoria,
-          price: appointment.precio,
-          startTime: appointment.hora_inicio,
-          endTime: appointment.hora_fin,
-          employeeId: appointment.empleado_id,
-          employeeName: appointment.estilista,
-        },
-      ];
+const parsePersistedBreakdown = (notes = '') => {
+  const markerIndex = String(notes).indexOf(BREAKDOWN_MARKER);
+  if (markerIndex < 0) return [];
 
-  return details.map((detail, index) => ({
-    id: `${appointment.id_cita}-${detail.serviceId}-${index}`,
+  try {
+    const details = JSON.parse(
+      String(notes).slice(markerIndex + BREAKDOWN_MARKER.length).trim()
+    );
+    return Array.isArray(details) ? details : [];
+  } catch (error) {
+    console.error('El desglose de servicios del historial tiene un formato inválido.', error);
+    return [];
+  }
+};
+
+const getAppointmentNotes = (notes = '') => {
+  const markerIndex = String(notes).indexOf(BREAKDOWN_MARKER);
+  return markerIndex < 0 ? notes : String(notes).slice(0, markerIndex).trim();
+};
+
+const appointmentVisits = (appointment) => {
+  const notes = appointment.especificaciones ?? '';
+  const detailsCandidates = [
+    appointment.service_breakdown,
+    parsePersistedBreakdown(notes),
+  ].filter((details) => Array.isArray(details) && details.length > 0);
+  const details = detailsCandidates.sort((a, b) => b.length - a.length)[0] || [
+    {
+      serviceId: appointment.servicio_id,
+      serviceName: appointment.servicio,
+      category: appointment.categoria,
+      price: appointment.precio,
+      startTime: appointment.hora_inicio,
+      endTime: appointment.hora_fin,
+      employeeId: appointment.empleado_id,
+      employeeName: appointment.estilista,
+    },
+  ];
+  const serviceNames = details.map((detail) => detail.serviceName).filter(Boolean);
+  const categories = [...new Set(details.map((detail) => detail.category).filter(Boolean))];
+  const employeeNames = [
+    ...new Set(details.map((detail) => detail.employeeName).filter(Boolean)),
+  ];
+
+  return [{
+    id: appointment.id_cita,
     appointmentId: appointment.id_cita,
-    service: detail.serviceName,
-    category: detail.category,
-    price: Number(detail.price),
+    service: serviceNames.join(' + ') || appointment.servicio,
+    category: categories.length > 1 ? 'Paquete mixto' : categories[0] || appointment.categoria,
+    price: Number(appointment.precio),
     date: appointment.fecha,
     isToday: appointment.fecha === getTodayISO(),
-    startTime: detail.startTime,
-    endTime: detail.endTime,
-    employeeId: detail.employeeId,
-    employee: detail.employeeName,
+    startTime: details[0].startTime || appointment.hora_inicio,
+    endTime: details[details.length - 1].endTime || appointment.hora_fin,
+    employeeId: details[0].employeeId || appointment.empleado_id,
+    employee: employeeNames.join(' | ') || appointment.estilista,
     status: toAppointmentStatus(appointment.estado),
-    notes: appointment.especificaciones ?? '',
-  }));
+    notes: getAppointmentNotes(notes),
+    serviceBreakdown: details,
+  }];
 };
 
 export const clientsService = {
