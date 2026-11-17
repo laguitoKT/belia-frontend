@@ -34,6 +34,7 @@ export default function InventoryPage() {
   const [operationError, setOperationError] = useState('');
   const pendingStockRef = useRef(new Set());
   const savingProductRef = useRef(false);
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
   const [pendingStock, setPendingStock] = useState(new Set());
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -104,7 +105,7 @@ export default function InventoryPage() {
   // Ajuste rápido de stock (+1 / -1) con desactivación automática al llegar a 0
   const handleQuickStockChange = async (product, delta) => {
     const nextQuantity = Math.max(0, Number(product.quantity) + delta);
-    if (nextQuantity === product.quantity || pendingStockRef.current.has(product.id)) return;
+    if (nextQuantity === product.quantity || pendingStockRef.current.has(product.id) || savingProductRef.current) return;
 
     pendingStockRef.current.add(product.id);
     setPendingStock(new Set(pendingStockRef.current));
@@ -149,22 +150,36 @@ export default function InventoryPage() {
   const handleSaveProduct = async (formData) => {
     if (savingProductRef.current) return;
     savingProductRef.current = true;
+    setIsSavingProduct(true);
     setOperationError('');
     try {
+      let saved;
       if (editingProduct) {
-        const updated = await inventoryService.updateProduct(
+        saved = await inventoryService.updateProduct(
           editingProduct.id,
           formData
         );
         setProducts((prev) =>
-          prev.map((p) => (p.id === editingProduct.id ? updated : p))
+          prev.map((p) => (p.id === editingProduct.id ? saved : p))
         );
-        showToast(`Producto "${updated.name}" actualizado.`);
       } else {
-        const created = await inventoryService.createProduct(formData);
-        setProducts((prev) => [created, ...prev]);
-        showToast(`Producto "${created.name}" agregado al inventario.`);
+        saved = await inventoryService.createProduct(formData);
+        setProducts((prev) => [saved, ...prev]);
       }
+
+      if (formData.imageFile) {
+        try {
+          const withImage = await inventoryService.uploadProductImage(saved.id, formData.imageFile);
+          setProducts((prev) => prev.map((p) => (p.id === saved.id ? withImage : p)));
+        } catch (error) {
+          console.error('Error al subir la imagen del producto:', error);
+          setOperationError(`El producto "${saved.name}" se guardó, pero no se pudo confirmar la subida de la imagen. Recarga el inventario y edita el producto para volver a intentarlo.`);
+          setIsModalOpen(false);
+          setEditingProduct(null);
+          return;
+        }
+      }
+      showToast(`Producto "${saved.name}" ${editingProduct ? 'actualizado' : 'agregado al inventario'}.`);
       setIsModalOpen(false);
       setEditingProduct(null);
     } catch (error) {
@@ -172,6 +187,7 @@ export default function InventoryPage() {
       setOperationError(`No se pudo confirmar el guardado. Recarga el inventario antes de volver a intentarlo. ${error.message || ''}`);
     } finally {
       savingProductRef.current = false;
+      setIsSavingProduct(false);
     }
   };
 
@@ -374,7 +390,7 @@ export default function InventoryPage() {
                           <button
                             type="button"
                             onClick={() => handleQuickStockChange(prod, -1)}
-                            disabled={prod.quantity <= 0 || pendingStock.has(prod.id)}
+                            disabled={prod.quantity <= 0 || pendingStock.has(prod.id) || isSavingProduct}
                             title="Descontar 1 unidad"
                             className="flex items-center justify-center w-6 h-6 transition-colors bg-white border rounded-lg border-stone-200 text-stone-600 hover:text-brand-primary disabled:opacity-40"
                           >
@@ -390,7 +406,7 @@ export default function InventoryPage() {
                           <button
                             type="button"
                             onClick={() => handleQuickStockChange(prod, 1)}
-                            disabled={pendingStock.has(prod.id)}
+                            disabled={pendingStock.has(prod.id) || isSavingProduct}
                             title="Agregar 1 unidad"
                             className="flex items-center justify-center w-6 h-6 transition-colors bg-white border rounded-lg border-stone-200 text-stone-600 hover:text-brand-primary"
                           >
@@ -579,7 +595,7 @@ export default function InventoryPage() {
                         <button
                           type="button"
                           onClick={() => handleQuickStockChange(prod, -1)}
-                          disabled={prod.quantity <= 0 || pendingStock.has(prod.id)}
+                          disabled={prod.quantity <= 0 || pendingStock.has(prod.id) || isSavingProduct}
                           className="flex items-center justify-center w-6 h-6 transition-colors border rounded-lg bg-surface-bg border-stone-200 text-stone-600 hover:text-brand-primary disabled:opacity-40"
                           title="Descontar 1"
                         >
@@ -593,7 +609,7 @@ export default function InventoryPage() {
                         <button
                           type="button"
                           onClick={() => handleQuickStockChange(prod, 1)}
-                          disabled={pendingStock.has(prod.id)}
+                          disabled={pendingStock.has(prod.id) || isSavingProduct}
                           className="flex items-center justify-center w-6 h-6 transition-colors border rounded-lg bg-surface-bg border-stone-200 text-stone-600 hover:text-brand-primary"
                           title="Agregar 1"
                         >
@@ -621,6 +637,7 @@ export default function InventoryPage() {
       <ProductFormModal
         isOpen={isModalOpen}
         onClose={() => {
+          if (savingProductRef.current) return;
           setIsModalOpen(false);
           setEditingProduct(null);
         }}
@@ -633,6 +650,7 @@ export default function InventoryPage() {
         }
         isAdmin={isAdmin || !editingProduct}
         existingProducts={products}
+        isSaving={isSavingProduct}
       />
 
       <ConfirmDialog

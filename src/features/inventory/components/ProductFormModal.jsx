@@ -45,6 +45,7 @@ export default function ProductFormModal({
   lockedCategory = null,
   isAdmin = false,
   existingProducts = [],
+  isSaving = false,
 }) {
   const isEditing = Boolean(initialData);
   const fileInputRef = useRef(null);
@@ -89,6 +90,13 @@ export default function ProductFormModal({
     setShowSaveConfirm(false);
   }, [initialData, isOpen, lockedCategory]);
 
+  useEffect(() => {
+    const imageUrl = formData.imageUrl;
+    return () => {
+      if (imageUrl?.startsWith('blob:')) URL.revokeObjectURL(imageUrl);
+    };
+  }, [formData.imageUrl]);
+
   if (!isOpen) return null;
 
   const handleChange = (e) => {
@@ -102,6 +110,7 @@ export default function ProductFormModal({
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
 
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -121,25 +130,24 @@ export default function ProductFormModal({
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData((prev) => ({
-        ...prev,
-        imageUrl: reader.result,
-        imageFile: file,
-      }));
-      setFieldErrors((prev) => ({ ...prev, image: undefined }));
-    };
-    reader.readAsDataURL(file);
+    const imageUrl = URL.createObjectURL(file);
+    setFormData((prev) => ({
+      ...prev,
+      imageUrl,
+      imageFile: file,
+    }));
+    setFieldErrors((prev) => ({ ...prev, image: undefined }));
   };
 
   const handleRemoveImage = () => {
     setFormData((prev) => ({ ...prev, imageUrl: null, imageFile: null }));
+    setFieldErrors((prev) => ({ ...prev, image: undefined }));
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const validateForm = () => {
     const errors = {};
+    if (fieldErrors.image) errors.image = fieldErrors.image;
     const trimmedName = formData.name.trim();
 
     if (!trimmedName || trimmedName.length < 3) {
@@ -217,6 +225,7 @@ export default function ProductFormModal({
         <button
           type="button"
           onClick={onClose}
+          disabled={isSaving}
           className="absolute flex items-center justify-center transition-colors bg-white border top-5 right-5 sm:top-8 sm:right-8 w-11 h-11 rounded-2xl border-stone-200/80 text-stone-600 hover:text-brand-primary"
           aria-label="Cerrar modal"
         >
@@ -235,7 +244,8 @@ export default function ProductFormModal({
           </p>
         </div>
 
-        <form onSubmit={handleRequestSubmit} className="space-y-4" noValidate>
+        <form onSubmit={handleRequestSubmit} noValidate>
+          <fieldset disabled={isSaving} className="space-y-4">
           {/* Imagen del producto */}
           <div>
             <label className="block mb-2 text-xs font-bold text-stone-800">
@@ -496,6 +506,8 @@ export default function ProductFormModal({
               </button>
             </div>
           )}
+          </fieldset>
+          {isSaving && <p role="status" className="mt-4 text-sm text-stone-500">Guardando producto e imagen...</p>}
         </form>
       </div>
     </div>
