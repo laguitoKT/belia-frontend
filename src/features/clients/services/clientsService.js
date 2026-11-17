@@ -1,5 +1,6 @@
 import axiosClient from '../../../api/axiosClient';
 import { getTodayISO } from '../../../utils/dateUtils';
+import { toAppointmentStatus } from '../../appointments/services/appointmentStatus';
 
 export const getClientInitials = (name = '') => {
   const parts = name.trim().split(/\s+/);
@@ -68,8 +69,8 @@ const appointmentVisits = (appointment) => {
     endTime: detail.endTime,
     employeeId: detail.employeeId,
     employee: detail.employeeName,
-    status: appointment.estado,
-    notes: appointment.specification || '',
+    status: toAppointmentStatus(appointment.estado),
+    notes: appointment.especificaciones ?? '',
   }));
 };
 

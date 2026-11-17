@@ -39,7 +39,7 @@ export default function AppointmentDetailModal({
     'Sin especificaciones adicionales.';
 
   const handleChangeStatus = () => {
-    const nextStatus = isConfirmed ? 'Por confirmar' : 'Confirmada';
+    const nextStatus = isConfirmed ? 'Pendiente' : 'Confirmada';
     if (onStatusChange) {
       onStatusChange(appointment.id, nextStatus);
     } else if (onToggleStatus) {
@@ -230,7 +230,7 @@ export default function AppointmentDetailModal({
                   : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
               }`}
             >
-              {isConfirmed ? 'Marcar por confirmar' : 'Confirmar cita'}
+              {isConfirmed ? 'Marcar pendiente' : 'Confirmar cita'}
             </button>
 
             {isAdmin && onDelete && (

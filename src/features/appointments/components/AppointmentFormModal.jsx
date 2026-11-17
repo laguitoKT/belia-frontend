@@ -146,7 +146,7 @@ export default function AppointmentFormModal({
     specification: '',
     date: defaultDate || getTodayISO(),
     startTime: '09:00',
-    status: 'Por Completar',
+    status: 'Pendiente',
   });
 
   const [fieldErrors, setFieldErrors] = useState({});

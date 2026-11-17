@@ -352,7 +352,7 @@ const handleSaveAppointment = async (formData) => {
   const handleToggleStatus = async (apt) => {
     setOpenMenuId(null);
     const nextStatus =
-      apt.status === 'Confirmada' ? 'Por confirmar' : 'Confirmada';
+      apt.status === 'Confirmada' ? 'Pendiente' : 'Confirmada';
     const updated = await appointmentsService.updateAppointment(apt.id, {
       ...apt,
       status: nextStatus,
@@ -373,7 +373,7 @@ const handleSaveAppointment = async (formData) => {
 
   return (
     <div
-      className="responsive-page w-full space-y-6"
+      className="w-full space-y-6 responsive-page"
       onClick={() => openMenuId !== null && setOpenMenuId(null)}
     >
       {feedbackBanner && (
@@ -409,8 +409,8 @@ const handleSaveAppointment = async (formData) => {
 
       {/* Fila 1 de Herramientas: Buscador + Todos los filtros + Conmutador de 3 Vistas (Lista | Tablero | Calendario) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 pt-1">
-        <div className="grid grid-cols-2 flex-1 min-w-0 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
-          <div className="relative col-span-2 w-full sm:max-w-md">
+        <div className="grid flex-1 min-w-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+          <div className="relative w-full col-span-2 sm:max-w-md">
             <Search className="absolute w-4 h-4 -translate-y-1/2 pointer-events-none text-stone-400 left-4 top-1/2" />
             <input
               type="text"
@@ -433,7 +433,6 @@ const handleSaveAppointment = async (formData) => {
               <option value="Todos">Todos los filtros</option>
               <option value="Pendiente">Estado: Pendientes</option>
               <option value="Confirmada">Estado: Confirmadas</option>
-              <option value="Por confirmar">Estado: Por confirmar</option>
             </select>
           </div>
 
@@ -743,7 +742,7 @@ const handleSaveAppointment = async (formData) => {
                             }`}
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>{isConfirmed ? 'Por confirmar' : 'Confirmar'}</span>
+                            <span>{isConfirmed ? 'Pendiente' : 'Confirmar'}</span>
                           </button>
 
                           <button
@@ -855,7 +854,7 @@ const handleSaveAppointment = async (formData) => {
                             >
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                               {isConfirmed
-                                ? 'Marcar Por confirmar'
+                                ? 'Marcar pendiente'
                                 : 'Confirmar cita'}
                             </button>
                             {isAdmin && (

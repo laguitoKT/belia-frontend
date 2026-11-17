@@ -1,4 +1,5 @@
 import axiosClient from '../../../api/axiosClient';
+import { toAppointmentStatus, toDatabaseAppointmentStatus } from './appointmentStatus';
 
 export const calculateEndTime = (startTime = '09:00', durationMinutes = 60) => {
   const [hours, minutes] = startTime.split(':').map(Number);
@@ -39,7 +40,7 @@ const toAppointment = (row) => {
     (total, detail) => total + detail.durationMinutes,
     0
   );
-  const status = row.estado === 'Pendiente' ? 'Por confirmar' : row.estado;
+  const status = toAppointmentStatus(row.estado);
   const category = categories.length > 1 ? 'Paquete mixto' : categories[0] || row.categoria;
 
   return {
@@ -51,7 +52,7 @@ const toAppointment = (row) => {
     durationHours: (totalDuration || Number(row.duracion_estimada)) / 60,
     serviceId: serviceBreakdown[0]?.serviceId || row.servicio_id,
     service: serviceNames.join(' + ') || row.servicio,
-    specification: row.specification || '',
+    specification: row.especificaciones ?? '',
     category,
     categories,
     serviceCategory: category,
@@ -73,8 +74,7 @@ const getReferences = async () =>
 
 const toDatabasePayload = async (payload) => {
   const references = await getReferences();
-  const stateName =
-    payload.status === 'Por confirmar' ? 'Pendiente' : payload.status || 'Pendiente';
+  const stateName = toDatabaseAppointmentStatus(payload.status || 'Pendiente');
   const state = references.estados.find(
     (item) => item.nombre.toLowerCase() === stateName.toLowerCase()
   );
@@ -124,11 +124,11 @@ const toDatabasePayload = async (payload) => {
     estado_id: state.id_estado,
     fecha_hora_inicio: first.fecha_hora_inicio,
     fecha_hora_fin: first.fecha_hora_fin,
-    notas_detalles: payload.specification || null,
+    notas_cita: payload.specification || null,
     precio_total: Number.isFinite(Number(payload.price))
       ? Number(payload.price)
       : null,
-    detalles,
+    detalles: details,
   };
 };
 
