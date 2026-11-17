@@ -85,11 +85,6 @@ const toProduct = (row) => {
 };
 
 const toDatabasePayload = async (payload) => {
-  if (payload.imageFile) {
-    throw new Error(
-      'La base de datos solo almacena una URL de imagen. Sube el archivo a un servicio de almacenamiento y guarda su URL.'
-    );
-  }
   const result = {};
   if (payload.name !== undefined) result.nombre = payload.name;
   if (payload.quantity !== undefined) {
@@ -100,7 +95,7 @@ const toDatabasePayload = async (payload) => {
     result.cantidad_existente = quantity;
     result.estado_id = quantity === 0 ? INACTIVE_STATE_ID : ACTIVE_STATE_ID;
   }
-  if (payload.imageUrl !== undefined) result.imagen_url = payload.imageUrl;
+  if (!payload.imageFile && payload.imageUrl !== undefined) result.imagen_url = payload.imageUrl;
   if (payload.price !== undefined) result.precio = payload.price;
   const references = payload.category !== undefined || payload.presentation !== undefined || payload.measureUnit !== undefined
     ? await getReferences()
@@ -186,6 +181,19 @@ export const inventoryService = {
     if (data.cantidad_existente !== undefined &&
       (product.quantity !== data.cantidad_existente || product.active !== (data.estado_id === ACTIVE_STATE_ID))) {
       throw new Error('El servidor no confirmó la cantidad y el estado actualizados.');
+    }
+    return product;
+  },
+
+  async uploadProductImage(id, file) {
+    const formData = new FormData();
+    formData.append('imagen', file);
+    await axiosClient.put(`/inventario/${id}/imagen`, formData, {
+      headers: { 'Content-Type': undefined },
+    });
+    const product = await getProductFromView(id);
+    if (typeof product.imageUrl !== 'string' || !product.imageUrl.trim()) {
+      throw new Error('El servidor no confirmó la URL de la imagen del producto.');
     }
     return product;
   },
