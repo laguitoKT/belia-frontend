@@ -1,6 +1,8 @@
 import axiosClient from '../../../api/axiosClient';
 import { toAppointmentStatus, toDatabaseAppointmentStatus } from './appointmentStatus';
 
+const BREAKDOWN_MARKER = '[[BELIA_SERVICE_BREAKDOWN]]';
+
 export const calculateEndTime = (startTime = '09:00', durationMinutes = 60) => {
   const [hours, minutes] = startTime.split(':').map(Number);
   const totalMinutes = hours * 60 + minutes + Number(durationMinutes || 0);
@@ -18,19 +20,108 @@ export const resolveAppointmentTheme = (category = '', status = 'Confirmada') =>
   return 'amber';
 };
 
+const parseDetails = (details) => {
+  if (Array.isArray(details)) return details;
+  if (typeof details !== 'string' || !details.trim()) return [];
+  try {
+    const parsedDetails = JSON.parse(details);
+    return Array.isArray(parsedDetails) ? parsedDetails : [];
+  } catch (error) {
+    console.error('El desglose de servicios de la cita tiene un formato inválido.', error);
+    return [];
+  }
+};
+
+const getDetailsFromNotes = (notes = '') => {
+  const markerIndex = String(notes).indexOf(BREAKDOWN_MARKER);
+  if (markerIndex < 0) return [];
+  return parseDetails(
+    String(notes).slice(markerIndex + BREAKDOWN_MARKER.length).trim()
+  );
+};
+
+const getAppointmentDetails = (row) => {
+  const candidates = [
+    row.service_breakdown,
+    row.detalles,
+    row.detalles_cita,
+    row.detalle_servicios,
+    row.servicios,
+    getDetailsFromNotes(row.especificaciones || row.notas_cita),
+  ]
+    .map(parseDetails)
+    .filter((details) => details.length > 0);
+
+  return candidates.sort((a, b) => b.length - a.length)[0] || [];
+};
+
+const getAppointmentNotes = (notes = '') => {
+  const markerIndex = String(notes).indexOf(BREAKDOWN_MARKER);
+  return markerIndex < 0 ? notes : String(notes).slice(0, markerIndex).trim();
+};
+
+const getTimePart = (value) => {
+  if (!value) return '';
+  return String(value).includes('T')
+    ? String(value).split('T').at(-1).slice(0, 5)
+    : String(value).slice(0, 5);
+};
+
+const mergePayloadBreakdown = (appointment, payload) => {
+  const payloadBreakdown = payload.serviceBreakdown;
+  if (
+    !Array.isArray(payloadBreakdown) ||
+    payloadBreakdown.length <= appointment.serviceBreakdown.length
+  ) {
+    return appointment;
+  }
+
+  return {
+    ...appointment,
+    service: payload.service || appointment.service,
+    category: payload.category || appointment.category,
+    categories: payload.categories || appointment.categories,
+    serviceCategory: payload.category || appointment.serviceCategory,
+    endTime: payload.endTime || appointment.endTime,
+    durationMinutes: payload.durationMinutes || appointment.durationMinutes,
+    price: payload.price ?? appointment.price,
+    employee: payload.employee || appointment.employee,
+    employeeFullName: payload.employeeFullName || appointment.employeeFullName,
+    serviceBreakdown: payloadBreakdown,
+  };
+};
+
 const toAppointment = (row) => {
-  const serviceBreakdown = (row.service_breakdown || []).map((detail, index) => ({
-    subKey: `${detail.serviceId}-${detail.employeeId}-${index}`,
-    serviceId: detail.serviceId,
-    serviceName: detail.serviceName,
-    category: detail.category,
-    startTime: detail.startTime,
-    endTime: detail.endTime,
-    durationMinutes: Number(detail.durationMinutes),
-    employeeId: detail.employeeId,
-    employeeName: detail.employeeName,
-    employeeShortName: (detail.employeeName || '').split(' ')[0],
-  }));
+  const serviceBreakdown = getAppointmentDetails(row).map((detail, index) => {
+    const serviceId = detail.serviceId ?? detail.servicio_id;
+    const employeeId = detail.employeeId ?? detail.empleado_id;
+    const employeeName =
+      detail.employeeName ||
+      detail.employee_name ||
+      detail.empleado ||
+      detail.estilista ||
+      '';
+
+    return {
+      subKey: `${serviceId || detail.serviceName || detail.servicio}-${employeeId || index}-${index}`,
+      serviceId,
+      serviceName:
+        detail.serviceName ||
+        detail.service_name ||
+        detail.servicio ||
+        detail.nombre_servicio ||
+        '',
+      category: detail.category || detail.categoria || 'General',
+      startTime: detail.startTime || getTimePart(detail.fecha_hora_inicio),
+      endTime: detail.endTime || getTimePart(detail.fecha_hora_fin),
+      durationMinutes: Number(
+        detail.durationMinutes || detail.duration_minutes || detail.duracion_estimada || 0
+      ),
+      employeeId,
+      employeeName,
+      employeeShortName: employeeName.split(' ')[0],
+    };
+  });
   const categories = [...new Set(serviceBreakdown.map((detail) => detail.category))];
   const employeeNames = [
     ...new Set(serviceBreakdown.map((detail) => detail.employeeName)),
@@ -52,7 +143,7 @@ const toAppointment = (row) => {
     durationHours: (totalDuration || Number(row.duracion_estimada)) / 60,
     serviceId: serviceBreakdown[0]?.serviceId || row.servicio_id,
     service: serviceNames.join(' + ') || row.servicio,
-    specification: row.especificaciones ?? '',
+    specification: getAppointmentNotes(row.especificaciones ?? ''),
     category,
     categories,
     serviceCategory: category,
@@ -124,7 +215,11 @@ const toDatabasePayload = async (payload) => {
     estado_id: state.id_estado,
     fecha_hora_inicio: first.fecha_hora_inicio,
     fecha_hora_fin: first.fecha_hora_fin,
-    notas_cita: payload.specification || null,
+    notas_cita: payload.serviceBreakdown?.length
+      ? `${payload.specification || ''}\n${BREAKDOWN_MARKER}${JSON.stringify(
+          payload.serviceBreakdown
+        )}`
+      : payload.specification || null,
     precio_total: Number.isFinite(Number(payload.price))
       ? Number(payload.price)
       : null,
@@ -163,13 +258,15 @@ export const appointmentsService = {
   async createAppointment(payload) {
     const data = await toDatabasePayload(payload);
     const created = (await axiosClient.post('/citas/', data)).data;
-    return getAppointmentFromView(created.id_cita);
+    const appointment = await getAppointmentFromView(created.id_cita);
+    return mergePayloadBreakdown(appointment, payload);
   },
 
   async updateAppointment(id, payload) {
     const data = await toDatabasePayload(payload);
     await axiosClient.patch(`/citas/${id}`, data);
-    return getAppointmentFromView(id);
+    const appointment = await getAppointmentFromView(id);
+    return mergePayloadBreakdown(appointment, payload);
   },
 
   async updateAppointmentStatus(id, nextStatus) {

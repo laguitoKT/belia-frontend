@@ -6,6 +6,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { formatEmployeeServiceDate } from '../services/employeesService';
+import { getCategoryTheme } from '../../../components/ui/categoryThemes';
 import { getInitialsTheme } from '../../../components/ui/initialsThemes';
 
 export default function EmployeeHistoryModal({ employee, isOpen, onClose }) {
@@ -24,7 +25,7 @@ export default function EmployeeHistoryModal({ employee, isOpen, onClose }) {
       onClick={onClose}
     >
       <div
-        className="responsive-dialog history-dialog relative w-full max-w-2xl bg-white rounded-[32px] shadow-card border border-stone-100 p-7 sm:p-9 overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col"
+        className="responsive-dialog history-dialog relative w-full max-w-4xl bg-white rounded-[32px] shadow-card border border-stone-100 p-7 sm:p-9 overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-brand-primary via-brand-accent to-brand-secondary" />
@@ -70,6 +71,9 @@ export default function EmployeeHistoryModal({ employee, isOpen, onClose }) {
           ) : (
             history.map((item, idx) => {
               const theme = getCategoryTheme(item.category);
+              const serviceBreakdown = Array.isArray(item.serviceBreakdown)
+                ? item.serviceBreakdown
+                : [];
               return (
               <div
                 key={item.id}
@@ -127,6 +131,30 @@ export default function EmployeeHistoryModal({ employee, isOpen, onClose }) {
                     </div>
                   </div>
                 </div>
+
+                {serviceBreakdown.length > 1 && (
+                  <div className="p-3 mt-3 space-y-2 border rounded-xl bg-white/70 border-stone-200/70">
+                    <p className="text-[10px] font-bold tracking-wider text-brand-primary uppercase">
+                      Distribución de la cita
+                    </p>
+                    {serviceBreakdown.map((step, stepIndex) => (
+                      <div
+                        key={step.subKey || `${item.id}-${stepIndex}`}
+                        className="flex flex-col gap-1 text-[11px] sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <span className="font-semibold text-stone-700">
+                          {stepIndex + 1}. {step.serviceName}
+                          <span className="ml-1 font-normal text-stone-400">
+                            ({step.startTime} – {step.endTime})
+                          </span>
+                        </span>
+                        <span className="font-semibold text-brand-primary">
+                          {step.employeeName || employee.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {item.notes && (
                   <div className="mt-3 pt-2.5 border-t border-stone-200/50 flex items-start gap-2 text-xs text-stone-600">

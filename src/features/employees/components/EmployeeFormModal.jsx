@@ -230,7 +230,7 @@ const toggleWorkDay = (dayId) => {
       onClick={onClose}
     >
       <div
-        className="responsive-dialog relative w-full max-w-[650px] bg-white rounded-[32px] shadow-card border border-stone-100 p-8 sm:p-10 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto"
+        className="responsive-dialog relative w-full max-w-3xl bg-white rounded-[32px] shadow-card border border-stone-100 p-8 sm:p-10 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-brand-primary via-brand-accent to-brand-secondary" />
@@ -248,7 +248,7 @@ const toggleWorkDay = (dayId) => {
           <span className="block text-xs font-bold tracking-[0.14em] text-brand-primary uppercase mb-1.5">
             {isEditing ? 'EDITAR ESPECIALISTA' : 'NUEVO REGISTRO'}
           </span>
-          <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">
+          <h3 className="text-2xl font-bold tracking-tight sm:text-3xl text-stone-900">
             {isEditing ? 'Editar empleado' : 'Agregar empleado'}
           </h3>
           <p className="mt-1 text-xs leading-relaxed sm:text-sm text-stone-400">
@@ -377,7 +377,7 @@ const toggleWorkDay = (dayId) => {
 
         {/* Selector de días de la semana */}
           <div className="pt-4 border-t border-stone-100">
-            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-2">
+            <div className="flex flex-wrap items-center justify-between mb-2 gap-x-3 gap-y-1">
               <label className="block text-xs font-bold text-stone-800">
                 Días laborales
               </label>

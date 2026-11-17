@@ -31,14 +31,20 @@ const ALL_CATEGORIES = [
 const JS_DAY_TO_ID = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 // Verifica si la especialidad del empleado corresponde a la categoría del servicio
+const normalizeCategory = (category = '') =>
+  category
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
 const matchesSpecialty = (empCategory = '', serviceCategory = '') => {
   if (!serviceCategory || serviceCategory === 'Paquete mixto') return true;
-  const normEmp = empCategory.toLowerCase();
-  const normSrv = serviceCategory.toLowerCase();
+  const normEmp = normalizeCategory(empCategory);
+  const normSrv = normalizeCategory(serviceCategory);
   if (normEmp === normSrv) return true;
   if (
-    (normEmp === 'cabello' || normEmp === 'coloración') &&
-    (normSrv === 'cabello' || normSrv === 'coloración')
+    (normEmp === 'cabello' || normEmp === 'coloracion') &&
+    (normSrv === 'cabello' || normSrv === 'coloracion')
   ) {
     return true;
   }
@@ -277,9 +283,8 @@ export default function AppointmentFormModal({
       const categoryEmps = activeEmps.filter((e) =>
         matchesSpecialty(e.specialtyCategory, step.category)
       );
-      const candidates = categoryEmps.length > 0 ? categoryEmps : activeEmps;
 
-      const evaluatedCandidates = candidates.map((emp) => ({
+      const evaluatedCandidates = categoryEmps.map((emp) => ({
         ...emp,
         availability: evaluateEmployeeSlotAvailability(
           emp,
@@ -331,6 +336,8 @@ export default function AppointmentFormModal({
           const fallback = selfMatch || firstAvailable || slot.candidates[0];
           if (fallback) {
             next[slot.subKey] = String(fallback.id);
+          } else {
+            delete next[slot.subKey];
           }
         }
       });
@@ -395,11 +402,26 @@ export default function AppointmentFormModal({
 
     if (initialData) {
       setClientMode('existing');
+      const breakdownNames = Array.isArray(initialData.serviceBreakdown)
+        ? initialData.serviceBreakdown
+            .map((detail) => detail.serviceName)
+            .filter(Boolean)
+            .map((name) => name.toLowerCase())
+        : [];
       const parts = (initialData.service || '')
         .split('+')
         .map((s) => s.trim().toLowerCase());
       const matchedKeys = unifiedCatalog
-        .filter((item) => parts.includes(item.name.toLowerCase()))
+        .filter((item) => {
+          const itemNames = [
+            item.name,
+            ...(item.subServices || []).map((subService) => subService.name),
+          ].map((name) => name.toLowerCase());
+          return (
+            itemNames.some((name) => breakdownNames.includes(name)) ||
+            parts.includes(item.name.toLowerCase())
+          );
+        })
         .map((item) => item.key);
 
       setSelectedItemKeys(
@@ -905,8 +927,8 @@ export default function AppointmentFormModal({
               </div>
 
               <div
-                className={`p-3 rounded-2xl bg-[#FAFAFB] border max-h-40 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-2 ${
-                  fieldErrors.service ? 'border-red-400' : 'border-stone-200/90'
+                className={`p-3 rounded-2xl bg-[#FAFAFB] border max-h-60 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-2 ${
+                  fieldErrors.service ? 'border-brand-primary' : 'border-stone-200/90'
                 }`}
               >
                 {visibleCatalogItems.map((item) => {
@@ -961,7 +983,7 @@ export default function AppointmentFormModal({
               <label className="text-xs font-bold text-stone-800">
                 3. Horario inicial y asignación de especialistas por servicio
               </label>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FDECEF] text-brand-primary">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-soft/50 text-brand-primary">
                 Horario total: {formData.startTime} – {appointmentTotals.finalEndTime} hrs
               </span>
             </div>
@@ -986,7 +1008,7 @@ export default function AppointmentFormModal({
 
               <div>
                 <label className="block text-[11px] font-bold text-stone-700 mb-1">
-                  Hora de inicio (Servicio 1)
+                  Hora de inicio del servicio(s)
                 </label>
                 <div className="relative">
                   <Clock className="w-3.5 h-3.5 text-brand-primary absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -1014,7 +1036,7 @@ export default function AppointmentFormModal({
                   <div key={slot.subKey}>
                     {index > 0 && (
                       <div className="flex items-center justify-center py-0.5 text-stone-400">
-                        <ArrowDown className="w-3.5 h-3.5 text-brand-primary" />
+                        <ArrowDown className="w-3.5 h-3.5 text-brand-accent" />
                         <span className="text-[10px] font-semibold ml-1 text-stone-400">
                           Continúa inmediatamente a las {slot.startTime} hrs
                         </span>
@@ -1024,7 +1046,7 @@ export default function AppointmentFormModal({
                     <div className="p-3.5 rounded-2xl bg-white border border-stone-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-brand-primary text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                          <span className="w-5 h-5 rounded-full bg-brand-secondary text-white text-[10px] font-bold flex items-center justify-center shrink-0">
                             {slot.stepIndex}
                           </span>
                           <span className="text-xs font-bold text-stone-900">
@@ -1061,6 +1083,11 @@ export default function AppointmentFormModal({
                                 : 'bg-[#FAFAFB] border-stone-200 text-stone-800 focus:border-brand-primary'
                             }`}
                           >
+                            {slot.candidates.length === 0 && (
+                              <option value="" disabled>
+                                No hay especialistas de esta categoría
+                              </option>
+                            )}
                             {slot.candidates.map((emp) => (
                               <option key={emp.id} value={emp.id}>
                                 {emp.availability.available ? '✓ ' : '⚠ '}

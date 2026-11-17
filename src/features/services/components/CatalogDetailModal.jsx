@@ -32,7 +32,7 @@ export default function CatalogDetailModal({
       onClick={onClose}
     >
       <div
-        className="responsive-dialog relative w-full max-w-lg bg-white rounded-[30px] shadow-card border border-stone-100 p-7 sm:p-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="responsive-dialog relative w-full max-w-3xl bg-white rounded-[30px] shadow-card border border-stone-100 p-7 sm:p-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-brand-primary via-brand-accent to-brand-secondary" />
@@ -75,7 +75,7 @@ export default function CatalogDetailModal({
         {/* Bloque de información detallada */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-surface-bg p-4 rounded-2xl border border-stone-100 text-sm">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
+            <div className="flex items-center justify-center bg-brand-soft/50 w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
               <Tag className="w-4 h-4" />
             </div>
             <div>
@@ -87,7 +87,7 @@ export default function CatalogDetailModal({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
+            <div className="flex items-center justify-center bg-brand-soft/50 w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
               <Clock className="w-4 h-4" />
             </div>
             <div>
@@ -101,7 +101,7 @@ export default function CatalogDetailModal({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center text-xs font-bold bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
+            <div className="flex items-center justify-center text-xs font-bold bg-brand-soft/50 w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
               $
             </div>
             <div>
@@ -114,7 +114,7 @@ export default function CatalogDetailModal({
 
           {isPromotion && (
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center bg-white w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
+              <div className="flex items-center justify-center bg-brand-soft/50 w-9 h-9 rounded-xl text-brand-primary shadow-2xs shrink-0">
                 <Calendar className="w-4 h-4" />
               </div>
               <div>
@@ -133,14 +133,14 @@ export default function CatalogDetailModal({
               <p className="text-[11px] font-medium text-stone-400 mb-1">
                 Servicios incluidos en el paquete
               </p>
-              <span className={`inline-block px-3 py-1 rounded-xl text-xs font-bold ${theme.bg} ${theme.text}`}>
+              <span className={`inline-block px-3 py-1 rounded-xl text-xs font-bold  ${theme.text}`}>
                 {item.serviceIncluded}
               </span>
             </div>
           )}
 
           <div className="flex items-start gap-3 pt-2 border-t sm:col-span-2 border-stone-200/60">
-            <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-brand-primary shadow-2xs shrink-0 mt-0.5">
+            <div className="w-9 h-9 rounded-xl bg-brand-soft/50 flex items-center justify-center text-brand-primary shadow-2xs shrink-0 mt-0.5">
               <FileText className="w-4 h-4" />
             </div>
             <div>

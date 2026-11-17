@@ -4,6 +4,7 @@ import { toAppointmentStatus } from '../../appointments/services/appointmentStat
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const ACTIVE_STATE_ID = 1;
 const INACTIVE_STATE_ID = 2;
+const BREAKDOWN_MARKER = '[[BELIA_SERVICE_BREAKDOWN]]';
 
 export const getEmployeeInitials = (name = '') => {
   const parts = name.trim().split(/\s+/);
@@ -36,6 +37,26 @@ const specialtyCategory = (specialty = '') => {
 
 const timeOnly = (time) => (time || '').slice(0, 5);
 
+const parsePersistedBreakdown = (notes = '') => {
+  const markerIndex = String(notes).indexOf(BREAKDOWN_MARKER);
+  if (markerIndex < 0) return [];
+
+  try {
+    const details = JSON.parse(
+      String(notes).slice(markerIndex + BREAKDOWN_MARKER.length).trim()
+    );
+    return Array.isArray(details) ? details : [];
+  } catch (error) {
+    console.error('El desglose de servicios del empleado tiene un formato inválido.', error);
+    return [];
+  }
+};
+
+const getAppointmentNotes = (notes = '') => {
+  const markerIndex = String(notes).indexOf(BREAKDOWN_MARKER);
+  return markerIndex < 0 ? notes : String(notes).slice(0, markerIndex).trim();
+};
+
 const enrichEmployee = (employee, schedules, appointments) => {
   const employeeSchedules = schedules
     .filter((schedule) => schedule.empleado_id === employee.id_empleado)
@@ -48,34 +69,45 @@ const enrichEmployee = (employee, schedules, appointments) => {
   const workDays = workDaysList.join(', ') || 'Sin horario';
   const serviceHistory = appointments
     .flatMap((appointment) => {
-      const details = appointment.service_breakdown?.length
-        ? appointment.service_breakdown
-        : [
-            {
-              serviceId: appointment.servicio_id,
-              serviceName: appointment.servicio,
-              category: appointment.categoria,
-              price: appointment.precio,
-              startTime: appointment.hora_inicio,
-              endTime: appointment.hora_fin,
-              employeeId: appointment.empleado_id,
-            },
-          ];
-      return details
-        .filter((detail) => detail.employeeId === employee.id_empleado)
-        .map((detail, index) => ({
-          id: `${appointment.id_cita}-${detail.serviceId}-${index}`,
-          service: detail.serviceName,
-          category: detail.category,
+      const notes = appointment.especificaciones ?? '';
+      const detailsCandidates = [
+        appointment.service_breakdown,
+        parsePersistedBreakdown(notes),
+      ].filter((details) => Array.isArray(details) && details.length > 0);
+      const details = detailsCandidates.sort((a, b) => b.length - a.length)[0] || [
+        {
+          serviceId: appointment.servicio_id,
+          serviceName: appointment.servicio,
+          category: appointment.categoria,
+          price: appointment.precio,
+          startTime: appointment.hora_inicio,
+          endTime: appointment.hora_fin,
+          employeeId: appointment.empleado_id,
+          employeeName: appointment.estilista,
+        },
+      ];
+      const employeeDetails = details.filter(
+        (detail) => String(detail.employeeId) === String(employee.id_empleado)
+      );
+      if (employeeDetails.length === 0) return [];
+
+      const categories = [
+        ...new Set(employeeDetails.map((detail) => detail.category).filter(Boolean)),
+      ];
+      return [{
+          id: appointment.id_cita,
+          service: employeeDetails.map((detail) => detail.serviceName).filter(Boolean).join(' + '),
+          category: categories.length > 1 ? 'Paquete mixto' : categories[0] || appointment.categoria,
           client: appointment.cliente,
           clientPhone: appointment.telefono_cliente || '',
-          price: Number(detail.price),
+          price: Number(appointment.precio),
           date: appointment.fecha,
-          startTime: detail.startTime,
-          endTime: detail.endTime,
+          startTime: employeeDetails[0].startTime || appointment.hora_inicio,
+          endTime: employeeDetails.at(-1).endTime || appointment.hora_fin,
           status: toAppointmentStatus(appointment.estado),
-          notes: appointment.especificaciones ?? '',
-        }));
+          notes: getAppointmentNotes(notes),
+          serviceBreakdown: employeeDetails,
+        }];
     })
     .sort((a, b) => `${b.date} ${b.startTime}`.localeCompare(`${a.date} ${a.startTime}`));
 
