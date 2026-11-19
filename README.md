@@ -1,30 +1,36 @@
-# React + Vite
+# Belia — Gestión de salón de belleza
 
-## Acceso de empleados
+Belia es una aplicación web para centralizar la operación diaria de un salón de
+belleza. Este repositorio contiene el frontend: una interfaz para que el equipo
+organice citas, consulte la información del negocio y gestione sus recursos desde
+un solo lugar.
 
-Configura `VITE_API_URL` con la URL del backend (por defecto,
-`http://localhost:8000`). El formulario envía el correo y la contraseña a
-`POST /empleados/login`; el backend comprueba la contraseña con bcrypt. Las
-cuentas existentes con PBKDF2 siguen siendo compatibles y las contraseñas nuevas
-o actualizadas no pueden superar 72 bytes UTF-8. Usa HTTPS fuera del entorno
-local; bcrypt no cifra el tráfico ni sustituye HTTPS.
+## Propósito
 
-El backend actual no emite tokens ni exige autenticación o autorización para
-sus endpoints. Las rutas protegidas del frontend solo controlan la navegación y
-no impiden el acceso directo a la API; no utilices esta configuración como
-control de acceso en producción.
+El proyecto busca facilitar la coordinación entre la administración y el
+personal del salón, ofreciendo una vista clara de la agenda y de las tareas
+operativas. La interfaz se adapta al rol de la persona usuaria para mostrar
+información relevante para la gestión general o para el trabajo diario de cada
+especialista.
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+## Áreas de gestión
 
-Currently, two official plugins are available:
+- **Inicio y seguimiento diario:** resumen de citas, actividad del día e
+  inventario.
+- **Citas:** consulta y gestión de la agenda y del estado de las citas.
+- **Servicios:** administración del catálogo de servicios y paquetes.
+- **Clientes:** consulta de clientes e historial relacionado con sus citas.
+- **Inventario:** seguimiento de productos, existencias y alertas de stock.
+- **Empleados:** gestión del equipo y consulta de su actividad; esta sección
+  está destinada a administración.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Organización del repositorio
 
-## React Compiler
+La aplicación está desarrollada con React y Vite. El código de la interfaz se
+organiza por áreas funcionales en `src/features`, mientras que los componentes
+compartidos, el contexto de sesión y tema, las rutas y las utilidades se
+encuentran en sus directorios correspondientes dentro de `src`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+Los servicios de cada área encapsulan la comunicación con la API del backend.
+Este repositorio se centra en la experiencia de usuario y la presentación de
+las funciones de gestión de Belia.

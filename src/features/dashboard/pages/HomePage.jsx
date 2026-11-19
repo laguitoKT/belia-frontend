@@ -47,6 +47,7 @@ export default function HomePage() {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [appointmentError, setAppointmentError] = useState('');
 
   const weekDays = useMemo(() => {
     return getWeekDaysFromDate(selectedDate);
@@ -110,17 +111,27 @@ export default function HomePage() {
 
 // Función para actualizar el estado de una cita y reflejarlo en la interfaz
   const handleUpdateAppointmentStatus = async (id, newStatus) => {
-    const updated = await appointmentsService.updateAppointmentStatus(id, newStatus);
-    if (updated) {
+    setAppointmentError('');
+    try {
+      const updated = await appointmentsService.updateAppointmentStatus(id, newStatus);
       setAllAppointments((prev) =>
         prev.map((apt) => (apt.id === id ? updated : apt))
       );
       setSelectedAppointment(updated);
+    } catch (error) {
+      console.error('No se pudo actualizar el estado de la cita.', error);
+      const detail = error.response?.data?.detail;
+      setAppointmentError(typeof detail === 'string' ? detail : error.message || 'No se pudo actualizar la cita.');
     }
   };
 
   return (
     <div className="w-full space-y-7">
+      {appointmentError && (
+        <p role="alert" className="p-3 text-xs font-semibold text-red-700 bg-red-50 rounded-xl">
+          {appointmentError}
+        </p>
+      )}
       {/* Encabezado Principal */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>

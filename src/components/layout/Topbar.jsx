@@ -1,4 +1,5 @@
 import { Menu } from 'lucide-react';
+import ThemeToggle from '../ui/ThemeToggle';
 
 export default function Topbar({ currentSection = 'Inicio', user, onOpenProfile, onOpenMenu, isMobileMenuOpen, menuButtonRef }) {
   return (
@@ -34,6 +35,7 @@ export default function Topbar({ currentSection = 'Inicio', user, onOpenProfile,
 
       {/* Controles derechos */}
       <div className="flex items-center gap-3">
+        <ThemeToggle />
         {/* Buscador *
         
         <div className="relative w-full sm:w-56">

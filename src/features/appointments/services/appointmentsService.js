@@ -67,32 +67,10 @@ const getTimePart = (value) => {
     : String(value).slice(0, 5);
 };
 
-const mergePayloadBreakdown = (appointment, payload) => {
-  const payloadBreakdown = payload.serviceBreakdown;
-  if (
-    !Array.isArray(payloadBreakdown) ||
-    payloadBreakdown.length <= appointment.serviceBreakdown.length
-  ) {
-    return appointment;
-  }
-
-  return {
-    ...appointment,
-    service: payload.service || appointment.service,
-    category: payload.category || appointment.category,
-    categories: payload.categories || appointment.categories,
-    serviceCategory: payload.category || appointment.serviceCategory,
-    endTime: payload.endTime || appointment.endTime,
-    durationMinutes: payload.durationMinutes || appointment.durationMinutes,
-    price: payload.price ?? appointment.price,
-    employee: payload.employee || appointment.employee,
-    employeeFullName: payload.employeeFullName || appointment.employeeFullName,
-    serviceBreakdown: payloadBreakdown,
-  };
-};
-
 const toAppointment = (row) => {
-  const serviceBreakdown = getAppointmentDetails(row).map((detail, index) => {
+  const persistedDetails = parseDetails(row.service_breakdown);
+  const legacyDetails = getDetailsFromNotes(row.especificaciones || row.notas_cita);
+  const serviceBreakdown = (persistedDetails.length ? persistedDetails : getAppointmentDetails(row)).map((detail, index) => {
     const serviceId = detail.serviceId ?? detail.servicio_id;
     const employeeId = detail.employeeId ?? detail.empleado_id;
     const employeeName =
@@ -120,8 +98,29 @@ const toAppointment = (row) => {
       employeeId,
       employeeName,
       employeeShortName: employeeName.split(' ')[0],
+      selectionId: detail.selectionId,
+      packageId: detail.packageId,
+      selectionName: detail.selectionName,
+      selectionPrice: detail.selectionPrice,
     };
   });
+  const selections = [];
+  for (const detail of serviceBreakdown) {
+    const key = detail.selectionId == null ? `legacy-${selections.length}` : detail.selectionId;
+    let selection = selections.find((item) => item.key === key);
+    if (!selection) {
+      selection = {
+        key,
+        serviceId: detail.packageId == null ? detail.serviceId : null,
+        packageId: detail.packageId ?? null,
+        name: detail.selectionName || detail.serviceName,
+        price: detail.selectionPrice ?? null,
+        details: [],
+      };
+      selections.push(selection);
+    }
+    selection.details.push(detail);
+  }
   const categories = [...new Set(serviceBreakdown.map((detail) => detail.category))];
   const employeeNames = [
     ...new Set(serviceBreakdown.map((detail) => detail.employeeName)),
@@ -142,12 +141,16 @@ const toAppointment = (row) => {
     durationMinutes: totalDuration || Number(row.duracion_estimada),
     durationHours: (totalDuration || Number(row.duracion_estimada)) / 60,
     serviceId: serviceBreakdown[0]?.serviceId || row.servicio_id,
-    service: serviceNames.join(' + ') || row.servicio,
+    service: selections.map((selection) => selection.name).join(' + ') ||
+      serviceNames.join(' + ') || row.servicio,
     specification: getAppointmentNotes(row.especificaciones ?? ''),
     category,
     categories,
     serviceCategory: category,
     price: Number(row.precio),
+    agreedTotal: row.precio_total == null ? null : Number(row.precio_total),
+    selections,
+    hasUnpersistedLegacyDetails: legacyDetails.length > persistedDetails.length,
     clientId: row.cliente_id,
     client: row.cliente,
     clientPhone: row.telefono_cliente || '',
@@ -171,7 +174,6 @@ const toDatabasePayload = async (payload) => {
   );
   if (!state) throw new Error(`No existe el estado "${stateName}" en la base de datos.`);
 
-  const serviceRows = (await axiosClient.get('/api/v1/catalogo/servicios')).data;
   const inputDetails = payload.serviceBreakdown?.length
     ? payload.serviceBreakdown
     : [
@@ -186,22 +188,9 @@ const toDatabasePayload = async (payload) => {
         },
       ];
   const details = inputDetails.map((detail) => {
-    const service = detail.serviceId
-      ? serviceRows.find(
-          (row) => Number(row.id_servicio) === Number(detail.serviceId)
-        )
-      : serviceRows.find(
-          (row) =>
-            row.servicio.toLowerCase() ===
-            String(detail.serviceName).toLowerCase()
-        );
-    if (!service) {
-      throw new Error(
-        `No se encontró el servicio "${detail.serviceName || detail.serviceId}" en el catálogo de la base de datos.`
-      );
-    }
+    if (!detail.serviceId) throw new Error('Falta el identificador de un servicio.');
     return {
-      servicio_id: service.id_servicio,
+      servicio_id: Number(detail.serviceId),
       empleado_id: Number(detail.employeeId),
       fecha_hora_inicio: `${payload.date}T${detail.startTime}:00`,
       fecha_hora_fin: `${payload.date}T${detail.endTime}:00`,
@@ -215,15 +204,23 @@ const toDatabasePayload = async (payload) => {
     estado_id: state.id_estado,
     fecha_hora_inicio: first.fecha_hora_inicio,
     fecha_hora_fin: first.fecha_hora_fin,
-    notas_cita: payload.serviceBreakdown?.length
-      ? `${payload.specification || ''}\n${BREAKDOWN_MARKER}${JSON.stringify(
-          payload.serviceBreakdown
-        )}`
-      : payload.specification || null,
-    precio_total: Number.isFinite(Number(payload.price))
-      ? Number(payload.price)
-      : null,
-    detalles: details,
+    notas_cita: payload.specification || null,
+    precio_total: payload.agreedTotal ?? null,
+    ...(payload.selections
+      ? {
+          selecciones: payload.selections.map((selection) => ({
+            servicio_id: selection.serviceId ?? null,
+            paquete_id: selection.packageId ?? null,
+            precio_acordado: selection.price ?? null,
+            detalles: selection.details.map((detail) => ({
+              servicio_id: Number(detail.serviceId),
+              empleado_id: Number(detail.employeeId),
+              fecha_hora_inicio: `${payload.date}T${detail.startTime}:00`,
+              fecha_hora_fin: `${payload.date}T${detail.endTime}:00`,
+            })),
+          })),
+        }
+      : { detalles: details }),
   };
 };
 
@@ -258,20 +255,24 @@ export const appointmentsService = {
   async createAppointment(payload) {
     const data = await toDatabasePayload(payload);
     const created = (await axiosClient.post('/citas/', data)).data;
-    const appointment = await getAppointmentFromView(created.id_cita);
-    return mergePayloadBreakdown(appointment, payload);
+    return getAppointmentFromView(created.id_cita);
   },
 
   async updateAppointment(id, payload) {
     const data = await toDatabasePayload(payload);
     await axiosClient.patch(`/citas/${id}`, data);
-    const appointment = await getAppointmentFromView(id);
-    return mergePayloadBreakdown(appointment, payload);
+    return getAppointmentFromView(id);
   },
 
   async updateAppointmentStatus(id, nextStatus) {
-    const appointment = await getAppointmentFromView(id);
-    return this.updateAppointment(id, { ...appointment, status: nextStatus });
+    const references = await getReferences();
+    const stateName = toDatabaseAppointmentStatus(nextStatus);
+    const state = references.estados.find(
+      (item) => item.nombre.toLowerCase() === stateName.toLowerCase()
+    );
+    if (!state) throw new Error(`No existe el estado "${stateName}" en la base de datos.`);
+    await axiosClient.patch(`/citas/${id}`, { estado_id: state.id_estado });
+    return getAppointmentFromView(id);
   },
 
   async deleteAppointment(id) {

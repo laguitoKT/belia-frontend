@@ -76,7 +76,7 @@ export default function Sidebar({
           }`}
         >
           {/* Logo de Belia */}
-          <div className="flex items-center justify-center w-8 h-8 p-1 text-sm font-bold text-white bg-white rounded-lg shadow-xs shrink-0">
+          <div className="brand-logo flex items-center justify-center w-8 h-8 p-1 text-sm font-bold text-white bg-white rounded-lg shadow-xs shrink-0">
             <img src={logo} alt="Belia" className="object-contain w-full h-full" />
           </div>
 

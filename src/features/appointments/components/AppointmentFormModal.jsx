@@ -67,25 +67,28 @@ const evaluateEmployeeSlotAvailability = (
   const dateObj = parseLocalDate(dateISO);
   const dayCode = JS_DAY_TO_ID[dateObj.getDay()];
 
-  if (
-    Array.isArray(employee.workDaysList) &&
-    !employee.workDaysList.includes(dayCode)
-  ) {
+  const daySchedules = (employee.schedules || []).filter(
+    (schedule) => schedule.day === dateObj.getDay()
+  );
+  if (!daySchedules.length) {
     return {
       available: false,
       reason: `No labora los ${dayCode} (${employee.workDays})`,
     };
   }
 
-  if (slotStart < employee.startTime || slotEnd > employee.endTime) {
+  if (slotEnd <= slotStart || !daySchedules.some(
+    (schedule) => slotStart >= schedule.startTime && slotEnd <= schedule.endTime
+  )) {
     return {
       available: false,
-      reason: `Fuera de turno (${employee.startTime}–${employee.endTime})`,
+      reason: `Fuera de turno (${daySchedules.map((s) => `${s.startTime}–${s.endTime}`).join(', ')})`,
     };
   }
 
   const conflict = existingAppointments.find((apt) => {
     if (apt.id === editingAppointmentId) return false;
+    if (apt.status === 'Cancelada') return false;
     if (apt.date !== dateISO) return false;
 
     // Verificar si el empleado está asignado en la cita principal o en alguno de sus tramos
@@ -157,6 +160,9 @@ export default function AppointmentFormModal({
 
   const [fieldErrors, setFieldErrors] = useState({});
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedSelections, setSavedSelections] = useState({});
+  const [restoreError, setRestoreError] = useState('');
 
   // 1. Catálogo unificado (Servicios + Paquetes con sus sub-servicios reales)
   const unifiedCatalog = useMemo(() => {
@@ -175,6 +181,7 @@ export default function AppointmentFormModal({
         subServices: [
           {
             subKey: `srv-${s.id}`,
+            serviceId: s.id,
             name: s.name,
             category: s.category,
             durationMinutes: Number(s.durationMinutes) || 60,
@@ -200,21 +207,13 @@ export default function AppointmentFormModal({
 
         // Desglosa los servicios que componen el paquete para asignar horario y empleado a cada uno
         const subServices =
-          includedSrvs.length > 0
-            ? includedSrvs.map((s) => ({
+          includedSrvs.map((s) => ({
                 subKey: `promo-${p.id}-srv-${s.id}`,
+                serviceId: s.id,
                 name: `${s.name} (${p.name})`,
                 category: s.category,
                 durationMinutes: Number(s.durationMinutes) || 45,
-              }))
-            : [
-                {
-                  subKey: `promo-${p.id}-main`,
-                  name: p.name,
-                  category: p.category,
-                  durationMinutes: Number(p.durationMinutes) || 90,
-                },
-              ];
+              }));
 
         return {
           key: `promo-${p.id}`,
@@ -228,6 +227,7 @@ export default function AppointmentFormModal({
           price: Number(p.price) || 0,
           description: `${p.serviceIncluded} — ${p.description || ''}`,
           subServices,
+          incomplete: !p.serviceIds?.length || includedSrvs.length !== p.serviceIds.length,
         };
       });
 
@@ -266,11 +266,25 @@ export default function AppointmentFormModal({
 
   // 3. Desglose secuencial de servicios con cálculo automático de horarios encadenados
   const scheduledServiceSlots = useMemo(() => {
-    const selectedItems = unifiedCatalog.filter((item) =>
-      selectedItemKeys.includes(item.key)
-    );
+    const selectedItems = selectedItemKeys
+      .map((key) => unifiedCatalog.find((item) => item.key === key))
+      .filter(Boolean);
 
-    const rawSteps = selectedItems.flatMap((item) => item.subServices);
+    const rawSteps = selectedItems.flatMap((item) => {
+      const saved = savedSelections[item.key];
+      const steps = saved
+        ? saved.details.map((detail) => item.subServices.find(
+            (step) => Number(step.serviceId) === Number(detail.serviceId)
+          )).filter(Boolean)
+        : item.subServices;
+      return steps.map((step) => ({
+        ...step,
+        itemKey: item.key,
+        durationMinutes: saved?.details.find(
+          (detail) => Number(detail.serviceId) === Number(step.serviceId)
+        )?.durationMinutes ?? step.durationMinutes,
+      }));
+    });
     let runningStartTime = formData.startTime || '09:00';
 
     return rawSteps.map((step, index) => {
@@ -312,6 +326,7 @@ export default function AppointmentFormModal({
     employeesList,
     existingAppointments,
     initialData,
+    savedSelections,
   ]);
 
   // 4. Autoseleccionar por cada tramo al primer especialista disponible en ese horario
@@ -347,10 +362,20 @@ export default function AppointmentFormModal({
 
   // 5. Resumen general de la cita (duración total, hora final, precio total y nombres de empleados)
   const appointmentTotals = useMemo(() => {
-    const selectedItems = unifiedCatalog.filter((item) =>
-      selectedItemKeys.includes(item.key)
+    const selectedItems = selectedItemKeys
+      .map((key) => unifiedCatalog.find((item) => item.key === key))
+      .filter(Boolean);
+    const prices = selectedItems.map((item) =>
+      Object.hasOwn(savedSelections, item.key) ? savedSelections[item.key].price : item.price
     );
-    const totalPrice = selectedItems.reduce((acc, i) => acc + i.price, 0);
+    const originalKeys = (initialData?.selections || []).map((selection) =>
+      selection.packageId != null ? `promo-${selection.packageId}` : `srv-${selection.serviceId}`
+    );
+    const sameSelections = originalKeys.length === selectedItemKeys.length &&
+      originalKeys.every((key, index) => key === selectedItemKeys[index]);
+    const totalPrice = prices.some((price) => price == null)
+      ? (sameSelections ? initialData?.agreedTotal : null) ?? null
+      : prices.reduce((acc, price) => acc + Math.round(Number(price) * 100), 0) / 100;
     const totalDuration = scheduledServiceSlots.reduce(
       (acc, s) => acc + s.durationMinutes,
       0
@@ -380,6 +405,8 @@ export default function AppointmentFormModal({
     selectedItemKeys,
     scheduledServiceSlots,
     formData.startTime,
+    savedSelections,
+    initialData,
   ]);
 
   const filteredClients = useMemo(() => {
@@ -399,49 +426,41 @@ export default function AppointmentFormModal({
     setClientSearch('');
     setFieldErrors({});
     setShowSaveConfirm(false);
+    setRestoreError('');
+    setSavedSelections({});
 
     if (initialData) {
       setClientMode('existing');
-      const breakdownNames = Array.isArray(initialData.serviceBreakdown)
-        ? initialData.serviceBreakdown
-            .map((detail) => detail.serviceName)
-            .filter(Boolean)
-            .map((name) => name.toLowerCase())
-        : [];
-      const parts = (initialData.service || '')
-        .split('+')
-        .map((s) => s.trim().toLowerCase());
-      const matchedKeys = unifiedCatalog
-        .filter((item) => {
-          const itemNames = [
-            item.name,
-            ...(item.subServices || []).map((subService) => subService.name),
-          ].map((name) => name.toLowerCase());
-          return (
-            itemNames.some((name) => breakdownNames.includes(name)) ||
-            parts.includes(item.name.toLowerCase())
+      const restored = {};
+      const restoredMap = {};
+      const keys = [];
+      for (const selection of initialData.selections || []) {
+        const key = selection.packageId != null
+          ? `promo-${selection.packageId}`
+          : `srv-${selection.serviceId}`;
+        const item = unifiedCatalog.find((entry) => entry.key === key);
+        const idsMatch = item && !item.incomplete &&
+          item.subServices.length === selection.details.length &&
+          item.subServices.every((step) =>
+            selection.details.some((detail) => Number(step.serviceId) === Number(detail.serviceId))
           );
-        })
-        .map((item) => item.key);
-
-      setSelectedItemKeys(
-        matchedKeys.length > 0
-          ? matchedKeys
-          : unifiedCatalog[0]
-          ? [unifiedCatalog[0].key]
-          : []
-      );
-
-      // Restaurar empleados asignados por tramo si existían
-      if (Array.isArray(initialData.serviceBreakdown)) {
-        const restoredMap = {};
-        initialData.serviceBreakdown.forEach((b) => {
-          restoredMap[b.subKey] = String(b.employeeId);
+        if (!idsMatch || restored[key]) {
+          setRestoreError('No se puede editar: el catálogo o el orden de servicios de esta cita cambió. Revisa las selecciones antes de continuar.');
+          continue;
+        }
+        keys.push(key);
+        restored[key] = selection;
+        item.subServices.forEach((step) => {
+          const detail = selection.details.find((entry) => Number(entry.serviceId) === Number(step.serviceId));
+          restoredMap[step.subKey] = String(detail.employeeId);
         });
-        setSlotEmployeeMap(restoredMap);
-      } else {
-        setSlotEmployeeMap({});
       }
+      if (!keys.length || initialData.hasUnpersistedLegacyDetails) {
+        setRestoreError('Esta cita contiene un desglose anterior que no está guardado por completo. No se puede editar sin recuperarlo primero.');
+      }
+      setSelectedItemKeys(keys);
+      setSavedSelections(restored);
+      setSlotEmployeeMap(restoredMap);
 
       setFormData({
         clientId: initialData.clientId ? String(initialData.clientId) : '',
@@ -454,7 +473,8 @@ export default function AppointmentFormModal({
         status: initialData.status || 'Pendiente',
       });
     } else {
-      const firstItem = visibleCatalogItems[0] || unifiedCatalog[0] || null;
+      const firstItem = visibleCatalogItems.find((item) => !item.incomplete) ||
+        unifiedCatalog.find((item) => !item.incomplete) || null;
 
       setClientMode(clientsList.length > 0 ? 'existing' : 'new');
       setSelectedItemKeys(firstItem ? [firstItem.key] : []);
@@ -475,7 +495,6 @@ export default function AppointmentFormModal({
     isOpen,
     initialData,
     defaultDate,
-    clientsList.length,
     unifiedCatalog,
   ]);
 
@@ -496,6 +515,17 @@ export default function AppointmentFormModal({
   };
 
   const toggleCatalogItem = (item) => {
+    if (item.incomplete) {
+      setFieldErrors((prev) => ({ ...prev, service: 'El paquete no tiene todos sus servicios disponibles.' }));
+      return;
+    }
+    if (selectedItemKeys.includes(item.key)) {
+      setSavedSelections((prev) => {
+        const next = { ...prev };
+        delete next[item.key];
+        return next;
+      });
+    }
     setSelectedItemKeys((prev) => {
       const exists = prev.includes(item.key);
       const nextKeys = exists
@@ -582,6 +612,8 @@ export default function AppointmentFormModal({
       errors.service =
         'Selecciona al menos un servicio o paquete para la cita.';
     }
+    if (restoreError) errors.service = restoreError;
+    if (!formData.date || !formData.startTime) errors.schedule = 'Selecciona la fecha y hora de inicio.';
 
     if (
       !formData.specification.trim() ||
@@ -620,21 +652,23 @@ export default function AppointmentFormModal({
     }
   };
 
-  const handleConfirmSave = () => {
+  const handleConfirmSave = async () => {
     // Construir el desglose detallado de cada tramo con su empleado y horario
     const serviceBreakdown = scheduledServiceSlots.map((slot) => {
       const empId = Number(slotEmployeeMap[slot.subKey]);
       const empObj = employeesList.find((e) => e.id === empId);
       return {
         subKey: slot.subKey,
+        itemKey: slot.itemKey,
+        serviceId: slot.serviceId,
         serviceName: slot.name,
         category: slot.category,
         startTime: slot.startTime,
         endTime: slot.endTime,
         durationMinutes: slot.durationMinutes,
         employeeId: empId,
-        employeeName: empObj?.name || 'Mariana Silva',
-        employeeShortName: (empObj?.name || 'Mariana').split(' ')[0],
+        employeeName: empObj.name,
+        employeeShortName: empObj.name.split(' ')[0],
       };
     });
 
@@ -646,7 +680,16 @@ export default function AppointmentFormModal({
       new Set(serviceBreakdown.map((b) => `${b.employeeName} (${b.startTime}–${b.endTime})`))
     ).join(' | ');
 
-    const primaryEmpId = serviceBreakdown[0]?.employeeId || 2;
+    const primaryEmpId = serviceBreakdown[0].employeeId;
+    const selections = selectedItemKeys.map((key) => {
+      const item = unifiedCatalog.find((entry) => entry.key === key);
+      return {
+        serviceId: item.type === 'service' ? item.id : null,
+        packageId: item.type === 'promotion' ? item.id : null,
+        price: Object.hasOwn(savedSelections, key) ? savedSelections[key].price : item.price,
+        details: serviceBreakdown.filter((step) => step.itemKey === key),
+      };
+    });
 
     const payload = {
       ...formData,
@@ -660,15 +703,37 @@ export default function AppointmentFormModal({
       durationMinutes: appointmentTotals.totalDuration,
       endTime: appointmentTotals.finalEndTime,
       price: appointmentTotals.totalPrice,
+      agreedTotal: appointmentTotals.totalPrice,
       specification: formData.specification.trim(),
       employeeId: primaryEmpId,
       employee: uniqueShortNames,
       employeeFullName: uniqueFullNames,
       serviceBreakdown,
+      selections,
     };
 
-    setShowSaveConfirm(false);
-    onSave(payload);
+    setIsSaving(true);
+    try {
+      await onSave(payload, (createdClient) => {
+        setClientMode('existing');
+        setFormData((prev) => ({
+          ...prev,
+          clientId: String(createdClient.id),
+          client: createdClient.name,
+          clientPhone: createdClient.phone,
+          clientEmail: createdClient.email || '',
+        }));
+      });
+    } catch (error) {
+      const detail = error.response?.data?.detail;
+      setFieldErrors((prev) => ({
+        ...prev,
+        save: typeof detail === 'string' ? detail : error.message || 'No se pudo guardar la cita.',
+      }));
+      setShowSaveConfirm(false);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -921,8 +986,10 @@ export default function AppointmentFormModal({
                 </span>
                 <span className="text-[11px] font-bold text-brand-primary">
                   {scheduledServiceSlots.length} servicio(s) a programar •{' '}
-                  {appointmentTotals.totalDuration} min • $
-                  {appointmentTotals.totalPrice} MXN
+                  {appointmentTotals.totalDuration} min •{' '}
+                  {appointmentTotals.totalPrice == null
+                    ? 'Precio desconocido'
+                    : `$${appointmentTotals.totalPrice} MXN`}
                 </span>
               </div>
 
@@ -934,6 +1001,9 @@ export default function AppointmentFormModal({
                 {visibleCatalogItems.map((item) => {
                   const isSelected = selectedItemKeys.includes(item.key);
                   const isPromo = item.type === 'promotion';
+                  const price = isSelected && Object.hasOwn(savedSelections, item.key)
+                    ? savedSelections[item.key].price
+                    : item.price;
                   return (
                     <button
                       key={item.key}
@@ -959,7 +1029,7 @@ export default function AppointmentFormModal({
                           {isPromo
                             ? `Paquete (${item.subServices.length} servicios: ${item.involvedCategories.join(' + ')})`
                             : item.category}{' '}
-                          • {item.durationMinutes} min • ${item.price}
+                          • {item.durationMinutes} min • {price == null ? 'Precio desconocido' : `$${price}`}
                         </span>
                       </div>
                       {isSelected && (
@@ -969,9 +1039,9 @@ export default function AppointmentFormModal({
                   );
                 })}
               </div>
-              {fieldErrors.service && (
-                <p className="text-[11px] font-medium text-red-600 mt-1">
-                  {fieldErrors.service}
+              {(fieldErrors.service || restoreError) && (
+                <p role="alert" className="text-[11px] font-medium text-red-600 mt-1">
+                  {fieldErrors.service || restoreError}
                 </p>
               )}
             </div>
@@ -1135,6 +1205,9 @@ export default function AppointmentFormModal({
             )}
           </div>
 
+          {fieldErrors.save && (
+            <p role="alert" className="text-xs font-semibold text-red-700">{fieldErrors.save}</p>
+          )}
           {showSaveConfirm ? (
             <div className="p-4 rounded-2xl bg-[#FDF2F5] border border-brand-light/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-150">
               <div className="flex items-center gap-2.5 text-brand-primary text-xs font-bold">
@@ -1147,6 +1220,7 @@ export default function AppointmentFormModal({
                 <button
                   type="button"
                   onClick={() => setShowSaveConfirm(false)}
+                  disabled={isSaving}
                   className="px-4 py-2 text-xs font-bold bg-white border rounded-xl border-stone-200 text-stone-700"
                 >
                   Revisar
@@ -1154,9 +1228,10 @@ export default function AppointmentFormModal({
                 <button
                   type="button"
                   onClick={handleConfirmSave}
+                  disabled={isSaving}
                   className="px-4 py-2 text-xs font-bold text-white rounded-xl bg-brand-primary shadow-button"
                 >
-                  Sí, confirmar cita
+                  {isSaving ? 'Guardando...' : 'Sí, confirmar cita'}
                 </button>
               </div>
             </div>

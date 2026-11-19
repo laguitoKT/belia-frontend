@@ -4,6 +4,7 @@ import { Sparkles, ChevronRight, Eye, EyeClosed } from 'lucide-react';
 import { useAuth } from '../../../context/useAuth';
 import { LoginResponseError } from '../services/authServices';
 import logo from '../../../assets/LogoB2.png';
+import ThemeToggle from '../../../components/ui/ThemeToggle';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -49,6 +50,9 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen w-full flex flex-col lg:flex-row overflow-hidden bg-[#F8F6F7]">
+      <div className="absolute z-30 top-4 right-4 sm:top-6 sm:right-6">
+        <ThemeToggle />
+      </div>
       {/* Fondo izquierdo con gradiente  */}
       <div className="relative w-full lg:w-[70%] lg:min-h-screen bg-gradient-to-br from-brand-primary via-[#9E1428] to-brand-accent flex flex-col justify-between p-6 sm:p-12 lg:p-16 xl:p-20 text-white overflow-hidden">
         
@@ -59,7 +63,7 @@ export default function LoginPage() {
         {/* Encabezado de Marca (Belia) */}
         <header className="relative z-10 flex items-center gap-4">
           {/* Logo de Belia */}
-          <div className="flex items-center justify-center w-16 h-16 p-1 bg-white rounded-md shadow-sm shrink-0">
+          <div className="brand-logo flex items-center justify-center w-16 h-16 p-1 bg-white rounded-md shadow-sm shrink-0">
             <img src={logo} alt="Belia" className="object-contain w-full h-full" />
           </div>
           <div>

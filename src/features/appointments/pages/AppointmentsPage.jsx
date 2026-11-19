@@ -254,7 +254,10 @@ export default function AppointmentsPage() {
       const matchesEmployee =
         !isAdmin ||
         employeeFilter === 'Todos' ||
-        String(apt.employeeId) === String(employeeFilter);
+        String(apt.employeeId) === String(employeeFilter) ||
+        apt.serviceBreakdown.some(
+          (detail) => String(detail.employeeId) === String(employeeFilter)
+        );
 
       return (
         matchesPeriod && matchesSearch && matchesStatus && matchesEmployee
@@ -322,7 +325,7 @@ export default function AppointmentsPage() {
     setIsFormModalOpen(true);
   };
 
-const handleSaveAppointment = async (formData) => {
+const handleSaveAppointment = async (formData, onClientCreated) => {
     let targetClientId = formData.clientId;
 
     // Si se registró un cliente nuevo desde la cita, lo agregamos al directorio de Clientes
@@ -337,6 +340,7 @@ const handleSaveAppointment = async (formData) => {
       );
       targetClientId = createdClient.id;
       setClientsDirectory((prev) => [createdClient, ...prev]);
+      onClientCreated(createdClient);
     }
 
     const payload = { ...formData, clientId: targetClientId };
@@ -365,14 +369,17 @@ const handleSaveAppointment = async (formData) => {
     setOpenMenuId(null);
     const nextStatus =
       apt.status === 'Confirmada' ? 'Pendiente' : 'Confirmada';
-    const updated = await appointmentsService.updateAppointment(apt.id, {
-      ...apt,
-      status: nextStatus,
-    });
-    setAppointments((prev) =>
-      prev.map((a) => (a.id === apt.id ? updated : a))
-    );
-    showToast(`Cita de "${apt.client}" marcada como ${nextStatus}.`);
+    try {
+      const updated = await appointmentsService.updateAppointmentStatus(apt.id, nextStatus);
+      setAppointments((prev) =>
+        prev.map((a) => (a.id === apt.id ? updated : a))
+      );
+      showToast(`Cita de "${apt.client}" marcada como ${nextStatus}.`);
+    } catch (error) {
+      console.error('No se pudo actualizar el estado de la cita.', error);
+      const detail = error.response?.data?.detail;
+      showToast(typeof detail === 'string' ? detail : error.message || 'No se pudo actualizar la cita.');
+    }
   };
 
   const handleConfirmDelete = async () => {

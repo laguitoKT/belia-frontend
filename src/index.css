@@ -50,3 +50,171 @@
     overflow-y: auto;
   }
 }
+
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+[data-theme='dark'] body,
+[data-theme='dark'] .bg-surface-bg,
+[data-theme='dark'] [class~='bg-[#F8F6F7]'] {
+  background-color: #181316;
+}
+
+[data-theme='dark'] :is(
+  .bg-white, [class~='bg-white/70'], [class~='bg-white/80']
+) {
+  background-color: #292126;
+}
+
+[data-theme='dark'] :is(
+  .bg-surface-input, .bg-stone-50, .bg-stone-100,
+  [class~='bg-[#FAFAFB]'], [class~='bg-[#FAF7F8]'],
+  [class~='bg-[#FAF6F7]'], [class~='bg-[#FAF8F9]'],
+  [class~='bg-[#FFF9FA]'], [class~='bg-[#F2EEF0]'],
+  [class~='bg-[#F4ECEF]']
+) {
+  background-color: #342a30;
+}
+
+[data-theme='dark'] :is(
+  .bg-brand-soft, [class~='bg-brand-soft/50'], [class~='bg-brand-soft/60'],
+  [class~='bg-brand-soft/70'], [class~='bg-brand-soft/80'],
+  .bg-brand-light.text-brand-primary, [class~='bg-[#FADCE6]'],
+  [class~='bg-[#FDF2F5]'], [class~='bg-[#FDECEF]'],
+  [class~='bg-[#FDECEF]/70'], [class~='bg-[#FADADD]/60'],
+  [class~='bg-[#F5EBEB]']
+) {
+  background-color: #54313c;
+}
+
+[data-theme='dark'] :is(
+  .bg-emerald-50, [class~='bg-[#E8F6F0]'], [class~='bg-[#E9F7F5]'],
+  [class~='bg-[#D1EFEA]/70']
+) {
+  background-color: #213d38;
+}
+
+[data-theme='dark'] :is(
+  .bg-amber-50, [class~='bg-[#FDF4E7]'], [class~='bg-[#FEF3E2]'],
+  [class~='bg-[#F9E7CC]/60'], [class~='bg-[#FFF0E8]'],
+  [class~='bg-[#FADACA]/70']
+) {
+  background-color: #463529;
+}
+
+[data-theme='dark'] :is([class~='bg-[#EEF3FC]'], [class~='bg-[#DCE7FA]/70']) {
+  background-color: #293747;
+}
+
+[data-theme='dark'] :is([class~='bg-[#F3EEFC]'], [class~='bg-[#E4D8F7]/70']) {
+  background-color: #3a3047;
+}
+
+[data-theme='dark'] :is(.bg-red-50, [class~='bg-red-50/50']) {
+  background-color: #48292e;
+}
+
+[data-theme='dark'] :is(.text-stone-900, .text-stone-800, .text-stone-700) {
+  color: #f2e8eb;
+}
+
+[data-theme='dark'] :is(.text-stone-600, .text-stone-500) {
+  color: #d3c2c8;
+}
+
+[data-theme='dark'] :is(.text-stone-400, .text-stone-300) {
+  color: #b7a3ab;
+}
+
+[data-theme='dark'] .text-brand-primary {
+  color: #f2a4b8;
+}
+
+[data-theme='dark'] :is(.text-red-600, .text-red-700) {
+  color: #ffa2aa;
+}
+
+[data-theme='dark'] :is(
+  .text-emerald-600, .text-emerald-700, [class~='text-[#1E7E5A]'],
+  [class~='text-[#1E7E6C]'], [class~='text-[#207268]']
+) {
+  color: #8dd9bc;
+}
+
+[data-theme='dark'] :is(
+  .text-amber-600, .text-amber-700, [class~='text-[#C2781A]'],
+  [class~='text-[#A66A15]'], [class~='text-[#9A6728]'],
+  [class~='text-[#B7643C]']
+) {
+  color: #f0c187;
+}
+
+[data-theme='dark'] :is([class~='text-[#D83B64]'], [class~='text-[#C82344]']) {
+  color: #f2a4b8;
+}
+
+[data-theme='dark'] [class~='text-[#4169A1]'] {
+  color: #a7c7f0;
+}
+
+[data-theme='dark'] [class~='text-[#7650A5]'] {
+  color: #d1b3f1;
+}
+
+[data-theme='dark'] :is(
+  .border-stone-100, [class~='border-stone-100/60'],
+  [class~='border-stone-100/80'], [class~='border-stone-100/90'],
+  .border-stone-200, [class~='border-stone-200/50'],
+  [class~='border-stone-200/60'], [class~='border-stone-200/70'],
+  [class~='border-stone-200/80'], [class~='border-stone-200/90'],
+  .border-stone-300, .border-brand-soft, .border-brand-light,
+  [class~='border-brand-light/30'], [class~='border-brand-light/40'],
+  [class~='border-brand-light/50'], [class~='border-brand-light/60'],
+  [class~='border-brand-soft/80'], .border-red-200, .border-amber-200,
+  .border-emerald-200
+) {
+  border-color: #57434a;
+}
+
+[data-theme='dark'] :is(
+  [class~='hover:bg-surface-bg'], [class~='hover:bg-surface-bg/60'],
+  [class~='hover:bg-stone-100'], [class~='hover:bg-white/80']
+):hover {
+  background-color: #413238;
+}
+
+[data-theme='dark'] :is(
+  [class~='hover:bg-brand-soft'], [class~='hover:bg-brand-soft/40'],
+  [class~='hover:bg-brand-soft/50'], [class~='hover:bg-brand-soft/60'],
+  [class~='hover:bg-brand-light/60']
+):hover {
+  background-color: #68404d;
+}
+
+[data-theme='dark'] :is([class~='hover:bg-red-50'], [class~='hover:bg-red-100']):hover {
+  background-color: #65363e;
+}
+
+[data-theme='dark'] [class~='hover:bg-emerald-100']:hover {
+  background-color: #31564b;
+}
+
+[data-theme='dark'] [class~='hover:bg-amber-100']:hover {
+  background-color: #604935;
+}
+
+[data-theme='dark'] :is(
+  [class~='hover:text-stone-700'], [class~='hover:text-stone-800'],
+  [class~='hover:text-stone-900'], [class~='hover:text-brand-primary']
+):hover {
+  color: #ffe3eb;
+}
+
+[data-theme='dark'] :is([class~='placeholder:text-stone-300'], [class~='placeholder:text-stone-400'])::placeholder {
+  color: #a9939c;
+}
+
+[data-theme='dark'] .brand-logo {
+  background-color: #fff;
+}

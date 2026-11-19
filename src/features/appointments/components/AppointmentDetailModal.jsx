@@ -36,8 +36,7 @@ export default function AppointmentDetailModal({
   const serviceNames = serviceBreakdown
     .map((step) => step.serviceName)
     .filter(Boolean);
-  const serviceTitle =
-    serviceNames.length > 0 ? serviceNames.join(' + ') : appointment.service;
+  const serviceTitle = appointment.service || serviceNames.join(' + ');
   const hasMultipleEmployees =
     new Set(
       serviceBreakdown
