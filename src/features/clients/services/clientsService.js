@@ -34,7 +34,11 @@ const enrichClient = (row, visits) => {
     phone: row.telefono,
     email: row.correo || '',
     notes: row.notas || '',
-    assignedEmployeeIds: [...new Set(sortedVisits.map((visit) => visit.employeeId))],
+    assignedEmployeeIds: [...new Set(sortedVisits.flatMap((visit) =>
+      visit.serviceBreakdown?.length
+        ? visit.serviceBreakdown.map((detail) => detail.employeeId)
+        : [visit.employeeId]
+    ))],
     visits: sortedVisits,
     initials: getClientInitials(row.nombre_completo),
     lastService: latestVisit?.service || 'Nuevo cliente',
@@ -69,7 +73,7 @@ const appointmentVisits = (appointment) => {
     appointment.service_breakdown,
     parsePersistedBreakdown(notes),
   ].filter((details) => Array.isArray(details) && details.length > 0);
-  const details = detailsCandidates.sort((a, b) => b.length - a.length)[0] || [
+  const details = detailsCandidates[0] || [
     {
       serviceId: appointment.servicio_id,
       serviceName: appointment.servicio,

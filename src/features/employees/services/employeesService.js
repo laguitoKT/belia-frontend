@@ -74,7 +74,7 @@ const enrichEmployee = (employee, schedules, appointments) => {
         appointment.service_breakdown,
         parsePersistedBreakdown(notes),
       ].filter((details) => Array.isArray(details) && details.length > 0);
-      const details = detailsCandidates.sort((a, b) => b.length - a.length)[0] || [
+      const details = detailsCandidates[0] || [
         {
           serviceId: appointment.servicio_id,
           serviceName: appointment.servicio,
@@ -120,6 +120,11 @@ const enrichEmployee = (employee, schedules, appointments) => {
     specialtyCategory: specialtyCategory(employee.especialidad || ''),
     workDays,
     workDaysList,
+    schedules: employeeSchedules.map((schedule) => ({
+      day: schedule.dia,
+      startTime: timeOnly(schedule.hora_entrada),
+      endTime: timeOnly(schedule.hora_salida),
+    })),
     startTime,
     endTime,
     active: employee.estado_id === ACTIVE_STATE_ID,
