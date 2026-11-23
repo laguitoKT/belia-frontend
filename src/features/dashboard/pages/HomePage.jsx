@@ -43,15 +43,45 @@ export default function HomePage() {
   const dateInputRef = useRef(null);
 
   const [selectedDate, setSelectedDate] = useState(() => getTodayISO());
+  const [, setClockTick] = useState(0);
   const [allAppointments, setAllAppointments] = useState([]);
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [appointmentError, setAppointmentError] = useState('');
 
-  const weekDays = useMemo(() => {
-    return getWeekDaysFromDate(selectedDate);
-  }, [selectedDate]);
+ const weekDays = useMemo(
+  () => getWeekDaysFromDate(selectedDate),
+  [selectedDate]
+  );
+
+  useEffect(() => {
+    const currentToday = getTodayISO();
+    setSelectedDate((previous) => previous || currentToday);
+
+    let previousToday = getTodayISO();
+
+    const refreshCurrentDate = () => {
+      const currentToday = getTodayISO();
+      if (currentToday === previousToday) return;
+
+      setSelectedDate((previousSelectedDate) =>
+        previousSelectedDate === previousToday ? currentToday : previousSelectedDate
+      );
+      setClockTick((previousTick) => previousTick + 1);
+      previousToday = currentToday;
+    };
+
+    const intervalId = window.setInterval(refreshCurrentDate, 60 * 1000);
+    window.addEventListener('focus', refreshCurrentDate);
+    document.addEventListener('visibilitychange', refreshCurrentDate);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refreshCurrentDate);
+      document.removeEventListener('visibilitychange', refreshCurrentDate);
+    };
+  }, []);
 
   // Vuelve a consultar citas e inventario cada vez que cambia el usuario/rol activo
   useEffect(() => {
@@ -108,6 +138,10 @@ export default function HomePage() {
       totalUnits,
     };
   }, [dayAppointments, allAppointments, products]);
+
+  const visibleProducts = useMemo(() => {
+    return products.slice(0, 10);
+  }, [products]);
 
 // Función para actualizar el estado de una cita y reflejarlo en la interfaz
   const handleUpdateAppointmentStatus = async (id, newStatus) => {
@@ -172,7 +206,9 @@ export default function HomePage() {
             type="date"
             value={selectedDate}
             onChange={(e) => {
-              if (e.target.value) setSelectedDate(e.target.value);
+              if (e.target.value) {
+                setSelectedDate(e.target.value);
+              }
             }}
             className="sr-only"
             aria-label="Seleccionar fecha"
@@ -273,14 +309,16 @@ export default function HomePage() {
           </div>
 
           {/* Tira de días */}
-          <div className="grid grid-cols-5 gap-2 pb-6 mb-6 border-b border-stone-100">
+          <div className="grid grid-cols-7 gap-1 pb-6 mb-6 border-b border-stone-100">
             {weekDays.map((day) => {
               const isSelected = selectedDate === day.fullDate;
               return (
                 <button
                   key={day.fullDate}
                   type="button"
-                  onClick={() => setSelectedDate(day.fullDate)}
+                  onClick={() => {
+                    setSelectedDate(day.fullDate);
+                  }}
                   className={`py-3 rounded-2xl flex flex-col items-center justify-center transition-all ${
                     isSelected
                       ? 'bg-brand-secondary text-white shadow-button'
@@ -431,7 +469,7 @@ export default function HomePage() {
           </div>
 
           <div className="flex-1 divide-y divide-stone-100">
-            {products.map((item) => {
+            {visibleProducts.map((item) => {
               const isLowStock = item.quantity < item.minStock;
               return (
                 <div

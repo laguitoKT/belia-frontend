@@ -155,17 +155,17 @@ export default function CatalogDetailModal({
         </div>
 
         {/* Acciones rápidas en el pie de la modal */}
-        <div className="flex flex-wrap items-center justify-between gap-2 mt-6">
+        <div className="flex gap-3 mt-6 justify-items-end sm:flex-row sm:justify-end sm:gap-2.5 flex-col">
           <button
             type="button"
             onClick={() => {
               onClose();
               onToggleStatus(item);
             }}
-            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 ${
+            className={`flex-1 sm:flex-initial justify-center px-4 py-2.5 rounded-xl text-xs font-semibold transition-colors inline-flex items-center gap-1.5 ${
               isActive
-                ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
-                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 '
+                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
             }`}
           >
             <Power className="w-3.5 h-3.5" />
@@ -179,17 +179,10 @@ export default function CatalogDetailModal({
                 onClose();
                 onEdit(item);
               }}
-              className="px-4 py-2.5 rounded-xl bg-[#FADCE6] text-brand-primary text-xs font-bold inline-flex items-center gap-1.5 hover:bg-brand-light/60"
+              className="px-4 py-2.5 rounded-xl flex-1 border-[#4b3179]/30 border bg-[#F3EEFC] text-[#4b3179] justify-center text-xs font-bold hover:bg-[#E0D7F5] inline-flex items-center gap-1.5 transition-colors"
             >
               <Pencil className="w-3.5 h-3.5" />
               <span>Editar</span>
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 rounded-xl bg-brand-primary text-white text-xs font-bold hover:bg-brand-accent"
-            >
-              Cerrar
             </button>
           </div>
         </div>

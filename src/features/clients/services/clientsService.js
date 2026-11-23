@@ -125,17 +125,6 @@ export const clientsService = {
       )
     );
 
-    if (user && user.role !== 'admin') {
-      clients = clients.filter(
-        (client) =>
-          client.assignedEmployeeIds.includes(user.id) ||
-          client.visits.some(
-            (visit) =>
-              visit.category.toLowerCase() ===
-              (user.specialtyCategory || '').toLowerCase()
-          )
-      );
-    }
     return clients;
   },
 

@@ -171,7 +171,7 @@ export default function EmployeeHistoryModal({ employee, isOpen, onClose }) {
           )}
         </div>
 
-        <div className="flex justify-end pt-5 mt-4 border-t border-stone-100 shrink-0">
+        <div className="flex gap-3 mt-6 justify-items-end sm:flex-row sm:justify-end sm:gap-2.5 flex-col">
           <button
             type="button"
             onClick={onClose}

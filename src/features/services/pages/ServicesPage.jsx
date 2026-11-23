@@ -103,9 +103,11 @@ export default function ServicesPage() {
 
   const availableCategories = useMemo(() => {
     if (!isAdmin && user?.specialtyCategory) {
-      return ['Todas', user.specialtyCategory, 'Paquete mixto'];
+      return user.specialtyCategory === 'Cabello'
+        ? ['Todas', 'Cabello', 'Coloración', 'Paquete mixto']
+        : ['Todas', user.specialtyCategory, 'Paquete mixto'];
     }
-    return ['Todas', 'Cabello', 'Uñas', 'Mirada', 'Maquillaje', 'Facial', 'Paquete mixto'];
+    return ['Todas', 'Cabello', 'Coloración', 'Uñas', 'Mirada', 'Maquillaje', 'Facial', 'Paquete mixto'];
   }, [isAdmin, user]);
 
   const filteredServices = useMemo(() => {
@@ -114,10 +116,15 @@ export default function ServicesPage() {
         srv.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         srv.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory =
-        selectedCategory === 'Todas' || srv.category === selectedCategory;
+        selectedCategory === 'Todas' ||
+        srv.category === selectedCategory ||
+        (!isAdmin &&
+          user?.specialtyCategory === 'Cabello' &&
+          selectedCategory === 'Cabello' &&
+          srv.category === 'Coloración');
       return matchesSearch && matchesCategory;
     });
-  }, [services, searchTerm, selectedCategory]);
+  }, [services, searchTerm, selectedCategory, isAdmin, user?.specialtyCategory]);
 
   const filteredPromotions = useMemo(() => {
     return promotions.filter((promo) => {
@@ -126,10 +133,15 @@ export default function ServicesPage() {
         promo.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         promo.serviceIncluded.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory =
-        selectedCategory === 'Todas' || promo.category === selectedCategory;
+        selectedCategory === 'Todas' ||
+        promo.category === selectedCategory ||
+        (!isAdmin &&
+          user?.specialtyCategory === 'Cabello' &&
+          selectedCategory === 'Cabello' &&
+          promo.category === 'Coloración');
       return matchesSearch && matchesCategory;
     });
-  }, [promotions, searchTerm, selectedCategory]);
+  }, [promotions, searchTerm, selectedCategory, isAdmin, user?.specialtyCategory]);
 
   const handleOpenEdit = (item) => {
     setEditingItem(item);
@@ -222,7 +234,7 @@ export default function ServicesPage() {
 
   return (
     <div
-      className="responsive-page w-full space-y-6"
+      className="w-full space-y-6 responsive-page"
       onClick={() => openMenuId !== null && setOpenMenuId(null)}
     >
       {operationError && (
@@ -324,8 +336,8 @@ export default function ServicesPage() {
 
       {/* Buscador, Filtro y Selector de Vista */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 pt-1">
-        <div className="grid grid-cols-2 flex-1 min-w-0 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
-          <div className="relative col-span-2 w-full sm:max-w-md">
+        <div className="grid flex-1 min-w-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+          <div className="relative w-full col-span-2 sm:max-w-md">
             <Search className="absolute w-4 h-4 -translate-y-1/2 pointer-events-none text-stone-400 left-4 top-1/2" />
             <input
               type="text"
@@ -444,7 +456,7 @@ export default function ServicesPage() {
                                 onClick={() => handleOpenEdit(srv)}
                                 className="w-full px-3.5 py-2 text-left flex items-center gap-2 text-stone-700 hover:bg-surface-bg font-medium"
                               >
-                                <Pencil className="w-3.5 h-3.5 text-brand-primary" />
+                                <Pencil className="w-3.5 h-3.5 text-[#4b3179]" />
                                 Editar
                               </button>
                               <button
@@ -595,11 +607,12 @@ export default function ServicesPage() {
                             <button
                               type="button"
                               onClick={() => handleOpenEdit(srv)}
-                              className="inline-flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:p-2 transition-colors rounded-xl text-stone-400 hover:text-brand-primary hover:bg-brand-soft/40"
+                              className="px-3.5 py-1.5 rounded-xl bg-[#F3EEFC] text-[#4b3179] text-xs font-bold hover:bg-[#E0D7F5] inline-flex items-center gap-1.5 transition-colors"
                               title="Editar"
                               aria-label="Editar servicio"
                             >
                               <Pencil className="w-4 h-4" />
+                              <span className="sr-only sm:not-sr-only">Editar</span>
                             </button>
                           </div>
                         </td>
@@ -669,7 +682,7 @@ export default function ServicesPage() {
                                 }}
                                 className="w-full px-3.5 py-2 text-left flex items-center gap-2 text-stone-700 hover:bg-surface-bg font-medium"
                               >
-                                <Pencil className="w-3.5 h-3.5 text-brand-primary" />
+                                <Pencil className="w-3.5 h-3.5 text-[#4b3179]" />
                                 Editar
                               </button>
                               <button
@@ -684,7 +697,7 @@ export default function ServicesPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleRequestDelete(promo)}
-                                  className="w-full px-3.5 py-2 text-left flex items-center gap-2 text-red-600 hover:bg-red-50 font-medium"
+                                  className="w-full px-3.5 py-2 text-left flex items-center gap-2 text-brand-primary hover:bg-red-50 font-medium"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                   Eliminar
@@ -838,10 +851,10 @@ export default function ServicesPage() {
                                 e.stopPropagation();
                                 handleOpenEdit(promo);
                               }}
-                              className="inline-flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-3.5 sm:py-1.5 rounded-xl bg-[#FADCE6] text-brand-primary text-xs font-bold hover:bg-brand-light/60 transition-colors"
-                              aria-label="Editar promoción"
+                              className="px-3.5 py-1.5 rounded-xl bg-[#F3EEFC] text-[#4b3179] text-xs font-bold hover:bg-[#E0D7F5] inline-flex items-center gap-1.5 transition-colors"
+                              title="Editar"
                             >
-                              <Pencil className="w-4 h-4 sm:hidden" />
+                              <Pencil className="w-4 h-4"/>
                               <span className="sr-only sm:not-sr-only">Editar</span>
                             </button>
                             {isAdmin && (
@@ -851,7 +864,7 @@ export default function ServicesPage() {
                                   e.stopPropagation();
                                   handleRequestDelete(promo);
                                 }}
-                                className="inline-flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:p-2 transition-colors rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50"
+                                className="inline-flex items-center justify-center transition-colors w-9 h-9 sm:w-auto sm:h-auto sm:p-2 rounded-xl text-stone-400 hover:text-brand-primary hover:bg-red-50"
                                 title="Eliminar"
                                 aria-label="Eliminar promoción"
                               >

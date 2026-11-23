@@ -234,21 +234,20 @@ const getAppointmentFromView = async (id) => {
 };
 
 export const appointmentsService = {
-  async getAppointments({ date, user } = {}) {
+  async getAppointments({ date, user, includeAll = false } = {}) {
     const params = date ? { desde: date, hasta: date } : {};
     const rows = (await axiosClient.get('/api/v1/agenda/citas', { params })).data;
     let appointments = rows.map(toAppointment);
-    if (user && user.role !== 'admin') {
-      appointments = appointments.filter(
-        (appointment) =>
-          appointment.employeeId === user.id ||
-          appointment.serviceBreakdown.some(
-            (detail) => detail.employeeId === user.id
-          ) ||
-          appointment.category.toLowerCase() ===
-            (user.specialtyCategory || '').toLowerCase()
+
+    if (!includeAll && user && user.role !== 'admin') {
+      appointments = appointments.filter((appointment) =>
+        String(appointment.employeeId) === String(user.id) ||
+        appointment.serviceBreakdown.some(
+          (detail) => String(detail.employeeId) === String(user.id)
+        )
       );
     }
+
     return appointments;
   },
 

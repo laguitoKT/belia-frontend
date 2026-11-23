@@ -202,7 +202,7 @@ export default function InventoryPage() {
 
   return (
     <div
-      className="responsive-page w-full space-y-6"
+      className="w-full space-y-6 responsive-page"
       onClick={() => openMenuId !== null && setOpenMenuId(null)}
     >
       {operationError && (
@@ -246,8 +246,8 @@ export default function InventoryPage() {
 
       {/* Barra de Herramientas */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 pt-1">
-        <div className="grid grid-cols-2 flex-1 min-w-0 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
-          <div className="relative col-span-2 w-full sm:max-w-md">
+        <div className="grid flex-1 min-w-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+          <div className="relative w-full col-span-2 sm:max-w-md">
             <Search className="absolute w-4 h-4 -translate-y-1/2 pointer-events-none text-stone-400 left-4 top-1/2" />
             <input
               type="text"
@@ -377,7 +377,7 @@ export default function InventoryPage() {
                               <Box className="w-5 h-5" />
                             )}
                           </div>
-                          <span className="text-sm font-bold text-stone-900">
+                          <span className="block min-w-0 max-w-[150px] xl:max-w-[220px] text-sm font-bold text-stone-900 line-clamp-2 break-words leading-tight">
                             {prod.name}
                           </span>
                         </div>
@@ -423,7 +423,7 @@ export default function InventoryPage() {
 
                       <td className="px-4 py-4">
                         <span
-                          className={`px-3.5 py-1 rounded-full text-[11px] font-semibold ${statusInfo.badgeClass}`}
+                          className={`block min-w-0 max-w-[150px] xl:max-w-[220px] text-[11px] font-bold line-clamp-2 text-center break-words leading-tight rounded-full py-1 ${statusInfo.badgeClass}`}
                         >
                           {statusInfo.label}
                         </span>
@@ -435,7 +435,7 @@ export default function InventoryPage() {
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(prod)}
-                            className="px-3.5 py-1.5 rounded-xl bg-[#FADCE6] text-brand-primary text-xs font-bold hover:bg-brand-light/60 inline-flex items-center gap-1.5 transition-colors"
+                            className="px-3.5 py-1.5 rounded-xl bg-[#F3EEFC] text-[#4b3179] text-xs font-bold hover:bg-[#E0D7F5] inline-flex items-center gap-1.5 transition-colors"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                             <span>Editar</span>
@@ -451,7 +451,7 @@ export default function InventoryPage() {
                                   product: prod,
                                 })
                               }
-                              className="p-2 transition-colors rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50"
+                              className="p-2 transition-colors rounded-xl text-stone-400 hover:text-brand-primary hover:bg-red-50"
                               title="Eliminar producto"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -552,7 +552,7 @@ export default function InventoryPage() {
                               onClick={() => handleOpenEdit(prod)}
                               className="w-full px-3.5 py-2 flex items-center gap-2 text-stone-700 hover:bg-surface-bg font-medium"
                             >
-                              <Pencil className="w-3.5 h-3.5 text-brand-primary" />
+                              <Pencil className="w-3.5 h-3.5 text-[#4b3179]"/>
                               Editar producto
                             </button>
                             {isAdmin && (

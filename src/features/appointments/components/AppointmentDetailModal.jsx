@@ -10,7 +10,7 @@ import {
   AlertCircle,
   History,
   Pencil,
-  Trash2,
+  CircleX,
 } from 'lucide-react';
 import { formatLongDate } from '../../../utils/dateUtils';
 
@@ -230,41 +230,26 @@ export default function AppointmentDetailModal({
 
 
         {/* Acciones interactivas */}
-        <div className="flex flex-col items-center justify-between gap-3 mt-6 sm:flex-row">
-          <div className="flex items-center w-full gap-2 sm:w-auto">
+        <div className="flex gap-3 mt-6 justify-items-end sm:flex-row sm:justify-end sm:gap-2.5 flex-col">
+         
             <button
               type="button"
               onClick={handleChangeStatus}
-              className={`flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
+              className={`flex-1 sm:flex-initial border border-emerald-200 px-4 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
                 isConfirmed
-                  ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
-                  : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                  ? 'text-amber-700 bg-amber-50 hover:bg-amber-100'
+                  : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
               }`}
             >
-              {isConfirmed ? 'Marcar pendiente' : 'Confirmar cita'}
+              {isConfirmed ? 'Marcar pendiente' : 
+              'Confirmar cita'}
             </button>
 
-            {isAdmin && onDelete && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onDelete(appointment);
-                }}
-                className="p-2.5 rounded-xl text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
-                title="Eliminar cita"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
             {onGoToModule && (
               <button
                 type="button"
                 onClick={onGoToModule}
-                className="px-4 py-2.5 rounded-xl bg-surface-bg hover:bg-brand-soft/40 text-stone-700 text-xs font-semibold transition-colors"
+                className="px-4 py-2.5 rounded-xl justify-center border border-brand-secondary/40 bg-brand-secondary/20 hover:bg-brand-secondary/40 text-brand-primary text-xs font-semibold transition-colors"
               >
                 Ver en módulo de Citas
               </button>
@@ -277,21 +262,29 @@ export default function AppointmentDetailModal({
                   onClose();
                   onEdit(appointment);
                 }}
-                className="px-4 py-2.5 rounded-xl bg-[#FADCE6] hover:bg-brand-light/60 text-brand-primary text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
+                className="px-4 py-2.5 rounded-xl border-[#4b3179]/30 border bg-[#F3EEFC] text-[#4b3179] justify-center text-xs font-bold hover:bg-[#E0D7F5] inline-flex items-center gap-1.5 transition-colors"
               >
                 <Pencil className="w-3.5 h-3.5" />
                 <span>Editar cita</span>
               </button>
             )}
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 rounded-xl bg-brand-primary hover:bg-brand-accent text-white text-xs font-semibold transition-colors"
-            >
-              Cerrar
-            </button>
-          </div>
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onDelete(appointment);
+                }}
+                className="p-2.5 rounded-xl justify-center border border-brand-primary/40 text-brand-primary bg-red-50 hover:bg-red-100 transition-colors inline-flex items-center gap-1.5 text-xs font-semibold"
+                title="Eliminar cita"
+              >
+                <CircleX className="w-4 h-4" />
+                <span>Cancelar cita</span>
+              </button>
+            )}
+          
+          
         </div>
       </div>
     </div>

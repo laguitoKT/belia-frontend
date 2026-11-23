@@ -51,6 +51,19 @@ const matchesSpecialty = (empCategory = '', serviceCategory = '') => {
   return false;
 };
 
+const getCurrentTime = () => {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+};
+
+const isPastAppointment = (dateISO, time) => {
+  if (!dateISO || !time) return false;
+  const today = getTodayISO();
+  if (dateISO < today) return true;
+  if (dateISO > today) return false;
+  return time <= getCurrentTime();
+};
+
 // Evalúa si un empleado está disponible en una fecha y rango de horas específico
 const evaluateEmployeeSlotAvailability = (
   employee,
@@ -141,7 +154,8 @@ export default function AppointmentFormModal({
 
   const [clientMode, setClientMode] = useState('existing');
   const [clientSearch, setClientSearch] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState(ALL_CATEGORIES);
+  const [serviceSearch, setServiceSearch] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedItemKeys, setSelectedItemKeys] = useState([]);
 
   // Mapa de empleado elegido por cada tramo de servicio: { [slotKey]: employeeId }
@@ -237,22 +251,28 @@ export default function AppointmentFormModal({
   // 2. Elementos visibles según rol y filtro de categorías
   const visibleCatalogItems = useMemo(() => {
     if (!isAdmin && currentUser?.specialtyCategory) {
-      const userCat = currentUser.specialtyCategory;
-      const allowedUserCats =
-        userCat === 'Cabello' ? ['Cabello', 'Coloración'] : [userCat];
+      const specialtyCategory = currentUser.specialtyCategory;
 
       return unifiedCatalog.filter((item) => {
         if (item.type === 'service') {
-          return allowedUserCats.includes(item.category);
+          return item.category === specialtyCategory;
         }
+
         return (
-          item.involvedCategories.some((c) => allowedUserCats.includes(c)) ||
+          item.category === specialtyCategory ||
+          item.involvedCategories.includes(specialtyCategory) ||
           item.category === 'Paquete mixto'
         );
+      }).filter((item) => {
+        if (item.type !== 'promotion') return true;
+        if (item.category === 'Paquete mixto') {
+          return item.involvedCategories.includes(specialtyCategory);
+        }
+        return true;
       });
     }
 
-    if (selectedCategories.length === 0) return [];
+    if (selectedCategories.length === 0) return unifiedCatalog;
     return unifiedCatalog.filter((item) => {
       if (item.type === 'service') {
         return selectedCategories.includes(item.category);
@@ -263,6 +283,22 @@ export default function AppointmentFormModal({
       );
     });
   }, [unifiedCatalog, isAdmin, currentUser, selectedCategories]);
+
+  const filteredVisibleCatalogItems = useMemo(() => {
+    const query = serviceSearch.trim().toLowerCase();
+    if (!query) return visibleCatalogItems;
+    return visibleCatalogItems.filter((item) =>
+      [
+        item.name,
+        item.category,
+        item.description,
+        item.serviceIncluded,
+        ...(item.involvedCategories || []),
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query))
+    );
+  }, [visibleCatalogItems, serviceSearch]);
 
   // 3. Desglose secuencial de servicios con cálculo automático de horarios encadenados
   const scheduledServiceSlots = useMemo(() => {
@@ -422,8 +458,9 @@ export default function AppointmentFormModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    setSelectedCategories(ALL_CATEGORIES);
+    setSelectedCategories([]);
     setClientSearch('');
+    setServiceSearch('');
     setFieldErrors({});
     setShowSaveConfirm(false);
     setRestoreError('');
@@ -509,6 +546,7 @@ export default function AppointmentFormModal({
 
   const toggleCategoryFilter = (cat) => {
     setSelectedCategories((prev) => {
+      if (prev.length === 0) return [cat];
       const exists = prev.includes(cat);
       return exists ? prev.filter((c) => c !== cat) : [...prev, cat];
     });
@@ -614,6 +652,9 @@ export default function AppointmentFormModal({
     }
     if (restoreError) errors.service = restoreError;
     if (!formData.date || !formData.startTime) errors.schedule = 'Selecciona la fecha y hora de inicio.';
+    else if (isPastAppointment(formData.date, formData.startTime)) {
+      errors.schedule = 'No puedes agendar una cita en una fecha o hora que ya pasó.';
+    }
 
     if (
       !formData.specification.trim() ||
@@ -653,6 +694,11 @@ export default function AppointmentFormModal({
   };
 
   const handleConfirmSave = async () => {
+    if (!validateForm()) {
+      setShowSaveConfirm(false);
+      return;
+    }
+
     // Construir el desglose detallado de cada tramo con su empleado y horario
     const serviceBreakdown = scheduledServiceSlots.map((slot) => {
       const empId = Number(slotEmployeeMap[slot.subKey]);
@@ -956,7 +1002,21 @@ export default function AppointmentFormModal({
                     2. Selecciona categoría
                   </label>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex gap-1.5 overflow-x-auto pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategories([])}
+                    className={`shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold inline-flex items-center gap-1 border transition-all ${
+                      selectedCategories.length === 0
+                        ? 'bg-[#FDECEF] text-brand-primary border-brand-light'
+                        : 'bg-white text-stone-500 border-stone-200'
+                    }`}
+                  >
+                    {selectedCategories.length === 0 && (
+                      <Check className="w-3 h-3 stroke-[2.5]" />
+                    )}
+                    <span>Todas</span>
+                  </button>
                   {ALL_CATEGORIES.map((cat) => {
                     const active = selectedCategories.includes(cat);
                     return (
@@ -964,22 +1024,27 @@ export default function AppointmentFormModal({
                         key={cat}
                         type="button"
                         onClick={() => toggleCategoryFilter(cat)}
-                        className={`px-3 py-1 rounded-xl text-xs font-bold inline-flex items-center gap-1 border transition-all ${
+                        className={`shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold inline-flex items-center gap-1 border transition-all ${
                           active
                             ? 'bg-[#FDECEF] text-brand-primary border-brand-light'
                             : 'bg-white text-stone-500 border-stone-200'
                         }`}
                       >
-                        {active && <Check className="w-3 h-3 stroke-[2.5]" />}
+                        {active}
                         <span>{cat}</span>
                       </button>
                     );
                   })}
+                  {filteredVisibleCatalogItems.length === 0 && (
+                    <p className="py-8 text-xs text-center sm:col-span-2 text-stone-400">
+                      No se encontraron servicios o paquetes.
+                    </p>
+                  )}
                 </div>
               </div>
             )}
 
-            <div>
+            <div className="space-y-2">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-bold text-stone-800">
                   {isAdmin ? 'Selecciona servicio(s) o paquete(s)' : '2. Servicios y Paquetes disponibles'}
@@ -993,12 +1058,23 @@ export default function AppointmentFormModal({
                 </span>
               </div>
 
+              <div className="relative">
+                <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={serviceSearch}
+                  onChange={(e) => setServiceSearch(e.target.value)}
+                  placeholder="Buscar servicio o paquete..."
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-stone-200 text-xs text-stone-800 placeholder:text-stone-400 focus:outline-none focus:border-brand-primary"
+                />
+              </div>
+
               <div
                 className={`p-3 rounded-2xl bg-[#FAFAFB] border max-h-60 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-2 ${
                   fieldErrors.service ? 'border-brand-primary' : 'border-stone-200/90'
                 }`}
               >
-                {visibleCatalogItems.map((item) => {
+                {filteredVisibleCatalogItems.map((item) => {
                   const isSelected = selectedItemKeys.includes(item.key);
                   const isPromo = item.type === 'promotion';
                   const price = isSelected && Object.hasOwn(savedSelections, item.key)
@@ -1070,6 +1146,7 @@ export default function AppointmentFormModal({
                     type="date"
                     name="date"
                     value={formData.date}
+                    min={getTodayISO()}
                     onChange={handleChange}
                     className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white border border-stone-200 text-xs font-semibold text-stone-800 focus:outline-none focus:border-brand-primary cursor-pointer"
                   />
@@ -1086,6 +1163,7 @@ export default function AppointmentFormModal({
                     type="time"
                     name="startTime"
                     value={formData.startTime}
+                    min={formData.date === getTodayISO() ? getCurrentTime() : undefined}
                     onChange={handleChange}
                     className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white border border-stone-200 text-xs font-semibold text-stone-800 focus:outline-none focus:border-brand-primary"
                   />
@@ -1147,11 +1225,7 @@ export default function AppointmentFormModal({
                             onChange={(e) =>
                               handleSlotEmployeeChange(slot.subKey, e.target.value)
                             }
-                            className={`w-full pl-8 pr-3 py-2 rounded-xl border text-xs font-semibold focus:outline-none cursor-pointer ${
-                              chosenEmpObj && !chosenEmpObj.availability.available
-                                ? 'bg-red-50/50 border-red-300 text-red-700'
-                                : 'bg-[#FAFAFB] border-stone-200 text-stone-800 focus:border-brand-primary'
-                            }`}
+                            className="w-full pl-8 pr-3 py-2 rounded-xl border border-stone-200 bg-[#FAFAFB] text-xs font-semibold text-stone-800 focus:outline-none focus:border-brand-primary cursor-pointer"
                           >
                             {slot.candidates.length === 0 && (
                               <option value="" disabled>
@@ -1159,7 +1233,15 @@ export default function AppointmentFormModal({
                               </option>
                             )}
                             {slot.candidates.map((emp) => (
-                              <option key={emp.id} value={emp.id}>
+                              <option
+                                key={emp.id}
+                                value={emp.id}
+                                className={
+                                  emp.availability.available
+                                    ? 'text-stone-800 bg-white'
+                                    : 'text-red-700 bg-red-50'
+                                }
+                              >
                                 {emp.availability.available ? '✓ ' : '⚠ '}
                                 {emp.name} — {emp.availability.reason}
                               </option>
@@ -1236,14 +1318,7 @@ export default function AppointmentFormModal({
               </div>
             </div>
           ) : (
-            <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-stone-100">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-6 py-3.5 rounded-2xl bg-white border border-stone-200/90 text-xs font-bold text-stone-700 hover:bg-surface-bg transition-colors"
-              >
-                Cancelar
-              </button>
+            <div className="flex gap-3 mt-6 sjustify-items-end sm:flex-row sm:justify-end sm:gap-2.5 flex-col">
               <button
                 type="submit"
                 className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 transition-opacity"
