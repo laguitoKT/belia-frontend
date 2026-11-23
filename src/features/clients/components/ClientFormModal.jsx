@@ -239,19 +239,12 @@ export default function ClientFormModal({
                   onClick={handleConfirmSave}
                   className="px-4 py-2 text-xs font-bold text-white rounded-xl bg-brand-primary shadow-button"
                 >
-                  Sí, guardar cambios
+                  Sí, guardar
                 </button>
               </div>
             </div>
           ) : (
-            <div className="flex flex-wrap items-center justify-end gap-3 pt-5 border-t border-stone-100">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-6 py-3.5 rounded-2xl bg-white border border-stone-200/90 text-xs font-bold text-stone-700 hover:bg-surface-bg transition-colors"
-              >
-                Cancelar
-              </button>
+            <div className="flex gap-3 mt-6 justify-items-end sm:flex-row sm:justify-end sm:gap-2.5 flex-col">
               <button
                 type="submit"
                 className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 transition-opacity"

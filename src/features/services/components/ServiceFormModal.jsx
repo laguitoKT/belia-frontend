@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { X, Lock, Check, Calendar, ShieldQuestion, Sparkles } from 'lucide-react';
 import { getTodayISO } from '../../../utils/dateUtils';
 
-const SERVICE_CATEGORIES = ['Cabello', 'Uñas', 'Mirada', 'Maquillaje', 'Facial'];
+const SERVICE_CATEGORIES = ['Cabello', 'Coloración', 'Uñas', 'Mirada', 'Maquillaje', 'Facial'];
 
 export default function ServiceFormModal({
   isOpen,
@@ -33,6 +33,7 @@ export default function ServiceFormModal({
 
   const [fieldErrors, setFieldErrors] = useState({});
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [selectedServiceCategory, setSelectedServiceCategory] = useState('Todas');
 
   useEffect(() => {
     if (initialData) {
@@ -62,6 +63,7 @@ export default function ServiceFormModal({
     }
     setFieldErrors({});
     setShowSaveConfirm(false);
+    setSelectedServiceCategory('Todas');
   }, [initialData, isOpen, lockedCategory]);
 
   // Deducción automática de categoría según los servicios seleccionados en la promoción
@@ -79,6 +81,18 @@ export default function ServiceFormModal({
     }
     return selectedObjs[0].category;
   }, [isPromotion, availableServices, formData.serviceIds, formData.category]);
+
+  const promotionServiceCategories = useMemo(() => {
+    const categories = Array.from(
+      new Set(availableServices.map((service) => service.category).filter(Boolean))
+    );
+    return ['Todas', ...SERVICE_CATEGORIES.filter((category) => categories.includes(category)), ...categories.filter((category) => !SERVICE_CATEGORIES.includes(category))];
+  }, [availableServices]);
+
+  const filteredAvailableServices = useMemo(() => {
+    if (selectedServiceCategory === 'Todas') return availableServices;
+    return availableServices.filter((service) => service.category === selectedServiceCategory);
+  }, [availableServices, selectedServiceCategory]);
 
   if (!isOpen) return null;
 
@@ -305,42 +319,74 @@ export default function ServiceFormModal({
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-xs font-bold text-stone-800">
-                  Servicios incluidos (Selecciona uno o más)
+                  Servicios incluidos 
                 </label>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FDECEF] text-brand-primary">
                   Clasificación: {derivedPromotionCategory}
                 </span>
               </div>
               <div
-                className={`p-3 rounded-2xl bg-[#FAFAFB] border flex flex-wrap gap-2 ${
+                className={`p-3 rounded-2xl bg-[#FAFAFB] border ${
                   fieldErrors.serviceIds ? 'border-red-400' : 'border-stone-200/90'
                 }`}
               >
-                {availableServices.map((srv) => {
-                  const isSelected = formData.serviceIds.includes(srv.id);
-                  return (
-                    <button
-                      key={srv.id}
-                      type="button"
-                      onClick={() => toggleServiceSelection(srv.id)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all border ${
-                        isSelected
-                          ? 'bg-brand-primary text-white border-brand-primary shadow-2xs'
-                          : 'bg-white text-stone-700 border-stone-200 hover:border-brand-light'
-                      }`}
-                    >
-                      {isSelected && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
-                      <span>{srv.name}</span>
-                      <span
-                        className={`text-[10px] ${
-                          isSelected ? 'text-brand-soft' : 'text-stone-400'
+                <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1">
+                  {promotionServiceCategories.map((category) => {
+                    const active = selectedServiceCategory === category;
+                    return (
+                      <button
+                        key={category}
+                        type="button"
+                        onClick={() => setSelectedServiceCategory(category)}
+                        className={`shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${
+                          active
+                            ? 'bg-[#FDECEF] text-brand-primary border-brand-light'
+                            : 'bg-white text-stone-500 border-stone-200'
                         }`}
                       >
-                        ({srv.category})
-                      </span>
-                    </button>
-                  );
-                })}
+                        {category}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="grid grid-cols-1 gap-2 pr-1 overflow-y-auto sm:grid-cols-2 max-h-60">
+                  {filteredAvailableServices.map((srv) => {
+                    const isSelected = formData.serviceIds.includes(srv.id);
+                    return (
+                      <button
+                        key={srv.id}
+                        type="button"
+                        onClick={() => toggleServiceSelection(srv.id)}
+                        className={`p-2.5 rounded-xl text-left flex items-start justify-between gap-2 border transition-all ${
+                          isSelected
+                            ? 'bg-brand-primary text-white border-brand-primary shadow-2xs'
+                            : 'bg-white text-stone-700 border-stone-200/90 hover:border-brand-light'
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <span className="block text-xs font-bold truncate">
+                            {srv.name}
+                          </span>
+                          <span
+                            className={`block text-[10px] mt-0.5 truncate ${
+                              isSelected ? 'text-brand-soft' : 'text-stone-400'
+                            }`}
+                          >
+                            {srv.category} • {srv.durationMinutes || 60} min • ${srv.price || 0}
+                          </span>
+                        </div>
+                        {isSelected && (
+                          <Check className="w-4 h-4 shrink-0 stroke-[2.5]" />
+                        )}
+                      </button>
+                    );
+                  })}
+                  {filteredAvailableServices.length === 0 && (
+                    <p className="py-4 text-xs text-center sm:col-span-2 text-stone-400">
+                      No hay servicios en esta categoría.
+                    </p>
+                  )}
+                </div>
               </div>
               {fieldErrors.serviceIds && (
                 <p className="text-[11px] font-medium text-red-600 mt-1">
@@ -535,14 +581,7 @@ export default function ServiceFormModal({
               </div>
             </div>
           ) : (
-            <div className="flex flex-wrap items-center justify-end gap-3 pt-5 border-t border-stone-100">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-6 py-3.5 rounded-2xl bg-white border border-stone-200/90 text-xs font-bold text-stone-700 hover:bg-surface-bg transition-colors"
-              >
-                Cancelar
-              </button>
+            <div className="flex gap-3 mt-6 sjustify-items-end sm:flex-row sm:justify-end sm:gap-2.5 flex-col">
               <button
                 type="submit"
                 className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 transition-opacity"

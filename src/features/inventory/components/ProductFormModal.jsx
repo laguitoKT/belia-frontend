@@ -307,7 +307,7 @@ export default function ProductFormModal({
           </div>
 
           {/* Fila 1: Nombre */}
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block mb-2 text-xs font-bold text-stone-800">
                 Nombre del producto
@@ -330,10 +330,7 @@ export default function ProductFormModal({
                 </p>
               )}
             </div>
-          </div>
 
-          {/* Fila 2: Categoría, Presentación y Unidad de Medición */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 
             <div>
               <label className="block mb-2 text-xs font-bold text-stone-800">
@@ -364,6 +361,10 @@ export default function ProductFormModal({
               )}
             </div>
 
+          </div>
+
+          {/* Fila 2: Categoría, Presentación y Unidad de Medición */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
               <label className="block mb-2 text-xs font-bold text-stone-800">
                 Presentación
@@ -419,10 +420,7 @@ export default function ProductFormModal({
                 </p>
               )}
             </div>
-          </div>
 
-          {/* Fila 3: Cantidad disponible y Estado */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block mb-2 text-xs font-bold text-stone-800">
                 Cantidad disponible (Stock)
@@ -449,20 +447,10 @@ export default function ProductFormModal({
               )}
             </div>
 
-            <div>
-              <p className="block mb-2 text-xs font-bold text-stone-800">
-                Estado del producto
-              </p>
-              <div className="w-full px-4 py-3.5 rounded-2xl bg-stone-100 border border-stone-200/90 text-sm text-stone-600">
-                {formData.quantity === '' || !Number.isInteger(Number(formData.quantity)) || Number(formData.quantity) < 0
-                  ? 'Ingresa una cantidad válida'
-                  : Number(formData.quantity) === 0 ? 'Inactivo' : 'Activo'}
-              </div>
-              <p className="text-[11px] font-medium text-stone-500 mt-1">
-                El estado se determina automáticamente según la cantidad.
-              </p>
-            </div>
           </div>
+
+          {/* Fila 3: Cantidad disponible */}
+
 
           {showSaveConfirm ? (
             <div className="p-4 rounded-2xl bg-[#FDF2F5] border border-brand-light/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-150">
@@ -490,14 +478,7 @@ export default function ProductFormModal({
               </div>
             </div>
           ) : (
-            <div className="flex flex-wrap items-center justify-end gap-3 pt-5 border-t border-stone-100">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-6 py-3.5 rounded-2xl bg-white border border-stone-200/90 text-xs font-bold text-stone-700 hover:bg-surface-bg transition-colors"
-              >
-                Cancelar
-              </button>
+            <div className="flex gap-3 mt-6 pt-3 sjustify-items-end sm:flex-row sm:justify-end sm:gap-2.5 flex-col">
               <button
                 type="submit"
                 className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 transition-opacity"

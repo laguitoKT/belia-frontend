@@ -200,7 +200,7 @@ export default function ClientDetailModal({
         </div>
 
         {/* Botones inferiores */}
-        <div className="gap-2 pt-4 mt-6 border-t justify-items-end border-stone-100">
+        <div className="flex gap-3 mt-6 justify-items-end sm:flex-row sm:justify-end sm:gap-2.5 flex-col">
           {/*<button
             type="button"
             onClick={() => {
@@ -220,17 +220,10 @@ export default function ClientDetailModal({
                 onClose();
                 onEdit(client);
               }}
-              className="px-4 py-2.5 rounded-xl bg-[#FADCE6] text-brand-primary text-xs font-bold inline-flex items-center gap-1.5 hover:bg-brand-light/60"
+              className="px-4 py-2.5 rounded-xl flex-1 border-[#4b3179]/30 border bg-[#F3EEFC] text-[#4b3179] justify-center text-xs font-bold hover:bg-[#E0D7F5] inline-flex items-center gap-1.5 transition-colors"
             >
               <Pencil className="w-3.5 h-3.5" />
               <span>Editar cliente</span>
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 rounded-xl bg-brand-primary text-white text-xs font-bold hover:bg-brand-accent"
-            >
-              Cerrar
             </button>
           </div>
         </div>

@@ -14,7 +14,7 @@ import {
   MoreHorizontal,
   Pencil,
   CheckCircle2,
-  Trash2,
+  CircleX,
 } from 'lucide-react';
 import { useAuth } from '../../../context/useAuth';
 import useIsMobile from '../../../utils/useIsMobile';
@@ -163,10 +163,9 @@ export default function AppointmentsPage() {
     const fetchAllData = async () => {
       setIsLoading(true);
       try {
-        const [apts, srvs, allSrvs, promos, clients, employees] = await Promise.all([
-          appointmentsService.getAppointments({ user }),
-          catalogService.getServices({ user }),
-          catalogService.getServices(), 
+        const [apts, allSrvs, promos, clients, employees] = await Promise.all([
+          appointmentsService.getAppointments({ user, includeAll: true }),
+          catalogService.getServices(),
           catalogService.getPromotions({ user }),
           clientsService.getClients({ user }),
           employeesService.getEmployees(),
@@ -250,6 +249,14 @@ export default function AppointmentsPage() {
       const matchesStatus =
         statusFilter === 'Todos' || apt.status === statusFilter;
 
+      // Los usuarios no administradores solo pueden ver citas donde participan
+      const matchesOwner =
+        isAdmin ||
+        String(apt.employeeId) === String(user?.id) ||
+        apt.serviceBreakdown.some(
+          (detail) => String(detail.employeeId) === String(user?.id)
+        );
+
       // Filtro por empleado (para Admin)
       const matchesEmployee =
         !isAdmin ||
@@ -260,7 +267,7 @@ export default function AppointmentsPage() {
         );
 
       return (
-        matchesPeriod && matchesSearch && matchesStatus && matchesEmployee
+        matchesPeriod && matchesSearch && matchesStatus && matchesOwner && matchesEmployee
       );
     });
   }, [
@@ -271,6 +278,7 @@ export default function AppointmentsPage() {
     statusFilter,
     employeeFilter,
     isAdmin,
+    user?.id,
   ]);
 
   // Celdas del calendario según el periodo seleccionado
@@ -384,6 +392,14 @@ const handleSaveAppointment = async (formData, onClientCreated) => {
 
   const handleConfirmDelete = async () => {
     if (!aptToDelete) return;
+    if (!isAdmin) {
+      const isOwnedByUser =
+        String(aptToDelete.employeeId) === String(user?.id) ||
+        aptToDelete.serviceBreakdown.some(
+          (detail) => String(detail.employeeId) === String(user?.id)
+        );
+      if (!isOwnedByUser) return;
+    }
     await appointmentsService.deleteAppointment(aptToDelete.id);
     setAppointments((prev) => prev.filter((a) => a.id !== aptToDelete.id));
     showToast(`Cita de "${aptToDelete.client}" eliminada de la agenda.`);
@@ -756,7 +772,7 @@ const handleSaveAppointment = async (formData, onClientCreated) => {
 
                       {/* Acciones */}
                       <td
-                        className="py-4 pl-4 text-center pr-7"
+                        className="py-4 pl-4 text-center  pr-7"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="inline-flex items-center gap-1.5">
@@ -776,22 +792,20 @@ const handleSaveAppointment = async (formData, onClientCreated) => {
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(apt)}
-                            className="px-3.5 py-1.5 rounded-xl bg-[#FADCE6] text-brand-primary text-xs font-bold hover:bg-brand-light/60 inline-flex items-center gap-1.5 transition-colors"
+                            className="px-3.5 py-1.5 rounded-xl bg-[#F3EEFC] text-[#4b3179] text-xs font-bold hover:bg-[#E0D7F5] inline-flex items-center gap-1.5 transition-colors"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                             <span>Editar</span>
                           </button>
 
-                          {isAdmin && (
-                            <button
-                              type="button"
-                              onClick={() => setAptToDelete(apt)}
-                              className="p-2 transition-colors rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50"
-                              title="Eliminar cita"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => setAptToDelete(apt)}
+                            className="inline-flex items-center justify-center transition-colors w-9 h-9 sm:w-auto sm:h-auto sm:p-2 rounded-xl text-stone-400 hover:text-brand-primary hover:bg-red-50"
+                            title="Cancelar cita"
+                          >
+                            <CircleX className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -872,7 +886,7 @@ const handleSaveAppointment = async (formData, onClientCreated) => {
                               onClick={() => handleOpenEdit(apt)}
                               className="w-full px-3.5 py-2 flex items-center gap-2 text-stone-700 hover:bg-surface-bg font-medium"
                             >
-                              <Pencil className="w-3.5 h-3.5 text-brand-primary" />
+                              <Pencil className="w-3.5 h-3.5 text-[#4b3179]" />
                               Editar cita
                             </button>
                             <button
@@ -885,19 +899,17 @@ const handleSaveAppointment = async (formData, onClientCreated) => {
                                 ? 'Marcar pendiente'
                                 : 'Confirmar cita'}
                             </button>
-                            {isAdmin && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setOpenMenuId(null);
-                                  setAptToDelete(apt);
-                                }}
-                                className="w-full px-3.5 py-2 flex items-center gap-2 text-red-600 hover:bg-red-50 font-medium"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                Eliminar
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                setAptToDelete(apt);
+                              }}
+                              className="w-full px-3.5 py-2 flex items-center gap-2 text-brand-primary hover:bg-red-50 font-medium"
+                            >
+                              <CircleX className="w-3.5 h-3.5" />
+                              Cancelar
+                            </button>
                           </div>
                         )}
                       </div>
@@ -977,8 +989,8 @@ const handleSaveAppointment = async (formData, onClientCreated) => {
         onConfirm={handleConfirmDelete}
         variant="danger"
         title={`¿Cancelar la cita de "${aptToDelete?.client}"?`}
-        message="Esta cita se eliminará permanentemente del calendario de trabajo."
-        confirmText="Sí, eliminar cita"
+        message="Esta cita se cancelará y se eliminará del calendario de trabajo."
+        confirmText="Sí, cancelar cita"
       />
     </div>
   );

@@ -161,7 +161,7 @@ export default function EmployeesPage() {
 
   return (
     <div
-      className="responsive-page w-full space-y-6"
+      className="w-full space-y-6 responsive-page"
       onClick={() => openMenuId !== null && setOpenMenuId(null)}
     >
       {feedbackBanner && (
@@ -197,8 +197,8 @@ export default function EmployeesPage() {
 
       {/* Barra de Herramientas */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 pt-1">
-        <div className="grid grid-cols-2 flex-1 min-w-0 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
-          <div className="relative col-span-2 w-full sm:max-w-md">
+        <div className="grid flex-1 min-w-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+          <div className="relative w-full col-span-2 sm:max-w-md">
             <Search className="absolute w-4 h-4 -translate-y-1/2 pointer-events-none text-stone-400 left-4 top-1/2" />
             <input
               type="text"
@@ -299,7 +299,7 @@ export default function EmployeesPage() {
                           <div className={`w-10 h-10 rounded-full ${initialsTheme.background} border-2 border-white flex items-center justify-center ${initialsTheme.text} font-bold text-xs shrink-0`}>
                             {emp.initials}
                           </div>
-                          <span className="text-sm font-bold text-stone-900">
+                          <span className="block min-w-0 max-w-[150px] xl:max-w-[220px] text-sm font-bold text-stone-900 line-clamp-2 break-words leading-tight">
                             {emp.name}
                           </span>
                         </div>
@@ -310,7 +310,7 @@ export default function EmployeesPage() {
                       <td className="px-4 py-4 text-stone-500">{emp.email}</td>
 
                       <td className="px-4 py-4">
-                        <span className={`px-3.5 py-1 rounded-full text-[11px] font-semibold ${theme.bg} ${theme.text}`}>
+                        <span className={`block min-w-0 max-w-[150px] xl:max-w-[220px] text-[11px] font-bold line-clamp-2 text-center break-words leading-tight rounded-full py-1 ${theme.bg} ${theme.text}`}>
                           {emp.specialty}
                         </span>
                       </td>
@@ -327,7 +327,7 @@ export default function EmployeesPage() {
                           <button
                             type="button"
                             onClick={() => setSelectedHistoryEmployee(emp)}
-                            className="px-3 py-1.5 rounded-xl bg-surface-bg hover:bg-brand-soft/60 text-brand-primary text-xs font-bold inline-flex items-center gap-1.5 border border-stone-200/70 transition-colors"
+                            className="px-3 py-1.5 rounded-xl bg-brand-accent/20 hover:bg-brand-soft/60 text-brand-primary text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
                             title="Ver historial de servicios realizados"
                           >
                             <History className="w-3.5 h-3.5" />
@@ -350,7 +350,7 @@ export default function EmployeesPage() {
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(emp)}
-                            className="px-3.5 py-1.5 rounded-xl bg-[#FADCE6] text-brand-primary text-xs font-bold hover:bg-brand-light/60 inline-flex items-center gap-1.5 transition-colors"
+                            className="px-3.5 py-1.5 rounded-xl bg-[#F3EEFC] text-[#4b3179] text-xs font-bold hover:bg-[#E0D7F5] inline-flex items-center gap-1.5 transition-colors"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                             <span>Editar</span>
@@ -365,7 +365,7 @@ export default function EmployeesPage() {
                                 employee: emp,
                               })
                             }
-                            className="p-2 transition-colors rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50"
+                            className="p-2 transition-colors rounded-xl text-stone-400 hover:text-brand-primary hover:bg-red-50"
                             title="Eliminar empleado"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -428,7 +428,7 @@ export default function EmployeesPage() {
                         onClick={() => handleOpenEdit(emp)}
                         className="w-full px-3.5 py-2 flex items-center gap-2 text-stone-700 hover:bg-surface-bg font-medium"
                       >
-                        <Pencil className="w-3.5 h-3.5 text-brand-primary" />
+                        <Pencil className="w-3.5 h-3.5 text-[#4b3179]" />
                         Editar empleado
                       </button>
                       <button
@@ -449,7 +449,7 @@ export default function EmployeesPage() {
                             employee: emp,
                           });
                         }}
-                        className="w-full px-3.5 py-2 flex items-center gap-2 text-red-600 hover:bg-red-50 font-medium"
+                        className="w-full px-3.5 py-2 flex items-center gap-2 text-brand-primary hover:bg-red-50 font-medium"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         Eliminar

@@ -52,27 +52,31 @@ export function formatDisplayDate(isoDateString) {
 }
 
 // Genera dinámicamente los 5 días hábiles (LUN a VIE) de la semana a la que pertenece la fecha dada
-export function getWeekDaysFromDate(isoDateString) {
-  const current = parseLocalDate(isoDateString);
-  const dayOfWeek = current.getDay(); // 0 es Domingo, 1 es Lunes...
+export const getWeekDaysFromDate = (isoDateString) => {
+  const [year, month, day] = isoDateString.split('-').map(Number);
+  const baseDate = new Date(year, month - 1, day);
 
-  // Calcular cuántos días restar para llegar al Lunes de esa misma semana
+  // Calcula el lunes de la semana correspondiente a la fecha recibida
+  const dayOfWeek = baseDate.getDay(); // 0 = Dom, 1 = Lun, ..., 6 = Sáb
   const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
 
-  const monday = new Date(current);
-  monday.setDate(current.getDate() + diffToMonday);
+  const monday = new Date(baseDate);
+  monday.setDate(baseDate.getDate() + diffToMonday);
 
-  // Generar de Lunes (0) a Viernes (4)
-  return Array.from({ length: 5 }, (_, index) => {
-    const dayDate = new Date(monday);
-    dayDate.setDate(monday.getDate() + index);
-    const fullDate = toISODate(dayDate);
+  const labels = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const current = new Date(monday);
+    current.setDate(monday.getDate() + i);
+
+    const y = current.getFullYear();
+    const m = String(current.getMonth() + 1).padStart(2, '0');
+    const d = String(current.getDate()).padStart(2, '0');
 
     return {
-      label: SHORT_DAYS[index],
-      number: String(dayDate.getDate()),
-      fullDate,
-      displayDate: formatDisplayDate(fullDate),
+      label: labels[i],
+      number: current.getDate(),
+      fullDate: `${y}-${m}-${d}`,
     };
   });
-}
+};
