@@ -135,6 +135,7 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState([]);
   const [servicesCatalog, setServicesCatalog] = useState([]);
   const [promotionsCatalog, setPromotionsCatalog] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [clientsDirectory, setClientsDirectory] = useState([]);
   const [employeesDirectory, setEmployeesDirectory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -163,16 +164,18 @@ export default function AppointmentsPage() {
     const fetchAllData = async () => {
       setIsLoading(true);
       try {
-        const [apts, allSrvs, promos, clients, employees] = await Promise.all([
+        const [apts, allSrvs, promos, clients, employees, categoryData] = await Promise.all([
           appointmentsService.getAppointments({ user, includeAll: true }),
           catalogService.getServices(),
           catalogService.getPromotions({ user }),
           clientsService.getClients({ user }),
           employeesService.getEmployees(),
+          catalogService.getCategories(),
         ]);
         setAppointments(apts);
         setServicesCatalog(allSrvs); 
         setPromotionsCatalog(promos);
+        setCategories(categoryData);
         setClientsDirectory(clients);
         setEmployeesDirectory(employees);
       } finally {
@@ -973,6 +976,7 @@ const handleSaveAppointment = async (formData, onClientCreated) => {
         onSave={handleSaveAppointment}
         initialData={editingApt}
         defaultDate={selectedDate}
+        categories={categories}
         catalogServices={servicesCatalog}
         catalogPromotions={promotionsCatalog}
         clientsList={clientsDirectory}

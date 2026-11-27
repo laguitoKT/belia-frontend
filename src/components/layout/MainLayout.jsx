@@ -46,7 +46,7 @@ export default function MainLayout() {
   };
 
   return (
-    <div className="flex w-full h-screen h-[100dvh] overflow-hidden bg-surface-bg text-stone-900">
+    <div className="flex w-full h-screen overflow-hidden bg-surface-bg text-stone-900">
       <div className="hidden lg:flex">
         <Sidebar
           user={user}

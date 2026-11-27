@@ -1,5 +1,6 @@
 import axiosClient from '../../../api/axiosClient';
 import { toAppointmentStatus } from '../../appointments/services/appointmentStatus';
+import { resolveSpecialtyCategory } from '../../../utils/specialtyCategory';
 
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const ACTIVE_STATE_ID = 1;
@@ -22,17 +23,6 @@ export const formatEmployeeServiceDate = (record) => {
     .format(dateObj)
     .replace('.', '');
   return `${String(day).padStart(2, '0')} ${monthShort} ${year}, ${record.startTime}`;
-};
-
-const specialtyCategory = (specialty = '') => {
-  const value = specialty.toLowerCase();
-  if (/uña|manic|pedic/.test(value)) return 'Uñas';
-  if (/color/.test(value)) return 'Coloración';
-  if (/mirada|ceja|pesta/.test(value)) return 'Mirada';
-  if (/cabell|estilist|corte/.test(value)) return 'Cabello';
-  if (/maquill/.test(value)) return 'Maquillaje';
-  if (/facial/.test(value)) return 'Facial';
-  return 'Todas';
 };
 
 const timeOnly = (time) => (time || '').slice(0, 5);
@@ -117,7 +107,7 @@ const enrichEmployee = (employee, schedules, appointments) => {
     phone: employee.telefono || '',
     email: employee.correo,
     specialty: employee.especialidad || '',
-    specialtyCategory: specialtyCategory(employee.especialidad || ''),
+    specialtyCategory: resolveSpecialtyCategory(employee.especialidad || ''),
     workDays,
     workDaysList,
     schedules: employeeSchedules.map((schedule) => ({

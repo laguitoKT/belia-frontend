@@ -54,6 +54,7 @@ export default function ServicesPage() {
 
   const [services, setServices] = useState([]);
   const [promotions, setPromotions] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [operationError, setOperationError] = useState('');
@@ -84,12 +85,14 @@ export default function ServicesPage() {
       setIsLoading(true);
       setLoadError('');
       try {
-        const [srvData, promoData] = await Promise.all([
+        const [srvData, promoData, categoryData] = await Promise.all([
           catalogService.getServices({ user }),
           catalogService.getPromotions({ user }),
+          catalogService.getCategories(),
         ]);
         setServices(srvData);
         setPromotions(promoData);
+        setCategories(categoryData);
         setSelectedCategory('Todas');
       } catch (error) {
         console.error('Error al cargar el catálogo:', error);
@@ -102,13 +105,15 @@ export default function ServicesPage() {
   }, [user]);
 
   const availableCategories = useMemo(() => {
+    const categoryNames = categories.map((category) => category.name);
     if (!isAdmin && user?.specialtyCategory) {
-      return user.specialtyCategory === 'Cabello'
-        ? ['Todas', 'Cabello', 'Coloración', 'Paquete mixto']
-        : ['Todas', user.specialtyCategory, 'Paquete mixto'];
+      const allowedCategories = user.specialtyCategory === 'Cabello'
+        ? categoryNames.filter((category) => ['Cabello', 'Coloración'].includes(category))
+        : categoryNames.filter((category) => category === user.specialtyCategory);
+      return ['Todas', ...allowedCategories, 'Paquete mixto'];
     }
-    return ['Todas', 'Cabello', 'Coloración', 'Uñas', 'Mirada', 'Maquillaje', 'Facial', 'Paquete mixto'];
-  }, [isAdmin, user]);
+    return ['Todas', ...categoryNames, 'Paquete mixto'];
+  }, [categories, isAdmin, user]);
 
   const filteredServices = useMemo(() => {
     return services.filter((srv) => {
@@ -231,6 +236,7 @@ export default function ServicesPage() {
     setConfirmState({ isOpen: false, type: null, item: null });
     showToast(`"${item.name}" eliminado correctamente.`);
   };
+
 
   return (
     <div
@@ -895,6 +901,7 @@ export default function ServicesPage() {
         initialData={editingItem}
         lockedCategory={!isAdmin ? user?.specialtyCategory : null}
         isAdmin={isAdmin}
+        categories={categories}
         existingItems={activeTab === 'services' ? services : promotions}
         availableServices={services}
       />
