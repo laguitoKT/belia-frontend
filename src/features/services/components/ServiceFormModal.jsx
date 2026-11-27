@@ -1,8 +1,22 @@
-import { useState, useEffect, useMemo } from 'react';
-import { X, Lock, Check, Calendar, ShieldQuestion, Sparkles } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import {
+  X,
+  Lock,
+  Check,
+  Calendar,
+  ShieldQuestion,
+  Sparkles,
+} from 'lucide-react';
 import { getTodayISO } from '../../../utils/dateUtils';
 
 const SERVICE_CATEGORIES = ['Cabello', 'Coloración', 'Uñas', 'Mirada', 'Maquillaje', 'Facial'];
+
+const normalizeServiceName = (name = '') =>
+  String(name)
+    .normalize('NFC')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
 
 export default function ServiceFormModal({
   isOpen,
@@ -12,6 +26,7 @@ export default function ServiceFormModal({
   initialData = null,
   lockedCategory = null,
   isAdmin = false,
+  categories = [],
   existingItems = [],
   availableServices = [],
 }) {
@@ -34,6 +49,13 @@ export default function ServiceFormModal({
   const [fieldErrors, setFieldErrors] = useState({});
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [selectedServiceCategory, setSelectedServiceCategory] = useState('Todas');
+  const [isSaving, setIsSaving] = useState(false);
+  const isSavingRef = useRef(false);
+  const categoriesRef = useRef(categories);
+
+  useEffect(() => {
+    categoriesRef.current = categories;
+  }, [categories]);
 
   useEffect(() => {
     if (initialData) {
@@ -51,7 +73,7 @@ export default function ServiceFormModal({
     } else {
       setFormData({
         name: '',
-        category: lockedCategory || 'Cabello',
+        category: lockedCategory || categoriesRef.current[0]?.name || '',
         serviceIds: [],
         price: '',
         durationMinutes: '60',
@@ -135,15 +157,20 @@ export default function ServiceFormModal({
     } else {
       const isDuplicate = existingItems.some(
         (item) =>
-          item.name.trim().toLowerCase() === trimmedName.toLowerCase() &&
+          normalizeServiceName(item.name) === normalizeServiceName(trimmedName) &&
           item.id !== initialData?.id
       );
       if (isDuplicate) {
-        errors.name = 'Ya existe un registro con este nombre.';
+        errors.name = isPromotion
+          ? 'Ya existe una promoción con ese nombre.'
+          : 'Ya existe un servicio con ese nombre.';
       }
     }
 
     if (!isPromotion) {
+      if (!formData.category) {
+        errors.category = 'Selecciona o agrega una categoría.';
+      }
       const numericDuration = Number(formData.durationMinutes);
       if (
         !formData.durationMinutes ||
@@ -189,38 +216,53 @@ export default function ServiceFormModal({
 
   const handleRequestSubmit = (e) => {
     e.preventDefault();
+    if (isSavingRef.current) return;
     if (validateForm()) {
       setShowSaveConfirm(true);
     }
   };
 
-  const handleConfirmSave = () => {
-    const selectedServiceNames = availableServices
-      .filter((s) => formData.serviceIds.includes(s.id))
-      .map((s) => s.name.toUpperCase())
-      .join(' + ');
+  const handleConfirmSave = async () => {
+    if (isSavingRef.current) return;
+    isSavingRef.current = true;
+    setIsSaving(true);
 
-    const finalCategory = isPromotion
-      ? derivedPromotionCategory
-      : formData.category;
+    try {
+      if (!validateForm()) {
+        setShowSaveConfirm(false);
+        return;
+      }
 
-    const payload = {
-      name: formData.name.trim(),
-      category: finalCategory,
-      price: canEditPrice ? Number(formData.price) : initialData?.price,
-      durationMinutes: Number(formData.durationMinutes),
-      status: formData.status,
-      description: formData.description.trim(),
-      ...(isPromotion && {
-        serviceIds: formData.serviceIds,
-        serviceIncluded: selectedServiceNames,
-        validFrom: formData.validFrom,
-        validUntil: formData.validUntil,
-      }),
-    };
+      const selectedServiceNames = availableServices
+        .filter((s) => formData.serviceIds.includes(s.id))
+        .map((s) => s.name.toUpperCase())
+        .join(' + ');
 
-    setShowSaveConfirm(false);
-    onSave(payload);
+      const finalCategory = isPromotion
+        ? derivedPromotionCategory
+        : formData.category;
+
+      const payload = {
+        name: formData.name.trim(),
+        category: finalCategory,
+        price: canEditPrice ? Number(formData.price) : initialData?.price,
+        durationMinutes: Number(formData.durationMinutes),
+        status: formData.status,
+        description: formData.description.trim(),
+        ...(isPromotion && {
+          serviceIds: formData.serviceIds,
+          serviceIncluded: selectedServiceNames,
+          validFrom: formData.validFrom,
+          validUntil: formData.validUntil,
+        }),
+      };
+
+      setShowSaveConfirm(false);
+      await onSave(payload);
+    } finally {
+      isSavingRef.current = false;
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -299,9 +341,9 @@ export default function ServiceFormModal({
                   }`}
                 >
                   <option value="">Seleccionar</option>
-                  {SERVICE_CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.name}>
+                      {category.name}
                     </option>
                   ))}
                 </select>
@@ -477,6 +519,7 @@ export default function ServiceFormModal({
           <div className={`grid grid-cols-1 gap-4 sm:grid-cols-${isPromotion ? '2' : '1'}`}>
             {isPromotion && (
               <>
+
                 <div>
                   <label className="block mb-2 text-xs font-bold text-stone-800">
                     Fecha de inicio
@@ -567,6 +610,7 @@ export default function ServiceFormModal({
                 <button
                   type="button"
                   onClick={() => setShowSaveConfirm(false)}
+                  disabled={isSaving}
                   className="px-4 py-2 text-xs font-bold bg-white border rounded-xl border-stone-200 text-stone-700"
                 >
                   Revisar
@@ -574,9 +618,10 @@ export default function ServiceFormModal({
                 <button
                   type="button"
                   onClick={handleConfirmSave}
-                  className="px-4 py-2 text-xs font-bold text-white rounded-xl bg-brand-primary shadow-button"
+                  disabled={isSaving}
+                  className="px-4 py-2 text-xs font-bold text-white rounded-xl bg-brand-primary shadow-button disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Sí, guardar cambios
+                  {isSaving ? 'Guardando...' : 'Sí, guardar cambios'}
                 </button>
               </div>
             </div>
@@ -584,7 +629,8 @@ export default function ServiceFormModal({
             <div className="flex gap-3 mt-6 sjustify-items-end sm:flex-row sm:justify-end sm:gap-2.5 flex-col">
               <button
                 type="submit"
-                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 transition-opacity"
+                disabled={isSaving}
+                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-accent to-brand-primary text-white text-xs font-bold shadow-button hover:opacity-95 transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isPromotion ? 'Guardar promoción' : 'Guardar servicio'}
               </button>

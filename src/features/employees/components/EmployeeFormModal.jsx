@@ -1,5 +1,13 @@
-import { useState, useEffect } from 'react';
-import { X, ShieldQuestion, Check } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import {
+  X,
+  ShieldQuestion,
+  Check,
+  ChevronDown,
+  Plus,
+  Trash2,
+} from 'lucide-react';
+import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 
 const SPECIALTY_OPTIONS = [
   { label: 'Estilista senior', category: 'Cabello' },
@@ -61,8 +69,28 @@ export default function EmployeeFormModal({
   onSave,
   initialData = null,
   existingEmployees = [],
+  categories = [],
+  onCreateCategory,
+  onDeleteCategory,
 }) {
   const isEditing = Boolean(initialData);
+  const specialtyOptions = useMemo(
+    () =>
+      categories.length > 0
+        ? categories.map((category) => {
+            const existingOption = SPECIALTY_OPTIONS.find(
+              (option) =>
+                option.category.toLowerCase() === category.name.toLowerCase()
+            );
+            return {
+              id: category.id,
+              label: existingOption?.label || category.name,
+              category: category.name,
+            };
+          })
+        : SPECIALTY_OPTIONS.map((option) => ({ ...option, id: null })),
+    [categories]
+  );
 
   const [formData, setFormData] = useState({
     name: '',
@@ -79,6 +107,11 @@ export default function EmployeeFormModal({
 
   const [fieldErrors, setFieldErrors] = useState({});
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [categoryError, setCategoryError] = useState('');
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [isManagingCategory, setIsManagingCategory] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -110,6 +143,10 @@ export default function EmployeeFormModal({
     }
     setFieldErrors({});
     setShowSaveConfirm(false);
+    setIsCategoryMenuOpen(false);
+    setNewCategoryName('');
+    setCategoryError('');
+    setCategoryToDelete(null);
   }, [initialData, isOpen]);
 
   if (!isOpen) return null;
@@ -132,6 +169,71 @@ const toggleWorkDay = (dayId) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (fieldErrors[name]) {
       setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  const handleAddCategory = async () => {
+    const name = newCategoryName.trim();
+    if (!name) {
+      setCategoryError('Escribe el nombre de la categoría.');
+      return;
+    }
+    if (name.length > 100) {
+      setCategoryError('El nombre no puede superar 100 caracteres.');
+      return;
+    }
+    if (categories.some((category) => category.name.toLowerCase() === name.toLowerCase())) {
+      setCategoryError('Esta categoría ya existe.');
+      return;
+    }
+
+    setIsManagingCategory(true);
+    setCategoryError('');
+    try {
+      const created = await onCreateCategory(name);
+      setFormData((prev) => ({ ...prev, specialty: created.name }));
+      setNewCategoryName('');
+      setIsCategoryMenuOpen(false);
+    } catch (error) {
+      const detail = error.response?.data?.detail || error.message;
+      setCategoryError(
+        typeof detail === 'string' ? detail : 'No se pudo agregar la categoría.'
+      );
+    } finally {
+      setIsManagingCategory(false);
+    }
+  };
+
+  const handleDeleteCategory = async () => {
+    if (!categoryToDelete) return;
+
+    setIsManagingCategory(true);
+    setCategoryError('');
+    try {
+      await onDeleteCategory(categoryToDelete);
+      const nextOption = specialtyOptions.find(
+        (option) => option.id !== categoryToDelete.id
+      );
+      if (formData.specialty === categoryToDelete.name ||
+          specialtyOptions.find((option) => option.label === formData.specialty)?.id === categoryToDelete.id) {
+        setFormData((prev) => ({
+          ...prev,
+          specialty: nextOption?.label || '',
+        }));
+      }
+      setCategoryToDelete(null);
+    } catch (error) {
+      const detail = error.response?.data?.detail || error.message;
+      setCategoryError(
+        error.response?.status === 409
+          ? 'No se puede eliminar: está asignada a un servicio o producto.'
+          : typeof detail === 'string'
+            ? detail
+            : 'No se pudo eliminar la categoría.'
+      );
+      setCategoryToDelete(null);
+    } finally {
+      setIsManagingCategory(false);
     }
   };
 
@@ -171,6 +273,9 @@ const toggleWorkDay = (dayId) => {
         errors.email = 'Este correo ya está asignado a otro empleado.';
       }
     }
+    if (!formData.specialty) {
+      errors.specialty = 'Selecciona una especialidad.';
+    }
     if ((!isEditing || formData.password) && formData.password.length < 8) {
       errors.password = 'La contraseña debe tener al menos 8 caracteres.';
     } else if (new TextEncoder().encode(formData.password).length > 72) {
@@ -198,9 +303,9 @@ const toggleWorkDay = (dayId) => {
   };
 
   const handleConfirmSave = () => {
-    const matchedSpecialty =
-      SPECIALTY_OPTIONS.find((s) => s.label === formData.specialty) ||
-      SPECIALTY_OPTIONS[0];
+    const matchedSpecialty = specialtyOptions.find(
+      (option) => option.label === formData.specialty
+    );
     
     const orderedDays = WEEK_DAYS.map((d) => d.id).filter((id) =>
       formData.workDaysList.includes(id)
@@ -211,8 +316,8 @@ const toggleWorkDay = (dayId) => {
       phone: formData.phone.trim(),
       email: formData.email.trim(),
       ...((!isEditing || formData.password) && { password: formData.password }),
-      specialty: matchedSpecialty.label,
-      specialtyCategory: matchedSpecialty.category,
+      specialty: formData.specialty,
+      specialtyCategory: matchedSpecialty?.category || formData.specialty,
       workDaysList: orderedDays,
       workDays: formatDaysToString(orderedDays),
       startTime: formData.startTime,
@@ -224,7 +329,12 @@ const toggleWorkDay = (dayId) => {
     onSave(payload);
   };
 
+  const selectedSpecialtyOption = specialtyOptions.find(
+    (option) => option.label === formData.specialty
+  );
+
   return (
+    <>
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/35 backdrop-blur-xs"
       onClick={onClose}
@@ -286,18 +396,125 @@ const toggleWorkDay = (dayId) => {
               <label className="block mb-1.5 sm:mb-2 text-xs font-bold text-stone-800">
                 Especialidad
               </label>
-              <select
-                name="specialty"
-                value={formData.specialty}
-                onChange={handleChange}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#FAFAFB] border border-stone-200/90 text-base sm:text-sm text-stone-800 focus:outline-none focus:border-brand-primary cursor-pointer"
-              >
-                {SPECIALTY_OPTIONS.map((opt) => (
-                  <option key={opt.label} value={opt.label}>
-                    {opt.label} ({opt.category})
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCategoryMenuOpen((open) => !open);
+                    setCategoryError('');
+                  }}
+                  aria-expanded={isCategoryMenuOpen}
+                  aria-label="Seleccionar especialidad o categoría"
+                  className={`w-full px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#FAFAFB] border text-base sm:text-sm text-left text-stone-800 flex items-center justify-between focus:outline-none ${
+                    fieldErrors.specialty
+                      ? 'border-red-400'
+                      : 'border-stone-200/90 focus:border-brand-primary'
+                  }`}
+                >
+                  <span>
+                    {selectedSpecialtyOption
+                      ? selectedSpecialtyOption.label === selectedSpecialtyOption.category
+                        ? selectedSpecialtyOption.category
+                        : `${selectedSpecialtyOption.label} (${selectedSpecialtyOption.category})`
+                      : formData.specialty || 'Escribe o selecciona una categoría'}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-stone-400 shrink-0" />
+                </button>
+                {isCategoryMenuOpen && (
+                  <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden bg-white border rounded-2xl border-stone-200 shadow-lg">
+                    <div className="max-h-48 overflow-y-auto p-1.5">
+                      {specialtyOptions.map((option) => {
+                        const category = categories.find(
+                          (item) => item.id === option.id
+                        );
+                        const label = option.label === option.category
+                          ? option.category
+                          : `${option.label} (${option.category})`;
+                        return (
+                          <div
+                            key={option.id ?? option.category}
+                            className="flex items-center gap-1 rounded-xl hover:bg-surface-bg"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  specialty: option.label,
+                                }));
+                                setFieldErrors((prev) => ({
+                                  ...prev,
+                                  specialty: undefined,
+                                }));
+                                setIsCategoryMenuOpen(false);
+                              }}
+                              className="flex-1 px-3 py-2.5 text-sm text-left text-stone-700"
+                            >
+                              {label}
+                            </button>
+                            {category && (
+                              <button
+                                type="button"
+                                onClick={() => setCategoryToDelete(category)}
+                                disabled={isManagingCategory}
+                                aria-label={`Eliminar categoría ${category.name}`}
+                                title={`Eliminar ${category.name}`}
+                                className="p-2 mr-1 text-stone-400 rounded-lg hover:text-red-600 hover:bg-red-50 disabled:opacity-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {categories.length === 0 && (
+                        <p className="px-3 py-3 text-xs text-stone-400">
+                          Aún no hay categorías.
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-2 p-2 border-t border-stone-100">
+                      <input
+                        type="text"
+                        value={newCategoryName}
+                        maxLength={100}
+                        onChange={(event) => {
+                          setNewCategoryName(event.target.value);
+                          setCategoryError('');
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault();
+                            handleAddCategory();
+                          }
+                        }}
+                        placeholder="Nueva categoría"
+                        aria-label="Nueva categoría"
+                        className="min-w-0 flex-1 px-3 py-2 text-sm border rounded-xl border-stone-200 focus:outline-none focus:border-brand-primary"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddCategory}
+                        disabled={isManagingCategory}
+                        className="inline-flex items-center gap-1 px-3 py-2 text-xs font-bold text-white rounded-xl bg-brand-primary hover:opacity-90 disabled:opacity-50"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Agregar
+                      </button>
+                    </div>
+                    {categoryError && (
+                      <p role="alert" className="px-3 pb-2 text-xs text-red-600">
+                        {categoryError}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+              {fieldErrors.specialty && (
+                <p className="text-[11px] font-medium text-red-600 mt-1">
+                  {fieldErrors.specialty}
+                </p>
+              )}
             </div>
           </div>
 
@@ -490,5 +707,14 @@ const toggleWorkDay = (dayId) => {
         </form>
       </div>
     </div>
+    <ConfirmDialog
+      isOpen={Boolean(categoryToDelete)}
+      onClose={() => setCategoryToDelete(null)}
+      onConfirm={handleDeleteCategory}
+      title={`¿Eliminar "${categoryToDelete?.name}"?`}
+      message="La categoría solo se eliminará si no está asignada a un servicio, producto o empleado."
+      confirmText="Eliminar categoría"
+    />
+    </>
   );
 }

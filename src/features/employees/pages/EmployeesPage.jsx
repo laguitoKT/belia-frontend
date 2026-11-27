@@ -23,21 +23,13 @@ import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { getCategoryTheme } from '../../../components/ui/categoryThemes';
 import { getInitialsTheme } from '../../../components/ui/initialsThemes';
 import useIsMobile from '../../../utils/useIsMobile';
-
-const CATEGORY_FILTER_OPTIONS = [
-  'Todas',
-  'Cabello',
-  'Coloración',
-  'Uñas',
-  'Mirada',
-  'Maquillaje',
-  'Facial',
-];
+import { catalogService } from '../../services/services/catalogService';
 
 export default function EmployeesPage() {
   const [viewMode, setViewMode] = useState('table');
   const isMobile = useIsMobile();
   const [employees, setEmployees] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Filtros
@@ -69,14 +61,31 @@ export default function EmployeesPage() {
     const fetchEmployees = async () => {
       setIsLoading(true);
       try {
-        const data = await employeesService.getEmployees();
+        const [data, categoryData] = await Promise.all([
+          employeesService.getEmployees(),
+          catalogService.getCategories(),
+        ]);
         setEmployees(data);
+        setCategories(categoryData);
       } finally {
         setIsLoading(false);
       }
     };
     fetchEmployees();
   }, []);
+
+  const categoryFilterOptions = useMemo(
+    () => [
+      'Todas',
+      ...new Set([
+        ...categories.map((category) => category.name),
+        ...employees
+          .map((employee) => employee.specialtyCategory)
+          .filter((category) => category && category !== 'Todas'),
+      ]),
+    ],
+    [categories, employees]
+  );
 
   const filteredEmployees = useMemo(() => {
     return employees.filter((emp) => {
@@ -104,6 +113,29 @@ export default function EmployeesPage() {
     setEditingEmployee(emp);
     setOpenMenuId(null);
     setIsFormModalOpen(true);
+  };
+
+  const handleCreateCategory = async (name) => {
+    const created = await catalogService.createCategory(name);
+    setCategories((prev) =>
+      [...prev, created].sort((a, b) => a.name.localeCompare(b.name, 'es'))
+    );
+    return created;
+  };
+
+  const handleDeleteCategory = async (category) => {
+    const isUsedByEmployee = employees.some(
+      (employee) => employee.specialtyCategory === category.name
+    );
+    if (isUsedByEmployee) {
+      throw new Error('No se puede eliminar: está asignada a un empleado.');
+    }
+
+    await catalogService.deleteCategory(category.id);
+    setCategories((prev) => prev.filter((item) => item.id !== category.id));
+    setSelectedCategory((current) =>
+      current === category.name ? 'Todas' : current
+    );
   };
 
   const handleSaveEmployee = async (formData) => {
@@ -217,7 +249,7 @@ export default function EmployeesPage() {
               aria-label="Filtrar por área de especialidad"
               className="w-full min-w-0 min-h-[40px] py-2 sm:py-3 pl-8 sm:pl-10 pr-3 sm:pr-8 text-xs font-semibold bg-white border appearance-none cursor-pointer rounded-xl sm:rounded-2xl border-stone-100 text-stone-600 shadow-2xs focus:outline-none sm:w-auto"
             >
-              {CATEGORY_FILTER_OPTIONS.map((cat) => (
+              {categoryFilterOptions.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat === 'Todas' ? 'Todos los filtros' : `Área: ${cat}`}
                 </option>
@@ -538,6 +570,9 @@ export default function EmployeesPage() {
         onSave={handleSaveEmployee}
         initialData={editingEmployee}
         existingEmployees={employees}
+        categories={categories}
+        onCreateCategory={handleCreateCategory}
+        onDeleteCategory={handleDeleteCategory}
       />
 
       {/* Confirmación para eliminar o cambiar el estado */}

@@ -8,15 +8,6 @@ import {
   ShieldQuestion,
 } from 'lucide-react';
 
-const PRODUCT_CATEGORIES = [
-  'Cabello',
-  'Coloración',
-  'Uñas',
-  'Mirada',
-  'Maquillaje',
-  'Facial',
-];
-
 const PRESENTATIONS = [
   'Botella',
   'Tubo',
@@ -45,10 +36,12 @@ export default function ProductFormModal({
   lockedCategory = null,
   isAdmin = false,
   existingProducts = [],
+  categories = [],
   isSaving = false,
 }) {
   const isEditing = Boolean(initialData);
   const fileInputRef = useRef(null);
+  const categoriesRef = useRef(categories);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -62,6 +55,10 @@ export default function ProductFormModal({
 
   const [fieldErrors, setFieldErrors] = useState({});
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+
+  useEffect(() => {
+    categoriesRef.current = categories;
+  }, [categories]);
 
   useEffect(() => {
     if (initialData) {
@@ -78,7 +75,7 @@ export default function ProductFormModal({
     } else {
       setFormData({
         name: '',
-        category: lockedCategory || 'Cabello',
+        category: lockedCategory || categoriesRef.current[0]?.name || '',
         presentation: '',
         measureUnit: '',
         quantity: '',
@@ -348,9 +345,13 @@ export default function ProductFormModal({
                 }`}
               >
                 <option value="">Seleccionar</option>
-                {PRODUCT_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
+                {!categories.some((category) => category.name === formData.category) &&
+                  formData.category && (
+                    <option value={formData.category}>{formData.category}</option>
+                  )}
+                {categories.map((category) => (
+                  <option key={category.id} value={category.name}>
+                    {category.name}
                   </option>
                 ))}
               </select>

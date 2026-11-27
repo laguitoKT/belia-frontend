@@ -1,21 +1,11 @@
 import axiosClient from '../../../api/axiosClient';
+import { resolveSpecialtyCategory } from '../../../utils/specialtyCategory';
 
 export class LoginResponseError extends Error {
   constructor() {
     super('El servidor devolvió una respuesta de inicio de sesión inválida.');
   }
 }
-
-const resolveSpecialtyCategory = (employee) => {
-  const specialty = `${employee.especialidad || ''} ${employee.rol || ''}`.toLowerCase();
-  if (/uña|manic|pedic/.test(specialty)) return 'Uñas';
-  if (/color/.test(specialty)) return 'Coloración';
-  if (/mirada|ceja|pesta/.test(specialty)) return 'Mirada';
-  if (/cabell|estilist|corte/.test(specialty)) return 'Cabello';
-  if (/maquill/.test(specialty)) return 'Maquillaje';
-  if (/facial/.test(specialty)) return 'Facial';
-  return 'Todas';
-};
 
 const toUser = (employee) => {
   const name = employee.nombre_completo;
@@ -36,7 +26,9 @@ const toUser = (employee) => {
     role: isAdmin ? 'admin' : 'stylist',
     roleLabel: employee.rol,
     specialty: employee.especialidad || '',
-    specialtyCategory: isAdmin ? 'Todas' : resolveSpecialtyCategory(employee),
+    specialtyCategory: isAdmin
+      ? 'Todas'
+      : resolveSpecialtyCategory(employee.especialidad || ''),
     phone: employee.telefono || '',
     email: employee.correo,
     scheduleDays: '',

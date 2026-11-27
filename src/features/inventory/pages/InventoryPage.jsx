@@ -18,6 +18,7 @@ import {
   inventoryService,
   getProductStockStatus,
 } from '../services/inventoryService';
+import { catalogService } from '../../services/services/catalogService';
 import ProductFormModal from '../components/ProductFormModal';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import ProductDetailModal from '../components/ProductDetailModal';
@@ -29,6 +30,7 @@ export default function InventoryPage() {
   const [viewMode, setViewMode] = useState('table');
   const isMobile = useIsMobile();
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [operationError, setOperationError] = useState('');
@@ -65,8 +67,12 @@ export default function InventoryPage() {
       setIsLoading(true);
       setLoadError('');
       try {
-        const data = await inventoryService.getProducts({ user });
+        const [data, categoryData] = await Promise.all([
+          inventoryService.getProducts({ user }),
+          catalogService.getCategories(),
+        ]);
         setProducts(data);
+        setCategories(categoryData);
         setSelectedCategory('Todas');
       } catch (error) {
         console.error('Error al cargar el inventario:', error);
@@ -78,10 +84,24 @@ export default function InventoryPage() {
     if (user) fetchInventory();
   }, [user]);
 
-  const availableCategories = useMemo(
-    () => ['Todas', ...new Set(products.map((product) => product.category).filter(Boolean))],
-    [products]
-  );
+  const specialtyCategory = user?.specialtyCategory;
+  const availableCategories = useMemo(() => {
+    let categoryNames = categories.map((category) => category.name);
+    if (!isAdmin && specialtyCategory) {
+      categoryNames = categoryNames.filter((category) =>
+        specialtyCategory === 'Cabello'
+          ? ['Cabello', 'Coloración'].includes(category)
+          : category === specialtyCategory
+      );
+    }
+    return [
+      'Todas',
+      ...new Set([
+        ...categoryNames,
+        ...products.map((product) => product.category).filter(Boolean),
+      ]),
+    ];
+  }, [categories, isAdmin, products, specialtyCategory]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((prod) => {
@@ -650,6 +670,7 @@ export default function InventoryPage() {
         }
         isAdmin={isAdmin || !editingProduct}
         existingProducts={products}
+        categories={categories}
         isSaving={isSavingProduct}
       />
 

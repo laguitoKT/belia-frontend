@@ -19,15 +19,6 @@ import {
 import { getTodayISO, parseLocalDate } from '../../../utils/dateUtils';
 import { calculateEndTime } from '../services/appointmentsService';
 
-const ALL_CATEGORIES = [
-  'Cabello',
-  'Coloración',
-  'Uñas',
-  'Mirada',
-  'Maquillaje',
-  'Facial',
-];
-
 const JS_DAY_TO_ID = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 // Verifica si la especialidad del empleado corresponde a la categoría del servicio
@@ -142,6 +133,7 @@ export default function AppointmentFormModal({
   onSave,
   initialData = null,
   defaultDate = null,
+  categories = [],
   catalogServices = [],
   catalogPromotions = [],
   clientsList = [],
@@ -177,6 +169,22 @@ export default function AppointmentFormModal({
   const [isSaving, setIsSaving] = useState(false);
   const [savedSelections, setSavedSelections] = useState({});
   const [restoreError, setRestoreError] = useState('');
+
+  const allCategories = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...categories.map((category) => category.name),
+          ...catalogServices.map((service) => service.category),
+          ...catalogPromotions
+            .map((promotion) => promotion.category)
+            .filter((category) => category !== 'Paquete mixto'),
+        ])
+      )
+        .filter((category) => category && category !== 'Paquete mixto')
+        .sort((a, b) => a.localeCompare(b, 'es')),
+    [categories, catalogServices, catalogPromotions]
+  );
 
   // 1. Catálogo unificado (Servicios + Paquetes con sus sub-servicios reales)
   const unifiedCatalog = useMemo(() => {
@@ -216,7 +224,7 @@ export default function AppointmentFormModal({
           catsFromServices.length > 0
             ? catsFromServices
             : p.category === 'Paquete mixto'
-            ? ALL_CATEGORIES
+            ? allCategories
             : [p.category];
 
         // Desglosa los servicios que componen el paquete para asignar horario y empleado a cada uno
@@ -246,7 +254,7 @@ export default function AppointmentFormModal({
       });
 
     return [...activeServices, ...activePromos];
-  }, [catalogServices, catalogPromotions]);
+  }, [allCategories, catalogServices, catalogPromotions]);
 
   // 2. Elementos visibles según rol y filtro de categorías
   const visibleCatalogItems = useMemo(() => {
@@ -1017,7 +1025,7 @@ export default function AppointmentFormModal({
                     )}
                     <span>Todas</span>
                   </button>
-                  {ALL_CATEGORIES.map((cat) => {
+                  {allCategories.map((cat) => {
                     const active = selectedCategories.includes(cat);
                     return (
                       <button

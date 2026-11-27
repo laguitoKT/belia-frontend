@@ -103,6 +103,31 @@ const promotionPayload = async (payload) => {
 };
 
 export const catalogService = {
+  async getCategories() {
+    const { data } = await axiosClient.get('/categorias/', {
+      params: { skip: 0, limit: 500 },
+    });
+    return data.map((category) => ({
+      id: category.id_categoria,
+      name: category.nombre,
+    }));
+  },
+
+  async createCategory(name) {
+    const { data } = await axiosClient.post('/categorias/', {
+      nombre: name,
+      estado_id: 1,
+    });
+    return {
+      id: data.id_categoria,
+      name: data.nombre,
+    };
+  },
+
+  async deleteCategory(id) {
+    await axiosClient.delete(`/categorias/${id}`);
+  },
+
   async getServices({ user } = {}) {
     const rows = (await axiosClient.get('/api/v1/catalogo/servicios')).data;
     let services = rows.map(toService);
@@ -195,4 +220,5 @@ export const catalogService = {
   async deletePromotion(id) {
     await axiosClient.delete(`/paquetes/${id}`);
   },
+
 };
